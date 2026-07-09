@@ -1,0 +1,248 @@
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 222 47% 11%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 88%;
+    --input: 214 32% 88%;
+    --ring: 222 47% 11%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --font-heading: 'Lilita One', cursive;
+    --font-body: 'Lilita One', cursive;
+    --font-display: 'Lilita One', cursive;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222 47% 5%;
+    --foreground: 210 40% 96%;
+    --card: 222 32% 10%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 32% 10%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 210 40% 96%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 222 32% 14%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 62.8% 40%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 15%;
+    --ring: 212 95% 68%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 222 47% 5%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 212 95% 68%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+    font-synthesis: none;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-dark {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .neon-glow {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3), 0 0 40px rgba(168, 85, 247, 0.15);
+  }
+
+  .neon-text {
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+  }
+
+  .dark .recharts-default-tooltip,
+  .dark .recharts-tooltip-wrapper {
+    color: #e2e8f0 !important;
+  }
+
+  .dark .recharts-tooltip-item,
+  .dark .recharts-tooltip-item-name,
+  .dark .recharts-tooltip-item-value,
+  .dark .recharts-tooltip-label {
+    color: #e2e8f0 !important;
+  }
+
+  .dark .recharts-legend-item-text {
+    color: #e2e8f0 !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Tier Aura Animations — per-rank effects that loop on cards.
+   Each aura has a signature keyframe cycle. Cadence is ~0.8s
+   for the "burst" motion plus a pause so effects breathe.
+   ───────────────────────────────────────────────────────────── */
+
+/* Pro — pale green up-arrow whooshing around the frame */
+@keyframes pro-arrow-orbit {
+  0%   { offset-distance: 0%;   opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* Masters — explosion burst with debris */
+@keyframes masters-explode {
+  0%   { transform: scale(0.2); opacity: 0; }
+  20%  { opacity: 1; }
+  60%  { transform: scale(1.4); opacity: 0.9; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@keyframes masters-debris {
+  0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(360deg); opacity: 0; }
+}
+
+/* Legendary — 95% opacity fire whooshing around the whole card */
+@keyframes legendary-fire-orbit {
+  0%   { offset-distance: 0%;   transform: scale(0.9); }
+  50%  { transform: scale(1.15); }
+  100% { offset-distance: 100%; transform: scale(0.9); }
+}
+@keyframes legendary-flicker {
+  0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+  50%      { filter: hue-rotate(-15deg) brightness(1.3); }
+}
+
+/* Mythic — cosmic vortex + lightning + supernova flares */
+@keyframes mythic-vortex-spin {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.08); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+@keyframes mythic-lightning {
+  0%, 82%, 100% { opacity: 0; }
+  84%, 88%      { opacity: 1; }
+  86%           { opacity: 0.2; }
+}
+@keyframes mythic-supernova {
+  0%, 100% { opacity: 0.2; transform: scale(0.6); }
+  40%      { opacity: 1;   transform: scale(1.6); }
+}
+
+/* Diamond — hyperborean blizzard + ice shards + strobe glints */
+@keyframes diamond-blizzard {
+  0%   { transform: translate(-30%, -20%); opacity: 0.4; }
+  50%  { opacity: 1; }
+  100% { transform: translate(30%, 20%);   opacity: 0.4; }
+}
+@keyframes diamond-shard {
+  0%   { transform: translate(0,0) rotate(var(--rot,0deg)); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(calc(var(--rot,0deg) + 180deg)); opacity: 0; }
+}
+@keyframes diamond-strobe {
+  0%, 100% { opacity: 0; }
+  48%, 52% { opacity: 1; }
+}
+
+/* Gold — solar tempest, sparks, sunburst */
+@keyframes gold-tempest {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes gold-spark {
+  0%   { transform: translate(0,0) scale(0.4); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
+}
+@keyframes gold-sunburst {
+  0%, 100% { opacity: 0.2; }
+  50%      { opacity: 1; }
+}
+
+/* Silver — kinetic chrome field + upward sparks + whip sheens */
+@keyframes silver-kinetic {
+  0%, 100% { transform: translateY(0) scaleY(1); opacity: 0.5; }
+  50%      { transform: translateY(-6px) scaleY(1.1); opacity: 1; }
+}
+@keyframes silver-spark-up {
+  0%   { transform: translateY(0) scale(0.5); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translateY(-140%) scale(1); opacity: 0; }
+}
+@keyframes silver-sheen {
+  0%   { transform: translateX(-120%) skewX(-25deg); opacity: 0; }
+  50%  { opacity: 1; }
+  100% { transform: translateX(120%)  skewX(-25deg); opacity: 0; }
+}
+
+/* Bronze — sandstorm + copper embers + gritty friction flashes */
+@keyframes bronze-sandstorm {
+  0%   { background-position: 0% 0%;   opacity: 0.55; }
+  100% { background-position: 200% 40%; opacity: 0.8; }
+}
+@keyframes bronze-ember {
+  0%   { transform: translate(0,0) scale(0.5); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1.1); opacity: 0; }
+}
+@keyframes bronze-friction {
+  0%, 100% { opacity: 0; transform: translateX(-50%); }
+  50%      { opacity: 0.9; transform: translateX(50%); }
+}
