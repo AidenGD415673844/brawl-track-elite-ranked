@@ -21,14 +21,14 @@ const K_FACTOR = {
 // Minimum win gain per tier — a victory is never worth less than this, no matter
 // how heavily favored you were. Fixes tiny gains vs much lower-ranked enemies.
 const MIN_WIN = {
-  Bronze: 28,
-  Silver: 25,
-  Gold: 22,
-  Diamond: 20,
-  Mythic: 18,
-  Legendary: 16,
-  Masters: 15,
-  Pro: 14,
+  Bronze: 85,
+  Silver: 80,
+  Gold: 75,
+  Diamond: 75,
+  Mythic: 70,
+  Legendary: 60,
+  Masters: 55,
+  Pro: 50,
 };
 
 // Minimum loss magnitude per tier — a defeat always costs at least this much.
