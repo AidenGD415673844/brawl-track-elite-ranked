@@ -13,8 +13,8 @@ const K_FACTOR = {
   Gold: { win: 150, loss: 80 },
   Diamond: { win: 135, loss: 95 },
   Mythic: { win: 125, loss: 115 },
-  Legendary: { win: 110, loss: 140 },
-  Masters: { win: 106, loss: 170 },
+  Legendary: { win: 115, loss: 140 },
+  Masters: { win: 108, loss: 170 },
   Pro: { win: 102, loss: 200 },
 };
 
