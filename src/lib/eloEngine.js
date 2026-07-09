@@ -8,14 +8,14 @@ import { getRank, getRankIndex, RANKS } from "@/lib/ranks";
 // At low tiers K_win > K_loss (forgiving climb); at Legendary+ K_loss climbs
 // steeply so demotions bite much harder the higher you go.
 const K_FACTOR = {
-  Bronze: { win: 160, loss: 60 },
-  Silver: { win: 150, loss: 70 },
-  Gold: { win: 130, loss: 80 },
-  Diamond: { win: 115, loss: 95 },
-  Mythic: { win: 105, loss: 115 },
-  Legendary: { win: 90, loss: 140 },
-  Masters: { win: 88, loss: 170 },
-  Pro: { win: 84, loss: 200 },
+  Bronze: { win: 185, loss: 60 },
+  Silver: { win: 175, loss: 70 },
+  Gold: { win: 150, loss: 80 },
+  Diamond: { win: 135, loss: 95 },
+  Mythic: { win: 125, loss: 115 },
+  Legendary: { win: 110, loss: 140 },
+  Masters: { win: 106, loss: 170 },
+  Pro: { win: 102, loss: 200 },
 };
 
 // Minimum win gain per tier — a victory is never worth less than this, no matter
