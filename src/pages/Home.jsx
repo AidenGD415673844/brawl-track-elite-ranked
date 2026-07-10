@@ -82,6 +82,11 @@ export default function Home() {
     const p = loadPlayer();
     const s = loadSnapshots();
     const bl = loadBattleLog();
+    // Safety net: season-highest should never sit below current Elo
+    if ((p.currentSeasonHighest || 0) < (p.currentElo || 0)) {
+      p.currentSeasonHighest = p.currentElo;
+      savePlayer(p);
+    }
     setPlayer(p);
     setSnapshots(s);
     setBattleLog(bl);
