@@ -62,6 +62,40 @@ function LowPowerAura({ tier }) {
 // ─── Helpers ─────────────────────────────────────────────────
 const rand = (min, max) => min + Math.random() * (max - min);
 
+// Per-tier grid tint. Kept subtle so text remains readable.
+const GRID_TINT = {
+  Bronze:    "rgba(251,191,36,0.16)",
+  Silver:    "rgba(226,232,240,0.14)",
+  Gold:      "rgba(250,204,21,0.18)",
+  Diamond:   "rgba(125,211,252,0.16)",
+  Mythic:    "rgba(217,70,239,0.18)",
+  Legendary: "rgba(249,115,22,0.18)",
+  Masters:   "rgba(251,191,36,0.16)",
+  Pro:       "rgba(253,224,71,0.20)",
+};
+
+// Old-school grid backdrop restored across every battle card. Renders under
+// the tier particle layer so effects still pop on top.
+function GridBackdrop({ tier }) {
+  const line = GRID_TINT[tier] || "rgba(255,255,255,0.12)";
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none rounded-[inherit]"
+      style={{
+        backgroundImage: `
+          linear-gradient(${line} 1px, transparent 1px),
+          linear-gradient(90deg, ${line} 1px, transparent 1px),
+          radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.35) 100%)
+        `,
+        backgroundSize: "24px 24px, 24px 24px, 100% 100%",
+        backgroundPosition: "0 0, 0 0, 0 0",
+        mixBlendMode: "screen",
+        opacity: 0.9,
+      }}
+    />
+  );
+}
+
 // ─── Bronze ──────────────────────────────────────────────────
 function BronzeAura() {
   const bullets = useMemo(
@@ -301,13 +335,13 @@ function DiamondAura() {
 
 // ─── Mythic ──────────────────────────────────────────────────
 function MythicAura() {
-  const flames = useMemo(
+  const blasts = useMemo(
     () =>
-      Array.from({ length: 5 }).map((_, i) => ({
-        left: `${rand(0, 80)}%`,
-        delay: `${(i * rand(0.4, 0.9)).toFixed(2)}s`,
-        duration: `${rand(1.5, 2.5).toFixed(2)}s`,
-        width: rand(60, 110),
+      Array.from({ length: 3 }).map((_, i) => ({
+        left: `${18 + i * 30}%`,
+        top: `${rand(35, 70)}%`,
+        delay: `${(i * rand(0.6, 1)).toFixed(2)}s`,
+        duration: `${rand(1.8, 2.6).toFixed(2)}s`,
       })),
     []
   );
@@ -315,33 +349,69 @@ function MythicAura() {
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
       {/* Purple base glow */}
       <div
-        className="absolute inset-x-0 bottom-0 h-1/2"
+        className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 100% 100% at 50% 100%, rgba(168,85,247,0.55), rgba(139,92,246,0.25) 40%, transparent 75%)",
+            "radial-gradient(ellipse 100% 80% at 50% 100%, rgba(168,85,247,0.45), rgba(139,92,246,0.2) 40%, transparent 75%)",
         }}
       />
-      {flames.map((f, i) => (
-        <div
-          key={i}
-          className="absolute bottom-0"
-          style={{
-            left: f.left,
-            width: f.width,
-            height: 70,
-            animation: `mythic-fire ${f.duration} ${f.delay} ease-in-out infinite`,
-            filter: "blur(4px)",
-            mixBlendMode: "screen",
-          }}
-        >
+      {blasts.map((ex, i) => (
+        <div key={i} className="absolute" style={{ left: ex.left, top: ex.top }}>
+          {/* Flash */}
           <div
+            className="absolute rounded-full"
             style={{
-              width: "100%",
-              height: "100%",
+              width: 90,
+              height: 90,
+              marginLeft: -45,
+              marginTop: -45,
               background:
-                "radial-gradient(ellipse 60% 100% at 50% 100%, #f0abfc 0%, #d946ef 30%, #9333ea 65%, transparent 90%)",
+                "radial-gradient(circle, rgba(250,232,255,0.95) 0%, rgba(217,70,239,0.7) 35%, rgba(126,34,206,0.4) 60%, transparent 75%)",
+              animation: `mythic-blast ${ex.duration} ${ex.delay} ease-out infinite`,
+              filter: "blur(2px)",
+              mixBlendMode: "screen",
             }}
           />
+          {/* Shockwave ring */}
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: 60,
+              height: 60,
+              marginLeft: -30,
+              marginTop: -30,
+              border: "3px solid rgba(240,171,252,0.85)",
+              boxShadow: "0 0 12px rgba(217,70,239,0.9)",
+              animation: `mythic-ring ${ex.duration} ${ex.delay} ease-out infinite`,
+            }}
+          />
+          {/* Violet chunks */}
+          {Array.from({ length: 8 }).map((_, k) => {
+            const a = (k / 8) * Math.PI * 2 + rand(-0.15, 0.15);
+            const d = 55 + rand(0, 30);
+            return (
+              <div
+                key={k}
+                className="absolute"
+                style={{
+                  left: 0,
+                  top: 0,
+                  width: 6,
+                  height: 6,
+                  marginLeft: -3,
+                  marginTop: -3,
+                  background:
+                    "radial-gradient(circle, #f0abfc 0%, #a855f7 70%, #6b21a8 100%)",
+                  borderRadius: "2px",
+                  boxShadow: "0 0 6px rgba(217,70,239,0.9)",
+                  "--dx": `${Math.cos(a) * d}px`,
+                  "--dy": `${Math.sin(a) * d}px`,
+                  "--rot": `${rand(-360, 360)}deg`,
+                  animation: `mythic-chunk ${ex.duration} ${ex.delay} ease-out infinite`,
+                }}
+              />
+            );
+          })}
         </div>
       ))}
     </div>
@@ -466,30 +536,43 @@ function MastersAura() {
               filter: "blur(1px)",
             }}
           />
-          {/* Debris */}
+          {/* Concrete debris chunks (rock icons) */}
           {Array.from({ length: 8 }).map((_, k) => {
             const a = (k / 8) * Math.PI * 2 + rand(-0.15, 0.15);
             const d = 55 + rand(0, 30);
+            const size = 8 + Math.round(rand(0, 4));
             return (
-              <div
+              <svg
                 key={k}
+                viewBox="0 0 20 20"
+                width={size}
+                height={size}
                 className="absolute"
                 style={{
                   left: 0,
                   top: 0,
-                  width: 5,
-                  height: 5,
-                  marginLeft: -2.5,
-                  marginTop: -2.5,
-                  background: "#9ca3af",
-                  borderRadius: "1px",
-                  boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.5)",
+                  marginLeft: -size / 2,
+                  marginTop: -size / 2,
+                  filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.7))",
                   "--dx": `${Math.cos(a) * d}px`,
                   "--dy": `${Math.sin(a) * d}px`,
                   "--rot": `${rand(-360, 360)}deg`,
-                  animation: `masters-debris 2s ${ex.delay} ease-out infinite`,
+                  animation: `masters-chunk-spin 2s ${ex.delay} ease-out infinite`,
                 }}
-              />
+              >
+                <polygon
+                  points="3,8 7,3 14,4 17,9 15,16 8,17 4,13"
+                  fill="#9ca3af"
+                  stroke="#4b5563"
+                  strokeWidth="1"
+                  strokeLinejoin="round"
+                />
+                <polygon
+                  points="7,7 11,6 13,10 10,12"
+                  fill="#6b7280"
+                  opacity="0.8"
+                />
+              </svg>
             );
           })}
         </div>
@@ -500,80 +583,52 @@ function MastersAura() {
 
 // ─── Pro ─────────────────────────────────────────────────────
 function ProAura() {
-  const explosions = useMemo(
+  const crowns = useMemo(
     () =>
-      Array.from({ length: 3 }).map((_, i) => ({
-        left: `${18 + i * 32}%`,
-        top: `${rand(30, 65)}%`,
-        delay: `${(i * rand(0.8, 1.2)).toFixed(2)}s`,
+      Array.from({ length: 7 }).map((_, i) => ({
+        left: `${rand(6, 92)}%`,
+        delay: `${(i * rand(0.35, 0.6)).toFixed(2)}s`,
+        duration: `${rand(2, 3).toFixed(2)}s`,
+        size: 14 + Math.round(rand(0, 8)),
       })),
     []
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
+      {/* Warm golden glow at bottom */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 100% 60% at 50% 100%, rgba(250,204,21,0.45), transparent 70%)",
+            "radial-gradient(ellipse 100% 60% at 50% 100%, rgba(250,204,21,0.4), transparent 70%)",
         }}
       />
-      {explosions.map((ex, i) => (
-        <div
+      {crowns.map((c, i) => (
+        <svg
           key={i}
+          viewBox="0 0 24 24"
+          width={c.size}
+          height={c.size}
           className="absolute"
-          style={{ left: ex.left, top: ex.top }}
+          style={{
+            left: c.left,
+            bottom: -20,
+            filter:
+              "drop-shadow(0 0 5px #fde047) drop-shadow(0 0 10px rgba(250,204,21,0.9))",
+            animation: `pro-crown-rise ${c.duration} ${c.delay} ease-out infinite`,
+          }}
         >
-          {/* Golden flash */}
-          <div
-            className="absolute rounded-full"
-            style={{
-              width: 70,
-              height: 70,
-              marginLeft: -35,
-              marginTop: -35,
-              background:
-                "radial-gradient(circle, rgba(254,249,195,0.95) 0%, rgba(250,204,21,0.65) 40%, transparent 70%)",
-              animation: `pro-flash 2.5s ${ex.delay} ease-out infinite`,
-              filter: "blur(1px)",
-            }}
+          <path
+            d="M 3 8 L 6 14 L 9 5 L 12 14 L 15 5 L 18 14 L 21 8 L 20 19 L 4 19 Z"
+            fill="#fef08a"
+            stroke="#ca8a04"
+            strokeWidth="0.8"
+            strokeLinejoin="round"
           />
-          {/* Flying crowns */}
-          {Array.from({ length: 7 }).map((_, k) => {
-            const a = (k / 7) * Math.PI * 2 + rand(-0.1, 0.1);
-            const d = 60 + rand(0, 35);
-            return (
-              <svg
-                key={k}
-                viewBox="0 0 24 24"
-                width="14"
-                height="14"
-                className="absolute"
-                style={{
-                  left: 0,
-                  top: 0,
-                  marginLeft: -7,
-                  marginTop: -7,
-                  filter:
-                    "drop-shadow(0 0 4px #fde047) drop-shadow(0 0 8px rgba(250,204,21,0.9))",
-                  "--dx": `${Math.cos(a) * d}px`,
-                  "--dy": `${Math.sin(a) * d}px`,
-                  "--rot": `${rand(-540, 540)}deg`,
-                  animation: `pro-crown 2.5s ${ex.delay} ease-out infinite`,
-                }}
-              >
-                <path
-                  d="M 3 8 L 6 14 L 9 5 L 12 14 L 15 5 L 18 14 L 21 8 L 20 19 L 4 19 Z"
-                  fill="#fef08a"
-                  stroke="#ca8a04"
-                  strokeWidth="0.8"
-                  strokeLinejoin="round"
-                />
-                <rect x="4" y="18" width="16" height="2" fill="#ca8a04" />
-              </svg>
-            );
-          })}
-        </div>
+          <rect x="4" y="18" width="16" height="2" fill="#ca8a04" />
+          <circle cx="9" cy="5" r="1.2" fill="#fff" />
+          <circle cx="15" cy="5" r="1.2" fill="#fff" />
+        </svg>
       ))}
     </div>
   );
@@ -632,6 +687,7 @@ export default function TierAuraOverlay({ tier, active = true }) {
   return (
     <>
       <Aura />
+      <GridBackdrop tier={tier} />
       <TierExtras tier={tier} />
     </>
   );
