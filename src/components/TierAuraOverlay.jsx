@@ -590,11 +590,49 @@ const TIER_COMPONENTS = {
   Bronze: BronzeAura,
 };
 
+// Optional extra flourishes layered on top of the base aura. Kept in one
+// place so we can iterate without touching each tier component.
+function TierExtras({ tier }) {
+  switch (tier) {
+    case "Bronze":
+      return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+          <div className="tier-bronze-dust" />
+        </div>
+      );
+    case "Mythic":
+      return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="tier-mythic-ember" style={{ left: `${10 + i * 15}%`, animationDelay: `${i * 0.4}s` }} />
+          ))}
+        </div>
+      );
+    case "Legendary":
+      return (
+        <div className="absolute inset-x-0 bottom-0 h-1/3 pointer-events-none tier-legendary-haze" aria-hidden />
+      );
+    case "Masters":
+      return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+          <div className="tier-masters-shockwave" />
+        </div>
+      );
+    default:
+      return null;
+  }
+}
+
 export default function TierAuraOverlay({ tier, active = true }) {
   const lowPower = useLowPowerMode();
   if (!active) return null;
   const Aura = TIER_COMPONENTS[tier];
   if (!Aura) return null;
   if (lowPower) return <LowPowerAura tier={tier} />;
-  return <Aura />;
+  return (
+    <>
+      <Aura />
+      <TierExtras tier={tier} />
+    </>
+  );
 }
