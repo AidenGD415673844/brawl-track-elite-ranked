@@ -2,7 +2,15 @@
 // Tokens are minted by a server-side edge function so the LiveKit API secret
 // never touches the browser.
 import { Room, RoomEvent, DataPacket_Kind } from "livekit-client";
-import { supabase } from "@/integrations/supabase/client";
+
+async function getBackendClient() {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    return supabase;
+  } catch {
+    return null;
+  }
+}
 
 const CHANNEL_NAME = "brawl-track-sync";
 
@@ -18,6 +26,11 @@ let livekitConfigured = null; // cached availability check
 async function checkLiveKitAvailable() {
   if (livekitConfigured !== null) return livekitConfigured;
   try {
+    const supabase = await getBackendClient();
+    if (!supabase) {
+      livekitConfigured = false;
+      return livekitConfigured;
+    }
     const { data, error } = await supabase.functions.invoke("livekit-token", {
       body: { roomName: "probe-check", identity: "probe-check" },
     });
@@ -91,6 +104,11 @@ async function connect(roomName) {
 
   // Try LiveKit connection via server-side token mint
   try {
+    const supabase = await getBackendClient();
+    if (!supabase) {
+      livekitConfigured = false;
+      return;
+    }
     const { data, error } = await supabase.functions.invoke("livekit-token", {
       body: { roomName, identity: "player-" + Math.random().toString(36).substring(2, 8) },
     });
