@@ -23,6 +23,9 @@ export default function Settings() {
   const [tiltLock, setTiltLock] = React.useState(isTiltLockEnabled());
   const [threshold, setThreshold] = React.useState(getTiltLockThreshold());
   const [haptics, setHaptics] = React.useState(areHapticsEnabled());
+  const [particlesOn, setParticlesOn] = React.useState(getParticlesEnabled());
+  const [particleIntensity, setParticleIntensityState] = React.useState(getParticleIntensity());
+
   const [perfMode, setPerfMode] = React.useState(() => {
     try { return localStorage.getItem("tierAnimPerf") || "auto"; } catch { return "auto"; }
   });
