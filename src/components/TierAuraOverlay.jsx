@@ -583,80 +583,52 @@ function MastersAura() {
 
 // ─── Pro ─────────────────────────────────────────────────────
 function ProAura() {
-  const explosions = useMemo(
+  const crowns = useMemo(
     () =>
-      Array.from({ length: 3 }).map((_, i) => ({
-        left: `${18 + i * 32}%`,
-        top: `${rand(30, 65)}%`,
-        delay: `${(i * rand(0.8, 1.2)).toFixed(2)}s`,
+      Array.from({ length: 7 }).map((_, i) => ({
+        left: `${rand(6, 92)}%`,
+        delay: `${(i * rand(0.35, 0.6)).toFixed(2)}s`,
+        duration: `${rand(2, 3).toFixed(2)}s`,
+        size: 14 + Math.round(rand(0, 8)),
       })),
     []
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
+      {/* Warm golden glow at bottom */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 100% 60% at 50% 100%, rgba(250,204,21,0.45), transparent 70%)",
+            "radial-gradient(ellipse 100% 60% at 50% 100%, rgba(250,204,21,0.4), transparent 70%)",
         }}
       />
-      {explosions.map((ex, i) => (
-        <div
+      {crowns.map((c, i) => (
+        <svg
           key={i}
+          viewBox="0 0 24 24"
+          width={c.size}
+          height={c.size}
           className="absolute"
-          style={{ left: ex.left, top: ex.top }}
+          style={{
+            left: c.left,
+            bottom: -20,
+            filter:
+              "drop-shadow(0 0 5px #fde047) drop-shadow(0 0 10px rgba(250,204,21,0.9))",
+            animation: `pro-crown-rise ${c.duration} ${c.delay} ease-out infinite`,
+          }}
         >
-          {/* Golden flash */}
-          <div
-            className="absolute rounded-full"
-            style={{
-              width: 70,
-              height: 70,
-              marginLeft: -35,
-              marginTop: -35,
-              background:
-                "radial-gradient(circle, rgba(254,249,195,0.95) 0%, rgba(250,204,21,0.65) 40%, transparent 70%)",
-              animation: `pro-flash 2.5s ${ex.delay} ease-out infinite`,
-              filter: "blur(1px)",
-            }}
+          <path
+            d="M 3 8 L 6 14 L 9 5 L 12 14 L 15 5 L 18 14 L 21 8 L 20 19 L 4 19 Z"
+            fill="#fef08a"
+            stroke="#ca8a04"
+            strokeWidth="0.8"
+            strokeLinejoin="round"
           />
-          {/* Flying crowns */}
-          {Array.from({ length: 7 }).map((_, k) => {
-            const a = (k / 7) * Math.PI * 2 + rand(-0.1, 0.1);
-            const d = 60 + rand(0, 35);
-            return (
-              <svg
-                key={k}
-                viewBox="0 0 24 24"
-                width="14"
-                height="14"
-                className="absolute"
-                style={{
-                  left: 0,
-                  top: 0,
-                  marginLeft: -7,
-                  marginTop: -7,
-                  filter:
-                    "drop-shadow(0 0 4px #fde047) drop-shadow(0 0 8px rgba(250,204,21,0.9))",
-                  "--dx": `${Math.cos(a) * d}px`,
-                  "--dy": `${Math.sin(a) * d}px`,
-                  "--rot": `${rand(-540, 540)}deg`,
-                  animation: `pro-crown 2.5s ${ex.delay} ease-out infinite`,
-                }}
-              >
-                <path
-                  d="M 3 8 L 6 14 L 9 5 L 12 14 L 15 5 L 18 14 L 21 8 L 20 19 L 4 19 Z"
-                  fill="#fef08a"
-                  stroke="#ca8a04"
-                  strokeWidth="0.8"
-                  strokeLinejoin="round"
-                />
-                <rect x="4" y="18" width="16" height="2" fill="#ca8a04" />
-              </svg>
-            );
-          })}
-        </div>
+          <rect x="4" y="18" width="16" height="2" fill="#ca8a04" />
+          <circle cx="9" cy="5" r="1.2" fill="#fff" />
+          <circle cx="15" cy="5" r="1.2" fill="#fff" />
+        </svg>
       ))}
     </div>
   );
