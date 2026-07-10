@@ -1,80 +1,56 @@
-// Deep Analysis Elo Engine
-// Uses standard Elo expected-score formula with Brawl Stars tuning.
-// Factors: expected win probability, carry detection, premade skill confidence,
-// tier-based K-factors, season refresh, floor protection, Mythic+ safety net.
+// Elo Engine — rewritten around explicit per-tier bounds.
+//
+// Design goals:
+//  • Every Elo delta is rigidly clamped inside the tier's absolute bounds.
+//  • Equal-sub-rank battles land inside the "equal band" (tier-specific).
+//  • Larger rank gaps scale linearly outward toward the absolute min/max.
+//  • Underdog bonus: player 1 sub-rank below their opponent gets +5.
+//  • Legacy modifiers (star player, premade, ranked boost, season refresh,
+//    floor protection, Diamond+ boundary protection) preserved but the tier
+//    absolute bounds are re-applied as the final clamp.
 import { getRank, getRankIndex, RANKS } from "@/lib/ranks";
 
-// K-factors by tier: lower ranks climb faster, high ranks lose harder.
-// At low tiers K_win > K_loss (forgiving climb); at Legendary+ K_loss climbs
-// steeply so demotions bite much harder the higher you go.
-const K_FACTOR = {
-  Bronze: { win: 185, loss: 60 },
-  Silver: { win: 175, loss: 70 },
-  Gold: { win: 150, loss: 80 },
-  Diamond: { win: 135, loss: 95 },
-  Mythic: { win: 125, loss: 115 },
-  Legendary: { win: 115, loss: 140 },
-  Masters: { win: 108, loss: 170 },
-  Pro: { win: 102, loss: 200 },
+// ── Tier bounds table ────────────────────────────────────────
+// equalWin / equalLoss = range for equal-sub-rank matches.
+// absWin / absLoss     = hard clamps regardless of rank gap.
+const TIER_BOUNDS = {
+  Bronze:    { equalWin: [100, 120], equalLoss: [30, 50],  absWin: [80, 200], absLoss: [20, 100] },
+  Silver:    { equalWin: [90, 115],  equalLoss: [35, 55],  absWin: [80, 200], absLoss: [20, 100] },
+  Gold:      { equalWin: [85, 110],  equalLoss: [45, 70],  absWin: [80, 200], absLoss: [25, 120] },
+  Diamond:   { equalWin: [80, 110],  equalLoss: [50, 75],  absWin: [75, 180], absLoss: [30, 140] },
+  Mythic:    { equalWin: [75, 105],  equalLoss: [50, 80],  absWin: [75, 165], absLoss: [35, 150] },
+  Legendary: { equalWin: [70, 100],  equalLoss: [55, 90],  absWin: [60, 150], absLoss: [40, 165] },
+  Masters:   { equalWin: [70, 95],   equalLoss: [60, 100], absWin: [55, 140], absLoss: [50, 185] },
+  Pro:       { equalWin: [65, 90],   equalLoss: [70, 110], absWin: [50, 130], absLoss: [60, 250] },
 };
 
-// Minimum win gain per tier — a victory is never worth less than this, no matter
-// how heavily favored you were. Fixes tiny gains vs much lower-ranked enemies.
-const MIN_WIN = {
-  Bronze: 85,
-  Silver: 80,
-  Gold: 75,
-  Diamond: 75,
-  Mythic: 70,
-  Legendary: 60,
-  Masters: 55,
-  Pro: 50,
-};
+const UNDERDOG_BONUS = 5;
 
-// Minimum loss magnitude per tier — a defeat always costs at least this much.
-// High tiers carry a heavy floor so climbing gets progressively riskier.
-const MIN_LOSS = {
-  Bronze: 10,
-  Silver: 12,
-  Gold: 15,
-  Diamond: 18,
-  Mythic: 22,
-  Legendary: 55,
-  Masters: 70,
-  Pro: 85,
-};
+// Permanent major-rank floors — Bronze through Gold can't drop below these.
+const RANK_FLOORS = { Bronze: 0, Silver: 750, Gold: 1500 };
 
-// Permanent major rank floors — Bronze through Gold can't drop below these.
-const RANK_FLOORS = {
-  Bronze: 0,
-  Silver: 750,
-  Gold: 1500,
-};
-
-// Match format: Mythic+ is Best of 3, below is Best of 1 (official rules)
+// Match format: Mythic+ is Best of 3, below is Best of 1
 export function getFormatForTier(tier) {
   return ["Mythic", "Legendary", "Masters", "Pro"].includes(tier) ? "Best of 3" : "Best of 1";
 }
 
-// No tier is solo-queue only — all ranks allow Duo/Trio per official Ranked 3.0 rules.
-export function isSoloQueueOnly(tier) {
+export function isSoloQueueOnly() {
   return false;
 }
 
-// Matchmaking offset: Duo queues face enemies at highest teammate +200,
-// Trio queues at highest teammate +500 (official Ranked 3.0 matchmaking rules).
+// Matchmaking offset per queue type
 export function getMatchmakingOffset(queueType) {
   if (queueType === "duo") return 200;
   if (queueType === "trio") return 500;
   return 0;
 }
 
-// The effective enemy Elo a party will be matched against.
 export function getEffectiveEnemyElo(queueType, teammateElos = [], playerElo = 0) {
-  const allElos = [playerElo, ...(teammateElos || [])].map(Number).filter((e) => !isNaN(e) && e > 0);
+  const allElos = [playerElo, ...(teammateElos || [])]
+    .map(Number)
+    .filter((e) => !isNaN(e) && e > 0);
   if (allElos.length === 0) return Number(playerElo) || 0;
-  const highest = Math.max(...allElos);
-  return highest + getMatchmakingOffset(queueType);
+  return Math.max(...allElos) + getMatchmakingOffset(queueType);
 }
 
 function avgElo(elos) {
@@ -84,235 +60,254 @@ function avgElo(elos) {
 }
 
 function getFloorForElo(elo) {
-  const rank = getRank(elo);
-  return RANK_FLOORS[rank.tier] ?? 0;
+  const tier = getRank(elo).tier;
+  return RANK_FLOORS[tier] ?? 0;
 }
 
-// Elo expected score: probability of winning against a given opponent Elo.
-// E = 1 / (1 + 10^((opponent - player) / DIVISOR))
-// A very wide divisor (1200) heavily compresses win probability toward 0.5,
-// making the delta almost insensitive to raw elo gap unless the gap is large.
-const EXPECTED_DIVISOR = 1200;
+// Sub-rank index of an average enemy Elo (uses same RANKS boundaries)
+function subRankIndexOfElo(elo) {
+  if (!(elo > 0)) return null;
+  return getRankIndex(elo);
+}
+
+// Standard expected-score curve (0..1); wider divisor -> flatter.
 function expectedScore(playerElo, opponentElo) {
   if (opponentElo <= 0) return 0.5;
-  return 1 / (1 + Math.pow(10, (opponentElo - playerElo) / EXPECTED_DIVISOR));
+  return 1 / (1 + Math.pow(10, (opponentElo - playerElo) / 400));
 }
 
-// Underdog bonus: if opponent is at least ~1 sub-rank higher (50+ elo diff),
-// the lower-ranked player gets a flat +5 on a victory. Applied after core delta.
-const UNDERDOG_GAP_THRESHOLD = 50;
-const UNDERDOG_BONUS = 5;
+// Linear interpolate x in [0,1] between a and b
+function lerp(a, b, t) {
+  return a + (b - a) * Math.max(0, Math.min(1, t));
+}
 
-// Premade skill confidence: adjusts delta based on premade teammates' true skill.
-// If a teammate's peak rank (highestElo / lastSeasonElo) is higher than their current
-// Elo, they're undervalued — the team is effectively stronger than it appears.
-// Trophies add a small experience factor.
-// Returns a value in [-0.12, 0.12]: positive = team undervalued (stronger than shown).
+/**
+ * Compute base Elo delta from tier bounds table.
+ *
+ * Behaviour:
+ *  • Equal sub-rank (gap 0): position inside equal band via expScore.
+ *      – Win:  favored (expScore≈1) → low end; upset (expScore≈0) → high end.
+ *      – Loss: favored → high loss magnitude; upset → low loss magnitude.
+ *  • Gap > 0 (enemy higher): extend beyond equal-band toward abs max.
+ *      Wins pay more (underdog); losses cost less.
+ *  • Gap < 0 (enemy lower): extend below equal-band toward abs min.
+ *      Wins pay less; losses cost more.
+ */
+function baseDeltaFromBounds(tier, isWin, expScore, subRankGap) {
+  const b = TIER_BOUNDS[tier] || TIER_BOUNDS.Diamond;
+
+  if (isWin) {
+    // Position inside equal band based on upset factor (1 - expScore)
+    // upset=0 (heavy favorite) → equalWin[0]; upset=1 (huge upset) → equalWin[1]
+    const upset = 1 - expScore;
+    let delta = lerp(b.equalWin[0], b.equalWin[1], upset);
+
+    if (subRankGap > 0) {
+      // Enemy is higher-ranked — reward the upset outside the equal band.
+      // Scale toward absWin[1]. Cap at 3 sub-ranks of separation for full swing.
+      const t = Math.min(1, subRankGap / 3);
+      delta = lerp(delta, b.absWin[1], t);
+    } else if (subRankGap < 0) {
+      // Enemy is lower-ranked — dampen gains below equal band toward absWin[0].
+      const t = Math.min(1, -subRankGap / 3);
+      delta = lerp(delta, b.absWin[0], t);
+    }
+
+    // Final absolute clamp
+    return Math.max(b.absWin[0], Math.min(b.absWin[1], delta));
+  }
+
+  // Loss — return NEGATIVE delta.
+  // Favored losses hurt more; upset losses hurt less.
+  const favored = expScore; // 1 = heavy favorite → high loss magnitude
+  let mag = lerp(b.equalLoss[0], b.equalLoss[1], favored);
+
+  if (subRankGap > 0) {
+    // Enemy higher-ranked — losing was expected; reduce toward absLoss[0].
+    const t = Math.min(1, subRankGap / 3);
+    mag = lerp(mag, b.absLoss[0], t);
+  } else if (subRankGap < 0) {
+    // Enemy lower-ranked — brutal loss, scale toward absLoss[1].
+    const t = Math.min(1, -subRankGap / 3);
+    mag = lerp(mag, b.absLoss[1], t);
+  }
+
+  mag = Math.max(b.absLoss[0], Math.min(b.absLoss[1], mag));
+  return -mag;
+}
+
+// Premade skill confidence: [-0.12, 0.12]
 function computePremadeAdjustment(teammateElos, teammateProfiles) {
   if (!teammateProfiles || teammateProfiles.length === 0) return 0;
 
-  let totalAdjustment = 0;
-  let premadeCount = 0;
-
+  let total = 0;
+  let count = 0;
   for (let i = 0; i < teammateElos.length; i++) {
     const profile = teammateProfiles[i];
     if (!profile) continue;
-
     const currentElo = Number(teammateElos[i]) || 0;
     if (currentElo <= 0) continue;
-
     const peakElo = Math.max(Number(profile.highestElo) || 0, Number(profile.lastSeasonElo) || 0);
     const trophies = Number(profile.trophies) || 0;
-
-    // Only count as premade if they have profile data
     if (peakElo <= 0 && trophies <= 0) continue;
-    premadeCount++;
-
-    // Undervaluation: if peak > current, teammate is better than their Elo shows
-    if (peakElo > currentElo) {
-      const undervaluation = (peakElo - currentElo) / 1000; // 500 gap = 0.5
-      totalAdjustment += undervaluation * 0.06; // ~6% per 1000 Elo gap
-    }
-
-    // Trophies: experience factor (50k trophies ≈ 4% boost)
-    if (trophies > 0) {
-      totalAdjustment += Math.min(0.04, trophies / 1250000);
-    }
+    count++;
+    if (peakElo > currentElo) total += ((peakElo - currentElo) / 1000) * 0.06;
+    if (trophies > 0) total += Math.min(0.04, trophies / 1250000);
   }
-
-  if (premadeCount === 0) return 0;
-  return Math.max(-0.12, Math.min(0.12, totalAdjustment / premadeCount));
+  if (count === 0) return 0;
+  return Math.max(-0.12, Math.min(0.12, total / count));
 }
 
 /**
  * Calculate Elo delta and new rating after a match.
- *
- * Deep analysis pipeline:
- *   1. Expected win probability via standard Elo formula (player Elo vs enemy avg)
- *   2. Core delta = K × (actual − expected), with asymmetric K for wins vs losses
- *   3. Carry factor: star player gets +12% gain / −15% loss
- *   4. Premade skill confidence: adjusts for teammates' peak rank, last season, trophies
- *   5. Ranked boost: +8% on victory if below previous peak
- *   6. Floor protection & Diamond+ threshold safety net
- *
- * @param {number} playerElo - Current player Elo
- * @param {object} opts
- * @param {string} opts.result - "victory" | "defeat" | "draw"
- * @param {number[]} opts.teammateElos
- * @param {number[]} opts.enemyElos
- * @param {boolean} opts.seasonRefreshed
- * @param {string} opts.queueType - "solo" | "duo" | "trio"
- * @param {number} opts.highestElo - Previous peak for ranked boost
- * @param {boolean|string} opts.starPlayer - true / "self" if player was star
- * @param {object[]} opts.teammateProfiles - Premade profiles: { highestElo, lastSeasonElo, trophies, skill }
- * @param {number} opts.manualDelta - Manual override (bypasses all logic)
  */
 export function calculateElo(playerElo, opts = {}) {
   const current = Math.max(0, Number(playerElo) || 0);
 
-  // Manual adjustment — bypass all logic
+  // Manual override
   if (opts.manualDelta !== undefined && opts.manualDelta !== null) {
     const delta = Number(opts.manualDelta) || 0;
-    return {
-      delta,
-      eloAfter: Math.max(0, current + delta),
-      details: { type: "manual", delta },
-    };
+    return { delta, eloAfter: Math.max(0, current + delta), details: { type: "manual", delta } };
   }
 
   const result = opts.result;
   const isWin = result === "victory";
   const isDraw = result === "draw";
   const rank = getRank(current);
-  const k = K_FACTOR[rank.tier] || K_FACTOR.Diamond;
+  const tier = rank.tier;
+  const bounds = TIER_BOUNDS[tier] || TIER_BOUNDS.Diamond;
   const queueType = opts.queueType || "solo";
   const highestElo = Number(opts.highestElo) || current;
 
   const enemyAvg = avgElo(opts.enemyElos);
   const teammateAvg = avgElo(opts.teammateElos);
-
   const teamSize = (opts.teammateElos?.length || 0) + 1;
   const teamAvg = teammateAvg > 0 ? (current + teammateAvg * (teamSize - 1)) / teamSize : current;
 
-  // --- Season refresh: flat +100 / -30, no other adjustments ---
+  // Season refresh — flat +100 / -30
   if (opts.seasonRefreshed) {
-    const flatDelta = isWin ? 100 : isDraw ? 0 : 30;
-    const delta = isWin ? flatDelta : isDraw ? 0 : -flatDelta;
+    const delta = isWin ? 100 : isDraw ? 0 : -30;
     return {
       delta,
       eloAfter: Math.max(0, current + delta),
       details: {
         type: "season_refresh",
-        rankTier: rank.tier,
+        rankTier: tier,
         enemyAvg: Math.round(enemyAvg),
         teamAvg: Math.round(teamAvg),
         queueType,
         seasonRefreshed: true,
-        format: getFormatForTier(rank.tier),
+        format: getFormatForTier(tier),
       },
     };
   }
 
-  // --- Core: Expected score formula ---
-  // Compare player's individual Elo to enemy team average.
+  // Sub-rank gap: enemyAvg sub-rank index − player sub-rank index.
+  // Positive = enemy higher, negative = enemy lower.
+  const playerSubIdx = getRankIndex(current);
+  const enemySubIdx = subRankIndexOfElo(enemyAvg);
+  const subRankGap = enemySubIdx == null ? 0 : enemySubIdx - playerSubIdx;
+
   const expScore = expectedScore(current, enemyAvg);
 
-  let delta;
-  if (isWin) {
-    // Win: delta proportional to how unlikely the win was
-    delta = k.win * (1 - expScore);
-  } else if (isDraw) {
-    // Draw: positive if underdog, negative if favored
-    delta = 60 * (0.5 - expScore);
-  } else {
-    // Loss: delta proportional to how likely the win was (favored teams lose more)
-    delta = -(k.loss * expScore);
+  // --- Draw path ---
+  if (isDraw) {
+    // Small delta biased by upset factor, capped tight.
+    const raw = 15 * (0.5 - expScore);
+    const draw = Math.round(Math.max(-20, Math.min(20, raw)));
+    return {
+      delta: draw,
+      eloAfter: Math.max(0, current + draw),
+      details: {
+        type: "deep_analysis",
+        band: "draw",
+        subRankGap,
+        expScore: Math.round(expScore * 100) / 100,
+        rankTier: tier,
+        enemyAvg: Math.round(enemyAvg),
+        teamAvg: Math.round(teamAvg),
+        eloDiff: Math.round(enemyAvg - current),
+        queueType,
+        matchmakingOffset: getMatchmakingOffset(queueType),
+        format: getFormatForTier(tier),
+      },
+    };
   }
 
-  // --- Carry factor: star player explicitly carried ---
+  // --- Base delta from tier bounds ---
+  let delta = baseDeltaFromBounds(tier, isWin, expScore, subRankGap);
+
+  // --- Star player: modest carry factor ---
   const isStarPlayer = opts.starPlayer === true || opts.starPlayer === "self";
-  if (isStarPlayer) {
-    delta *= isWin ? 1.12 : isDraw ? 1.0 : 0.85;
-  }
+  if (isStarPlayer) delta *= isWin ? 1.08 : 0.92;
 
   // --- Premade skill confidence ---
-  // Only for duo/trio with teammate profiles (not solo randoms)
   const premadeAdjustment =
     (queueType === "duo" || queueType === "trio") && opts.teammateProfiles
       ? computePremadeAdjustment(opts.teammateElos || [], opts.teammateProfiles)
       : 0;
-
   if (premadeAdjustment !== 0) {
-    // Positive adjustment = team is undervalued (stronger than it appears)
-    // Wins: reduce gain (you had an advantage), Losses: increase loss (you should've won)
-    if (isWin) {
-      delta *= 1 - premadeAdjustment;
-    } else if (!isDraw) {
-      delta *= 1 + premadeAdjustment;
-    }
+    if (isWin) delta *= 1 - premadeAdjustment;
+    else delta *= 1 + premadeAdjustment;
   }
 
-  // --- Ranked boost: +8% on victory if below previous peak ---
+  // --- Ranked boost: +6% on victory if below previous peak ---
   const rankedBoost = isWin && current < highestElo;
-  if (rankedBoost) {
-    delta *= 1.08;
+  if (rankedBoost) delta *= 1.06;
+
+  // --- Underdog bonus: exactly 1 sub-rank below enemy avg (even by 1 Elo) ---
+  const isUnderdog = subRankGap >= 1;
+  if (isUnderdog && subRankGap === 1) {
+    // Player is the underdog — wins gain +5, losses lose 5 less
+    if (isWin) delta += UNDERDOG_BONUS;
+    else delta += UNDERDOG_BONUS; // delta is negative; adding reduces magnitude
   }
 
-  // --- Underdog bonus: +5 on victory when opponent is higher-ranked ---
-  // Applied whenever the enemy team avg exceeds the player's elo by at least
-  // one sub-rank (~50 elo). "Even by a few elo" — small gaps still trigger.
-  const isUnderdog = isWin && enemyAvg - current >= UNDERDOG_GAP_THRESHOLD;
-  if (isUnderdog) {
-    delta += UNDERDOG_BONUS;
+  // --- Final absolute clamp to tier bounds ---
+  if (isWin) {
+    delta = Math.max(bounds.absWin[0], Math.min(bounds.absWin[1], delta));
+  } else {
+    // delta is negative; magnitude must stay within absLoss bounds
+    const mag = Math.max(bounds.absLoss[0], Math.min(bounds.absLoss[1], -delta));
+    delta = -mag;
   }
 
-  // --- Tier floors: guarantee a minimum win gain / loss cost ---
-  if (isWin && delta > 0) {
-    const minWin = MIN_WIN[rank.tier] ?? 0;
-    if (delta < minWin) delta = minWin;
-  } else if (!isWin && !isDraw) {
-    const minLoss = MIN_LOSS[rank.tier] ?? 0;
-    if (-delta < minLoss) delta = -minLoss;
-  }
-
-  // Round to integer
   delta = Math.round(delta);
-
   let eloAfter = current + delta;
 
-  // --- Floor protection: Bronze through Gold have permanent major rank floors ---
-  if (!isWin && delta < 0) {
+  // --- Floor protection ---
+  if (!isWin) {
     const floor = getFloorForElo(current);
-    if (floor > 0 && eloAfter < floor) {
-      eloAfter = floor;
-    }
-  }
+    if (floor > 0 && eloAfter < floor) eloAfter = floor;
 
-  // --- Diamond+ threshold protection: can't drop below major tier boundary
-  // unless already at the boundary (demotion allowed per official rules) ---
-  if (!isWin && delta < 0) {
+    // Diamond+ major-tier boundary safety net
     const curIdx = getRankIndex(current);
     const rankObj = RANKS[curIdx];
     if (curIdx >= 9 && rankObj.roman === "I") {
       const baseline = rankObj.min;
-      if (current > baseline && eloAfter < baseline) {
-        eloAfter = baseline;
-      }
+      if (current > baseline && eloAfter < baseline) eloAfter = baseline;
     }
   }
 
   eloAfter = Math.max(0, Math.round(eloAfter));
   delta = eloAfter - current;
 
+  // Determine band label
+  let band = "equal";
+  if (subRankGap >= 2) band = isWin ? "upset_win" : "expected_loss";
+  else if (subRankGap === 1) band = isWin ? "underdog_win" : "close_loss";
+  else if (subRankGap <= -2) band = isWin ? "expected_win" : "upset_loss";
+  else if (subRankGap === -1) band = isWin ? "favored_win" : "close_loss";
+
   return {
     delta,
     eloAfter,
     details: {
       type: "deep_analysis",
+      band,
+      subRankGap,
       expScore: Math.round(expScore * 100) / 100,
-      kWin: k.win,
-      kLoss: k.loss,
-      rankTier: rank.tier,
+      rankTier: tier,
       enemyAvg: Math.round(enemyAvg),
       teamAvg: Math.round(teamAvg),
       eloDiff: Math.round(enemyAvg - current),
@@ -323,22 +318,17 @@ export function calculateElo(playerElo, opts = {}) {
       queueType,
       matchmakingOffset: getMatchmakingOffset(queueType),
       seasonRefreshed: false,
-      format: getFormatForTier(rank.tier),
+      format: getFormatForTier(tier),
     },
   };
 }
 
-/**
- * Check if a rank-up occurred between two Elo values.
- */
 export function checkRankUp(oldElo, newElo) {
   const oldRank = getRank(oldElo);
   const newRank = getRank(newElo);
   const oldIdx = getRankIndex(oldElo);
   const newIdx = getRankIndex(newElo);
-
   const isRankUp = newIdx > oldIdx;
   const isMajorRankUp = isRankUp && newRank.tier !== oldRank.tier;
-
   return { isRankUp, oldRank, newRank, isMajorRankUp };
 }
