@@ -223,15 +223,16 @@ function SilverAura() {
           </svg>
         </div>
       ))}
-      {/* Flash overlay */}
+      {/* Flash overlay — subtle so TIER_BG shows through */}
       <div
         className="absolute inset-0"
         style={{
-          background: "rgba(226,232,240,0.6)",
+          background: "rgba(226,232,240,0.22)",
           animation: "silver-flash 1.6s ease-in-out infinite",
           mixBlendMode: "screen",
         }}
       />
+
     </div>
   );
 }
