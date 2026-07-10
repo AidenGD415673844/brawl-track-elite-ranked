@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import { ThemeProvider } from '@/lib/ThemeContext';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Home from './pages/Home';
 import Settings from './pages/Settings';
 import SquadDashboard from './pages/SquadDashboard';
@@ -27,17 +28,19 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ThemeProvider>
-            <ScrollToTop />
-            <AuthenticatedApp />
-          </ThemeProvider>
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <ThemeProvider>
+              <ScrollToTop />
+              <AuthenticatedApp />
+            </ThemeProvider>
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
 
