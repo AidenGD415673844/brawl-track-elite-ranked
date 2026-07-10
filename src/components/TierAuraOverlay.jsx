@@ -687,6 +687,7 @@ export default function TierAuraOverlay({ tier, active = true }) {
   return (
     <>
       <Aura />
+      <GridBackdrop tier={tier} />
       <TierExtras tier={tier} />
     </>
   );
