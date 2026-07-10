@@ -124,17 +124,9 @@ function BronzeAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
-      {/* Dark brick backdrop */}
+      {/* Brick pattern overlay — multiplies onto TIER_BG so brown gradient still reads */}
       <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(180deg, #2a1207 0%, #4b1e08 55%, #6b2a0d 100%)",
-        }}
-      />
-      {/* Brick pattern overlay */}
-      <div
-        className="absolute inset-0 opacity-70"
+        className="absolute inset-0 opacity-50 mix-blend-multiply"
         style={{
           backgroundImage: `
             linear-gradient(0deg, rgba(0,0,0,0.55) 0 2px, transparent 2px 30px),
@@ -142,14 +134,6 @@ function BronzeAura() {
             linear-gradient(90deg, rgba(0,0,0,0.55) 0 2px, transparent 2px 60px)`,
           backgroundSize: "60px 30px, 60px 30px, 60px 30px",
           backgroundPosition: "0 0, 0 0, 30px 15px",
-        }}
-      />
-      {/* Slight brick texture noise */}
-      <div
-        className="absolute inset-0 opacity-40 mix-blend-overlay"
-        style={{
-          background:
-            "radial-gradient(circle at 30% 20%, rgba(255,180,120,0.15), transparent 50%), radial-gradient(circle at 80% 70%, rgba(0,0,0,0.4), transparent 55%)",
         }}
       />
       {/* Diagonally-rising bullets */}
@@ -164,6 +148,7 @@ function BronzeAura() {
             animation: `bronze-bullet ${b.duration} ${b.delay} linear infinite`,
           }}
         >
+
           <div
             style={{
               width: 6,
