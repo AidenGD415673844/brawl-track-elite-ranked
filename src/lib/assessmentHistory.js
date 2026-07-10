@@ -75,6 +75,21 @@ export function clearHistory() {
   writeAll([]);
 }
 
+// Merge imported entries with existing history, dedupe by id, newest-first.
+export function importHistory(entries) {
+  if (!Array.isArray(entries)) return loadHistory();
+  const current = loadHistory();
+  const map = new Map();
+  for (const e of [...entries, ...current]) {
+    if (e && e.id) map.set(e.id, e);
+  }
+  const merged = [...map.values()]
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+    .slice(0, 50);
+  writeAll(merged);
+  return merged;
+}
+
 // Rehydrate a stored entry into the shape DeservedRankReveal expects.
 export function entryToResult(entry) {
   if (!entry) return null;
