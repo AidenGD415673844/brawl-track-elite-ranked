@@ -3,76 +3,58 @@ const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me
 // Rank scale, bands, and color/tier utilities for the ranked tracker.
 // Each sub-rank has its own distinct image asset.
 
-// Rank icons — generated as inline SVG data URLs so they always render
-// (the previous /__l5e/ CDN paths were unavailable outside Base44 hosting
-// and showed as broken images on other environments).
-//
-// Each icon is a chunky shield in the tier's brand gradient with the tier
-// initial + roman numeral stacked on top, matching Brawl Stars' visual
-// hierarchy without pulling in external assets.
-const TIER_ICON_STOPS = {
-  Bronze:    ["#f59e0b", "#78350f"],
-  Silver:    ["#e2e8f0", "#475569"],
-  Gold:      ["#fde047", "#a16207"],
-  Diamond:   ["#7dd3fc", "#075985"],
-  Mythic:    ["#f0abfc", "#6b21a8"],
-  Legendary: ["#fca5a5", "#7f1d1d"],
-  Masters:   ["#fbbf24", "#7c2d12"],
-  Pro:       ["#fef08a", "#b45309"],
-};
-
-function rankIconDataUrl(tier, roman) {
-  const [c1, c2] = TIER_ICON_STOPS[tier] || ["#94a3b8", "#334155"];
-  const initial = tier[0];
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-    <defs>
-      <linearGradient id='g' x1='0' y1='0' x2='0' y2='1'>
-        <stop offset='0%' stop-color='${c1}'/>
-        <stop offset='100%' stop-color='${c2}'/>
-      </linearGradient>
-      <linearGradient id='rim' x1='0' y1='0' x2='0' y2='1'>
-        <stop offset='0%' stop-color='rgba(255,255,255,0.65)'/>
-        <stop offset='100%' stop-color='rgba(0,0,0,0.35)'/>
-      </linearGradient>
-    </defs>
-    <path d='M50 6 L88 20 V52 C88 74 72 88 50 94 C28 88 12 74 12 52 V20 Z'
-          fill='url(#g)' stroke='url(#rim)' stroke-width='3'/>
-    <path d='M50 12 L82 24 V52 C82 70 68 82 50 87 C32 82 18 70 18 52 V24 Z'
-          fill='none' stroke='rgba(0,0,0,0.35)' stroke-width='1.5'/>
-    <text x='50' y='52' text-anchor='middle' font-family='Impact, "Arial Black", sans-serif'
-          font-size='34' fill='white' stroke='rgba(0,0,0,0.55)' stroke-width='2'
-          paint-order='stroke' font-weight='900'>${initial}</text>
-    <text x='50' y='78' text-anchor='middle' font-family='Impact, "Arial Black", sans-serif'
-          font-size='18' fill='white' stroke='rgba(0,0,0,0.55)' stroke-width='1.5'
-          paint-order='stroke' font-weight='900'>${roman || ""}</text>
-  </svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
+// Rank icons — original Brawl Stars-style badges uploaded by the user
+// (brown skull = Bronze, blue-gray = Silver, yellow = Gold, blue = Diamond,
+// purple = Mythic, red = Legendary, dark red = Masters, trophy = Pro).
+// Hosted via Lovable Assets so URLs stay stable across environments.
+import bronze1 from "@/assets/ranks/bronze-1.png.asset.json";
+import bronze2 from "@/assets/ranks/bronze-2.png.asset.json";
+import bronze3 from "@/assets/ranks/bronze-3.png.asset.json";
+import silver1 from "@/assets/ranks/silver-1.png.asset.json";
+import silver2 from "@/assets/ranks/silver-2.png.asset.json";
+import silver3 from "@/assets/ranks/silver-3.png.asset.json";
+import gold1   from "@/assets/ranks/gold-1.png.asset.json";
+import gold2   from "@/assets/ranks/gold-2.png.asset.json";
+import gold3   from "@/assets/ranks/gold-3.png.asset.json";
+import diamond1 from "@/assets/ranks/diamond-1.png.asset.json";
+import diamond2 from "@/assets/ranks/diamond-2.png.asset.json";
+import diamond3 from "@/assets/ranks/diamond-3.png.asset.json";
+import mythic1 from "@/assets/ranks/mythic-1.png.asset.json";
+import mythic2 from "@/assets/ranks/mythic-2.png.asset.json";
+import mythic3 from "@/assets/ranks/mythic-3.png.asset.json";
+import legendary1 from "@/assets/ranks/legendary-1.png.asset.json";
+import legendary2 from "@/assets/ranks/legendary-2.png.asset.json";
+import legendary3 from "@/assets/ranks/legendary-3.png.asset.json";
+import masters1 from "@/assets/ranks/masters-1.png.asset.json";
+import masters2 from "@/assets/ranks/masters-2.png.asset.json";
+import masters3 from "@/assets/ranks/masters-3.png.asset.json";
+import proIcon  from "@/assets/ranks/pro.png.asset.json";
 
 const RANK_IMAGES = {
-  "Bronze I":      rankIconDataUrl("Bronze", "I"),
-  "Bronze II":     rankIconDataUrl("Bronze", "II"),
-  "Bronze III":    rankIconDataUrl("Bronze", "III"),
-  "Silver I":      rankIconDataUrl("Silver", "I"),
-  "Silver II":     rankIconDataUrl("Silver", "II"),
-  "Silver III":    rankIconDataUrl("Silver", "III"),
-  "Gold I":        rankIconDataUrl("Gold", "I"),
-  "Gold II":       rankIconDataUrl("Gold", "II"),
-  "Gold III":      rankIconDataUrl("Gold", "III"),
-  "Diamond I":     rankIconDataUrl("Diamond", "I"),
-  "Diamond II":    rankIconDataUrl("Diamond", "II"),
-  "Diamond III":   rankIconDataUrl("Diamond", "III"),
-  "Mythic I":      rankIconDataUrl("Mythic", "I"),
-  "Mythic II":     rankIconDataUrl("Mythic", "II"),
-  "Mythic III":    rankIconDataUrl("Mythic", "III"),
-  "Legendary I":   rankIconDataUrl("Legendary", "I"),
-  "Legendary II":  rankIconDataUrl("Legendary", "II"),
-  "Legendary III": rankIconDataUrl("Legendary", "III"),
-  "Masters I":     rankIconDataUrl("Masters", "I"),
-  "Masters II":    rankIconDataUrl("Masters", "II"),
-  "Masters III":   rankIconDataUrl("Masters", "III"),
-  "Pro":           rankIconDataUrl("Pro", ""),
+  "Bronze I":      bronze1.url,
+  "Bronze II":     bronze2.url,
+  "Bronze III":    bronze3.url,
+  "Silver I":      silver1.url,
+  "Silver II":     silver2.url,
+  "Silver III":    silver3.url,
+  "Gold I":        gold1.url,
+  "Gold II":       gold2.url,
+  "Gold III":      gold3.url,
+  "Diamond I":     diamond1.url,
+  "Diamond II":    diamond2.url,
+  "Diamond III":   diamond3.url,
+  "Mythic I":      mythic1.url,
+  "Mythic II":     mythic2.url,
+  "Mythic III":    mythic3.url,
+  "Legendary I":   legendary1.url,
+  "Legendary II":  legendary2.url,
+  "Legendary III": legendary3.url,
+  "Masters I":     masters1.url,
+  "Masters II":    masters2.url,
+  "Masters III":   masters3.url,
+  "Pro":           proIcon.url,
 };
+
 
 // TIER_IMAGES kept for backward compat — points to the I sub-rank image of each tier
 export const TIER_IMAGES = {
