@@ -15,6 +15,7 @@ import {
   deleteAssessment,
   clearHistory,
   entryToResult,
+  importHistory,
 } from "@/lib/assessmentHistory";
 
 const CAT_ICONS = { mechanics: Target, gameIQ: Brain, resilience: Shield, brawlerPool: Users };
