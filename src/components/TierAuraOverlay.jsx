@@ -64,22 +64,33 @@ function LowPowerAura({ tier }) {
 // ─── Helpers ─────────────────────────────────────────────────
 const rand = (min, max) => min + Math.random() * (max - min);
 
-// Per-tier grid tint. Kept subtle so text remains readable.
+// Per-tier grid tint. Neon-boosted so the grid reads on every card.
 const GRID_TINT = {
-  Bronze:    "rgba(251,191,36,0.16)",
-  Silver:    "rgba(226,232,240,0.14)",
-  Gold:      "rgba(250,204,21,0.18)",
-  Diamond:   "rgba(125,211,252,0.16)",
-  Mythic:    "rgba(217,70,239,0.18)",
-  Legendary: "rgba(249,115,22,0.18)",
-  Masters:   "rgba(251,191,36,0.16)",
-  Pro:       "rgba(253,224,71,0.20)",
+  Bronze:    "rgba(253,224,71,0.35)",
+  Silver:    "rgba(226,232,240,0.32)",
+  Gold:      "rgba(253,224,71,0.42)",
+  Diamond:   "rgba(125,211,252,0.42)",
+  Mythic:    "rgba(240,171,252,0.42)",
+  Legendary: "rgba(254,215,170,0.40)",
+  Masters:   "rgba(253,224,71,0.38)",
+  Pro:       "rgba(254,240,138,0.48)",
+};
+const GRID_GLOW = {
+  Bronze:    "rgba(251,191,36,0.35)",
+  Silver:    "rgba(191,219,254,0.35)",
+  Gold:      "rgba(250,204,21,0.45)",
+  Diamond:   "rgba(56,189,248,0.5)",
+  Mythic:    "rgba(217,70,239,0.5)",
+  Legendary: "rgba(249,115,22,0.45)",
+  Masters:   "rgba(251,146,60,0.45)",
+  Pro:       "rgba(250,204,21,0.55)",
 };
 
-// Old-school grid backdrop restored across every battle card. Rendered UNDER
-// the tier particle layer, subtle so the TIER_BG gradient still reads.
+// Old-school grid backdrop, now with a soft neon glow behind every line
+// so it reads through any TIER_BG gradient.
 function GridBackdrop({ tier }) {
-  const line = GRID_TINT[tier] || "rgba(255,255,255,0.12)";
+  const line = GRID_TINT[tier] || "rgba(255,255,255,0.25)";
+  const glow = GRID_GLOW[tier] || "rgba(255,255,255,0.3)";
   return (
     <div
       className="absolute inset-0 pointer-events-none rounded-[inherit]"
@@ -90,7 +101,9 @@ function GridBackdrop({ tier }) {
         `,
         backgroundSize: "24px 24px, 24px 24px",
         backgroundPosition: "0 0, 0 0",
-        opacity: 0.45,
+        opacity: 0.9,
+        filter: `drop-shadow(0 0 2px ${glow})`,
+        mixBlendMode: "screen",
       }}
     />
   );
