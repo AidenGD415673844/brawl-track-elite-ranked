@@ -20,7 +20,7 @@ const fields = [
   { key: "winStreak",            label: "Current Win Streak",      type: "number" },
 ];
 
-export default function InputForm({ player, setPlayer, onSave, onResetSeason, onFetchLogs }) {
+export default function InputForm({ player, setPlayer, onSave, onResetSeason }) {
   const [freqOpen, setFreqOpen] = useState(false);
   const [freqEdits, setFreqEdits] = useState({});
 
