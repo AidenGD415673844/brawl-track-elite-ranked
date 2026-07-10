@@ -1,12 +1,12 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, ArrowLeft, Radio, ShieldAlert, Zap, Vibrate, Sparkles, LogIn, LogOut } from "lucide-react";
+import { Sun, Moon, ArrowLeft, ShieldAlert, Zap, Vibrate, Sparkles, LogIn, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 import { useAuth } from "@/lib/AuthContext";
 
-import LiveKitSettings from "@/components/LiveKitSettings";
+
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -106,18 +106,6 @@ export default function Settings() {
           </div>
         </Card>
 
-        <Card className="bg-card border-border p-5 rounded-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
-              <Radio className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-foreground">P2P Sync (LiveKit)</h3>
-              <p className="text-xs text-muted-foreground">Connect with friends via WebRTC data channels</p>
-            </div>
-          </div>
-          <LiveKitSettings />
-        </Card>
 
         <Card className="bg-card border-border p-5 rounded-2xl">
           <div className="flex items-start justify-between gap-4 mb-4">

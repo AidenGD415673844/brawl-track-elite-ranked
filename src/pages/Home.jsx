@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { FileDown, FileText, Gauge, Settings as SettingsIcon, Users, Flag, Sparkles } from "lucide-react";
+import { FileDown, FileText, Gauge, Settings as SettingsIcon, Users, Flag, Sparkles, Undo2 } from "lucide-react";
 import InputForm from "@/components/InputForm";
 import ProfileBadge from "@/components/ProfileBadge";
 import SummaryCards from "@/components/SummaryCards";
@@ -45,7 +45,7 @@ import {
 } from "@/lib/inbox";
 import { notifyTierUpgrade } from "@/lib/tierUpgrades";
 import { checkAchievements } from "@/lib/achievements";
-import LiveKitLobby from "@/components/LiveKitLobby";
+import RoomLobby from "@/components/RoomLobby";
 import { syncActiveSpace } from "@/lib/brawlSpaces";
 import { Layers } from "lucide-react";
 import RankDecayWarning from "@/components/RankDecayWarning";
@@ -166,6 +166,20 @@ export default function Home() {
 
   const handleSave = () => {
     setSnapshots(saveSnapshot(player));
+  };
+
+  const handleRevert = () => {
+    const snaps = loadSnapshots();
+    if (!snaps.length) {
+      toast({ title: "No save to revert to", description: "Save your data first to enable revert." });
+      return;
+    }
+    const last = snaps[snaps.length - 1];
+    if (!window.confirm(`Revert to save from ${new Date(last.date).toLocaleString()}?`)) return;
+    const { date, ...restored } = last;
+    setPlayer((p) => ({ ...p, ...restored }));
+    savePlayer({ ...player, ...restored });
+    toast({ title: "Reverted", description: `Restored save from ${new Date(date).toLocaleString()}` });
   };
 
   const handleCSVImport = (data) => {
@@ -445,6 +459,14 @@ export default function Home() {
             >
               <Flag className="w-4 h-4 mr-2" /> Season Report
             </Button>
+            <Button
+              variant="outline"
+              onClick={handleRevert}
+              title="Revert to last save"
+              className="border-border bg-card text-foreground hover:bg-muted rounded-xl"
+            >
+              <Undo2 className="w-4 h-4 mr-2" /> Revert
+            </Button>
             <CSVImport onImport={handleCSVImport} />
             <Button
               variant="outline"
@@ -573,7 +595,7 @@ export default function Home() {
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.42 }}>
-          <LiveKitLobby />
+          <RoomLobby />
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.45 }}>
