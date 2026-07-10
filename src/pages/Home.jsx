@@ -651,7 +651,7 @@ export default function Home() {
 
         <footer className="text-center space-y-2 pt-4 pb-2">
           <p className="text-xs text-muted-foreground">
-            Forecast model: dynamic rank-based gains/losses · floor protection · Mythic+ safety net
+            Forecast model: dynamic rank-based gains/losses · permanent floors · Mythic+ major-rank safety net
           </p>
           <p className="text-[10px] text-muted-foreground/70 max-w-2xl mx-auto leading-relaxed">
             This content is not affiliated with, endorsed, sponsored or specifically approved by Supercell and Supercell is not responsible for it. For more information, see Supercell's Fan Content Policy.
