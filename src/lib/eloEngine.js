@@ -27,7 +27,8 @@ const TIER_BOUNDS = {
 const UNDERDOG_BONUS = 5;
 
 // Permanent major-rank floors — Bronze through Gold can't drop below these.
-const RANK_FLOORS = { Bronze: 0, Silver: 750, Gold: 1500 };
+// Diamond floor is a permanent 3000 safety net once a player has ever reached Diamond.
+const RANK_FLOORS = { Bronze: 0, Silver: 750, Gold: 1500, Diamond: 3000 };
 
 // Match format: Mythic+ is Best of 3, below is Best of 1
 export function getFormatForTier(tier) {
@@ -59,9 +60,13 @@ function avgElo(elos) {
   return valid.reduce((a, b) => a + b, 0) / valid.length;
 }
 
-function getFloorForElo(elo) {
+function getFloorForElo(elo, highestElo = 0) {
   const tier = getRank(elo).tier;
-  return RANK_FLOORS[tier] ?? 0;
+  let floor = RANK_FLOORS[tier] ?? 0;
+  // Permanent Diamond safety net: once a player ever reached Diamond (>= 2250),
+  // they can never drop below 3000 regardless of current tier.
+  if ((Number(highestElo) || 0) >= 2250) floor = Math.max(floor, RANK_FLOORS.Diamond);
+  return floor;
 }
 
 // Sub-rank index of an average enemy Elo (uses same RANKS boundaries)
@@ -277,7 +282,7 @@ export function calculateElo(playerElo, opts = {}) {
 
   // --- Floor protection ---
   if (!isWin) {
-    const floor = getFloorForElo(current);
+    const floor = getFloorForElo(current, highestElo);
     if (floor > 0 && eloAfter < floor) eloAfter = floor;
 
     // Diamond+ major-tier boundary safety net

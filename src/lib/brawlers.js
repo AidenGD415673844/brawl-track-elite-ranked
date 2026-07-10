@@ -1,22 +1,26 @@
 // Brawler database, map list, and image URL helpers.
-// Images served from cdn.brawlify.com.
+// Portraits served from Brawlify CDN using their numeric IDs.
+// ID map is generated from https://api.brawlapi.com/v1/brawlers
+import { BRAWLER_IDS } from "@/lib/brawlerIds";
 
-const CDN = "https://cdn.brawlify.com/brawlers";
+const CDN_BORDER = "https://cdn.brawlify.com/brawlers/borders";
+const CDN_BORDERLESS = "https://cdn.brawlify.com/brawlers/borderless";
 
-// Convert brawler name to URL slug (e.g. "Larry & Lawrie" → "Larry-Lawrie").
-function brawlerSlug(name) {
-  if (!name) return "Unknown";
-  return String(name)
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/\s*\+\s*/g, "-")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+// Look up ID with tolerant name matching (handles "El Primo", "Larry & Lawrie", etc.)
+function findBrawlerId(name) {
+  if (!name) return null;
+  if (BRAWLER_IDS[name] != null) return BRAWLER_IDS[name];
+  const norm = String(name).trim().toLowerCase();
+  for (const k of Object.keys(BRAWLER_IDS)) {
+    if (k.toLowerCase() === norm) return BRAWLER_IDS[k];
+  }
+  return null;
 }
 
-export function brawlerImageUrl(name) {
-  if (!name) return PLACEHOLDER_BRAWLER;
-  return `${CDN}/${brawlerSlug(name)}.png`;
+export function brawlerImageUrl(name, { borderless = false } = {}) {
+  const id = findBrawlerId(name);
+  if (id == null) return PLACEHOLDER_BRAWLER;
+  return `${borderless ? CDN_BORDERLESS : CDN_BORDER}/${id}.png`;
 }
 
 // SVG placeholder for when a brawler image fails to load.

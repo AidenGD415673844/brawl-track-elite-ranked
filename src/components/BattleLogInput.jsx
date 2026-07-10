@@ -200,6 +200,16 @@ export default function BattleLogInput({
 
   const handleLog = () => {
     if (!canSubmit) return;
+    // If lobby validation surfaced a soft warning (e.g. lone Diamond enemy in a
+    // Mythic party), require explicit confirmation before logging so accidental
+    // Elo swings from mis-entered opponents are avoided.
+    const warnings = lobbyCheck.warnings || [];
+    if (warnings.length > 0) {
+      const ok = typeof window !== "undefined" && window.confirm(
+        `${warnings.join("\n\n")}\n\nContinue and log this battle?`
+      );
+      if (!ok) return;
+    }
     onLog({
       mode,
       result,
