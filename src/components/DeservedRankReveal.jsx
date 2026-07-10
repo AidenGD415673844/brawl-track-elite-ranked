@@ -262,6 +262,52 @@ export default function DeservedRankReveal({ result, onDone, onRetake, readOnly 
           </div>
         </Card>
 
+        {/* Suggested Focus — the two weakest categories */}
+        {(() => {
+          const DRILLS = {
+            mechanics: "Grind Showdown solo for 30 min — pure aim + dodge reps, no team crutch.",
+            gameIQ: "Watch one pro match with sound off and predict every rotation before it happens.",
+            resilience: "Set a hard 3-loss stop rule for one week. Journal what tilted you.",
+            brawlerPool: "Pick your 3 weakest roles and P11 one brawler per role this season.",
+          };
+          const weakest = [...(result.categories || [])]
+            .sort((a, b) => a.score - b.score)
+            .slice(0, 2);
+          if (!weakest.length) return null;
+          return (
+            <Card className="bg-card border-border rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1.5 h-5 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
+                <h2 className="text-base font-display font-bold text-foreground">
+                  Suggested Focus
+                </h2>
+              </div>
+              <div className="space-y-2">
+                {weakest.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="rounded-xl p-3 border border-border/60"
+                    style={{ background: `linear-gradient(135deg, ${cat.color?.from}22, transparent 70%)` }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-display font-bold" style={{ color: cat.color?.text }}>
+                        {cat.label}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {cat.score}/100
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-snug">
+                      {DRILLS[cat.id] || "Focus a full session on this pillar and re-assess."}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          );
+        })()}
+
+
         <div className="flex gap-3">
           {!readOnly && (
             <Button
