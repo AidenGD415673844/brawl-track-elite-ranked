@@ -59,7 +59,9 @@ export default function DeservedRankReveal({ result, onDone, onRetake, readOnly 
                 Deserved Rank Analysis
               </h1>
               <p className="text-xs text-muted-foreground">
-                Verdict based on self-assessment + battle log data
+                {readOnly && result.savedAt
+                  ? `Saved ${new Date(result.savedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+                  : "Verdict based on self-assessment + battle log data"}
               </p>
             </div>
           </div>
@@ -261,19 +263,21 @@ export default function DeservedRankReveal({ result, onDone, onRetake, readOnly 
         </Card>
 
         <div className="flex gap-3">
-          <Button
-            onClick={onRetake}
-            variant="outline"
-            className="flex-1 rounded-xl border-border bg-card text-foreground hover:bg-muted"
-          >
-            Retake assessment
-          </Button>
+          {!readOnly && (
+            <Button
+              onClick={onRetake}
+              variant="outline"
+              className="flex-1 rounded-xl border-border bg-card text-foreground hover:bg-muted"
+            >
+              Retake assessment
+            </Button>
+          )}
           <Button
             onClick={onDone}
             className="flex-1 rounded-xl text-white hover:opacity-95"
             style={{ background: `linear-gradient(90deg, ${c.from}, ${c.to})` }}
           >
-            Done
+            {readOnly ? "Back" : "Done"}
           </Button>
         </div>
       </div>
