@@ -43,6 +43,22 @@ export default function SeasonEndReport({ player, battleLog, onClose }) {
   const seasonWinRate = seasonGames > 0 ? Math.round((wins / seasonGames) * 100) : 0;
   const funny = SUB_RANK_DESCRIPTIONS[peakRank.name]?.funny || "";
   const story = computeSeasonStory(realLog);
+  const badges = useMemo(() => computeSeasonBadges(player, realLog), [player, realLog]);
+  const compare = useMemo(() => computeSeasonDiff(player, realLog), [player, realLog]);
+  const [sharing, setSharing] = useState(false);
+
+  const handleShare = async () => {
+    setSharing(true);
+    try {
+      await generateSeasonShareCard({
+        peakRank, peakElo, wins, losses, games: seasonGames, winRate: seasonWinRate, badges,
+      });
+    } finally { setSharing(false); }
+  };
+
+  const handleArchive = () => {
+    savePriorSeason(player, realLog);
+  };
 
   useEffect(() => {
     const timers = [
