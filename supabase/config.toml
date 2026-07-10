@@ -1,4 +1,1 @@
 project_id = "uudxwsxuehwocnexpany"
-
-[functions.fetch-battles]
-verify_jwt = false
