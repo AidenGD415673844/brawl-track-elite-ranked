@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Radio, Copy, Check, Users, Wifi, WifiOff } from "lucide-react";
+import BackendStatusChip from "@/components/BackendStatusChip";
 import {
   createRoom,
   joinRoom,
@@ -95,9 +96,16 @@ export default function LiveKitLobby() {
         </div>
       </div>
 
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <BackendStatusChip compact />
+        <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-400">
+          <Wifi className="h-3.5 w-3.5" /> Local tab sync ready
+        </span>
+      </div>
+
       {!hasCreds && (
         <p className="text-[10px] text-yellow-500 mb-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2">
-          ⚠️ Configure LiveKit credentials in Settings for cross-device sync. Local sync (same browser) works without configuration.
+          Cross-device sync needs an authenticated backend token. Local sync between tabs still works.
         </p>
       )}
 
