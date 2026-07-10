@@ -141,6 +141,42 @@ export default function Settings() {
         </Card>
 
         <Card className="bg-card border-border p-5 rounded-2xl">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-amber-400 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Battle Card Particles</h3>
+                <p className="text-xs text-muted-foreground">
+                  Turn card particle effects on or off, and tune their intensity.
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={particlesOn}
+              onCheckedChange={(v) => { setParticlesOn(v); setParticlesEnabled(v); }}
+            />
+          </div>
+          <div className={particlesOn ? "" : "opacity-40 pointer-events-none"}>
+            <div className="grid grid-cols-3 gap-2">
+              {["low", "medium", "high"].map((mode) => (
+                <Button
+                  key={mode}
+                  onClick={() => { setParticleIntensityState(mode); setParticleIntensity(mode); }}
+                  variant={particleIntensity === mode ? "default" : "outline"}
+                  className="rounded-xl capitalize"
+                >
+                  {mode}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+
+
+        <Card className="bg-card border-border p-5 rounded-2xl">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
