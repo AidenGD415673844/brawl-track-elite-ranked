@@ -484,7 +484,7 @@ export default function Home() {
             setPlayer={setPlayer}
             onSave={handleSave}
             onResetSeason={handleResetSeason}
-            onFetchLogs={handleFetchLogs}
+            
           />
         </motion.div>
 
