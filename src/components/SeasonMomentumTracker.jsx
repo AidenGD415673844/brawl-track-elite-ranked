@@ -123,9 +123,9 @@ export default function SeasonMomentumTracker({ battleLog, seasonStartDate }) {
   );
 }
 
-function Sparkline({ battleLog }) {
+function Sparkline({ entries }) {
   const points = useMemo(() => {
-    const real = (battleLog || []).filter((e) => !e.manual);
+    const real = (entries || []).filter((e) => !e.manual);
     if (real.length < 2) return [];
     const chrono = [...real].reverse().slice(-20);
     const elos = chrono.map((e, i) => ({
@@ -141,7 +141,7 @@ function Sparkline({ battleLog }) {
       nx: (p.x / (elos.length - 1)) * 100,
       ny: 100 - ((p.y - minY) / range) * 100,
     }));
-  }, [battleLog]);
+  }, [entries]);
 
   if (points.length < 2) return null;
 
