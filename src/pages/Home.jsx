@@ -145,6 +145,15 @@ export default function Home() {
     [snapshots, battleLog]
   );
 
+  // Days since last Deserved Rank assessment (null if <7 or none)
+  const assessmentReminder = useMemo(() => {
+    if (loading) return null;
+    const hist = loadAssessmentHistory();
+    if (!hist.length) return null;
+    const days = Math.floor((Date.now() - hist[0].timestamp) / 86400000);
+    return days >= 7 ? days : null;
+  }, [loading]);
+
   const handleSave = () => {
     setSnapshots(saveSnapshot(player));
   };
