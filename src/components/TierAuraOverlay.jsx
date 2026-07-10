@@ -536,30 +536,43 @@ function MastersAura() {
               filter: "blur(1px)",
             }}
           />
-          {/* Debris */}
+          {/* Concrete debris chunks (rock icons) */}
           {Array.from({ length: 8 }).map((_, k) => {
             const a = (k / 8) * Math.PI * 2 + rand(-0.15, 0.15);
             const d = 55 + rand(0, 30);
+            const size = 8 + Math.round(rand(0, 4));
             return (
-              <div
+              <svg
                 key={k}
+                viewBox="0 0 20 20"
+                width={size}
+                height={size}
                 className="absolute"
                 style={{
                   left: 0,
                   top: 0,
-                  width: 5,
-                  height: 5,
-                  marginLeft: -2.5,
-                  marginTop: -2.5,
-                  background: "#9ca3af",
-                  borderRadius: "1px",
-                  boxShadow: "inset 0 -1px 2px rgba(0,0,0,0.5)",
+                  marginLeft: -size / 2,
+                  marginTop: -size / 2,
+                  filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.7))",
                   "--dx": `${Math.cos(a) * d}px`,
                   "--dy": `${Math.sin(a) * d}px`,
                   "--rot": `${rand(-360, 360)}deg`,
-                  animation: `masters-debris 2s ${ex.delay} ease-out infinite`,
+                  animation: `masters-chunk-spin 2s ${ex.delay} ease-out infinite`,
                 }}
-              />
+              >
+                <polygon
+                  points="3,8 7,3 14,4 17,9 15,16 8,17 4,13"
+                  fill="#9ca3af"
+                  stroke="#4b5563"
+                  strokeWidth="1"
+                  strokeLinejoin="round"
+                />
+                <polygon
+                  points="7,7 11,6 13,10 10,12"
+                  fill="#6b7280"
+                  opacity="0.8"
+                />
+              </svg>
             );
           })}
         </div>
