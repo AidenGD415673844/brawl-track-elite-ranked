@@ -58,6 +58,8 @@ export function saveAssessment(result, responses) {
     adjustments: result.adjustments,
     verdict: result.verdict,
     verdictClass: result.verdictClass,
+    focusNotes: result.focusNotes,
+    gapExplanation: result.gapExplanation,
     responses,
   };
   const list = [entry, ...loadHistory()].slice(0, MAX_ENTRIES);
