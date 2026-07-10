@@ -116,7 +116,7 @@ export default function SeasonMomentumTracker({ battleLog, seasonStartDate }) {
 
         {/* Elo sparkline — last 20 games trend */}
         <div className="mt-3">
-          <Sparkline battleLog={battleLog} />
+          <Sparkline entries={seasonLogAll} />
         </div>
       </Card>
     </motion.div>
