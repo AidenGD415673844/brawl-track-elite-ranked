@@ -140,6 +140,22 @@ export default function AssessmentHistoryPanel({
     [history]
   );
 
+  // Biggest category gainer & decliner across the full history
+  // (oldest → newest). Only meaningful with 2+ runs.
+  const categoryTrend = useMemo(() => {
+    if (history.length < 2) return null;
+    const oldest = history[history.length - 1];
+    const newest = history[0];
+    if (!oldest?.categories || !newest?.categories) return null;
+    const diffs = oldest.categories.map((c) => {
+      const nb = newest.categories.find((x) => x.id === c.id);
+      return { id: c.id, label: c.label, color: c.color, delta: (nb?.score ?? 0) - c.score };
+    });
+    const gainer = [...diffs].sort((a, b) => b.delta - a.delta)[0];
+    const decliner = [...diffs].sort((a, b) => a.delta - b.delta)[0];
+    return { gainer, decliner };
+  }, [history]);
+
   const toggleSelect = (id) => {
     setSelectedIds((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
