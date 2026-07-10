@@ -227,15 +227,16 @@ export default function RankScale({ elo, seasonHighest }) {
           })}
         </div>
         {peakSeason > elo && (
-          <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground flex-wrap">
             <div className="flex items-center gap-1">
               <div className="w-3 h-2 rounded-sm" style={{ background: `linear-gradient(90deg, ${tierColors.from}, ${tierColors.to})` }} />
-              <span>Current {elo.toLocaleString()}</span>
+              <span>Now: {elo.toLocaleString()} Elo</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-2 rounded-sm border" style={{ background: `${tierColors.from}55`, borderColor: `${tierColors.to}80`, borderStyle: "dashed" }} />
-              <span>Season peak {peakSeason.toLocaleString()}</span>
+              <span>Season high: {peakSeason.toLocaleString()} Elo</span>
             </div>
+            <span className="opacity-70">· {(peakSeason - elo).toLocaleString()} Elo to reclaim your peak</span>
           </div>
         )}
       </div>
