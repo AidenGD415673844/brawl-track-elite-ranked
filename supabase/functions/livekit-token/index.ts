@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { z } from 'npm:zod@3.24.2'
 
 const BodySchema = z.object({
@@ -46,6 +47,27 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+    )
+    const token0 = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token0)
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const userId = claimsData.claims.sub as string
+
     const apiKey = Deno.env.get('LIVEKIT_API_KEY')
     const apiSecret = Deno.env.get('LIVEKIT_API_SECRET')
     const url = Deno.env.get('LIVEKIT_URL')
@@ -65,7 +87,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    const token = await signJwt(apiKey, apiSecret, parsed.data.roomName, parsed.data.identity)
+    // Use authenticated user id as identity to prevent spoofing
+    const token = await signJwt(apiKey, apiSecret, parsed.data.roomName, userId)
     return new Response(JSON.stringify({ token, url }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
