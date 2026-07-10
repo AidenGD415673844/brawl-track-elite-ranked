@@ -65,24 +65,55 @@ export const MODES = [
   "Bounty", "Knockout",
 ];
 
+const BATTLE_LOG_BACKUP_KEY = BATTLE_LOG_KEY + ".backup";
+
 export function loadBattleLog() {
   try {
     const raw = localStorage.getItem(BATTLE_LOG_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
   } catch {
-    return [];
+    // fall through to backup
   }
+  // Recover from backup if primary key is missing / corrupted
+  try {
+    const backup = localStorage.getItem(BATTLE_LOG_BACKUP_KEY);
+    if (backup) {
+      const parsed = JSON.parse(backup);
+      if (Array.isArray(parsed)) {
+        // Restore primary from backup
+        try { localStorage.setItem(BATTLE_LOG_KEY, backup); } catch { /* noop */ }
+        return parsed;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return [];
 }
 
 function saveBattleLog(log) {
+  const arr = Array.isArray(log) ? log : [];
+  const serialized = JSON.stringify(arr);
   try {
-    localStorage.setItem(BATTLE_LOG_KEY, JSON.stringify(log));
+    localStorage.setItem(BATTLE_LOG_KEY, serialized);
+    // Mirror to backup key for recovery
+    try { localStorage.setItem(BATTLE_LOG_BACKUP_KEY, serialized); } catch { /* noop */ }
+    // Verify write actually persisted
+    const check = localStorage.getItem(BATTLE_LOG_KEY);
+    if (check !== serialized) {
+      console.warn("Battle log write verification failed — retrying.");
+      localStorage.setItem(BATTLE_LOG_KEY, serialized);
+    }
   } catch (err) {
-    // Storage quota or serialization failure — trim to the most recent 500
-    // entries and retry so newly-logged battles never silently disappear.
+    // Storage quota — trim to most recent 500 entries and retry
     try {
-      const trimmed = (log || []).slice(0, 500);
-      localStorage.setItem(BATTLE_LOG_KEY, JSON.stringify(trimmed));
+      const trimmed = arr.slice(0, 500);
+      const trimmedStr = JSON.stringify(trimmed);
+      localStorage.setItem(BATTLE_LOG_KEY, trimmedStr);
+      try { localStorage.setItem(BATTLE_LOG_BACKUP_KEY, trimmedStr); } catch { /* noop */ }
       console.warn("Battle log trimmed to 500 entries due to storage limits.");
     } catch (retryErr) {
       console.error("Failed to persist battle log:", retryErr);

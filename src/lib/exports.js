@@ -161,65 +161,104 @@ export function exportCSV(player, forecast, snapshots, battleLog = []) {
   }
 
   const csv = rows
-    .map((r) => r.map((c) => `"${String(c ?? "")}"`).join(","))
+    .map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(","))
     .join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "ranked-analytics-full-export.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  try {
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ranked-analytics-full-export.csv";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return { success: true };
+  } catch (err) {
+    console.error("CSV export failed:", err);
+    return { success: false, error: err.message || "Failed to export CSV." };
+  }
 }
 
-export function exportPDF(player, forecast) {
-  const doc = new jsPDF();
-  doc.setFillColor(10, 12, 20);
-  doc.rect(0, 0, 210, 297, "F");
+export function exportPDF(player, forecast, battleLog = []) {
+  try {
+    const doc = new jsPDF();
+    doc.setFillColor(10, 12, 20);
+    doc.rect(0, 0, 210, 297, "F");
 
-  doc.setTextColor(56, 189, 248);
-  doc.setFontSize(20);
-  doc.text("Ranked Analytics Report", 14, 20);
+    doc.setTextColor(56, 189, 248);
+    doc.setFontSize(20);
+    doc.text("Ranked Analytics Report", 14, 20);
 
-  doc.setTextColor(200, 200, 210);
-  doc.setFontSize(10);
-  doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+    doc.setTextColor(200, 200, 210);
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
 
-  const lines = [
-    `Current Elo: ${player.currentElo}  (${getRank(player.currentElo).name})`,
-    `Highest Elo: ${player.highestElo}  (${getRank(player.highestElo).name})`,
-    `Last Season Highest: ${player.lastSeasonElo}  (${getRank(player.lastSeasonElo).name})`,
-    `Trophies: ${player.trophies}`,
-    `Win Rate: ${player.winRate}%`,
-    `Games Played: ${player.gamesPlayed}`,
-    `Self-Rated Skill: ${player.skill}/10`,
-  ];
-  doc.setFontSize(12);
-  doc.setTextColor(230, 230, 240);
-  let y = 42;
-  lines.forEach((l) => {
-    doc.text(l, 14, y);
-    y += 9;
-  });
-
-  if (forecast) {
-    y += 6;
-    doc.setTextColor(217, 70, 239);
-    doc.setFontSize(14);
-    doc.text("Forecast", 14, y);
-    y += 9;
+    const lines = [
+      `Current Elo: ${player.currentElo}  (${getRank(player.currentElo).name})`,
+      `Highest Elo: ${player.highestElo}  (${getRank(player.highestElo).name})`,
+      `Last Season Highest: ${player.lastSeasonElo}  (${getRank(player.lastSeasonElo).name})`,
+      `Trophies: ${player.trophies}`,
+      `Win Rate: ${player.winRate}%`,
+      `Games Played: ${player.gamesPlayed}`,
+      `Self-Rated Skill: ${player.skill}/10`,
+    ];
+    doc.setFontSize(12);
     doc.setTextColor(230, 230, 240);
-    doc.setFontSize(11);
-    const f = forecast.final;
-    [
-      `Expected Elo per match: ${forecast.evPerMatch}`,
-      `Gain per win (boost applied): +${forecast.gainPerWin}`,
-      `After ${f.match} matches -> Low: ${f.low} | Median: ${f.median} | High: ${f.high}`,
-    ].forEach((l) => {
+    let y = 42;
+    lines.forEach((l) => {
       doc.text(l, 14, y);
-      y += 8;
+      y += 9;
     });
-  }
 
-  doc.save("ranked-analytics.pdf");
+    if (forecast) {
+      y += 6;
+      doc.setTextColor(217, 70, 239);
+      doc.setFontSize(14);
+      doc.text("Forecast", 14, y);
+      y += 9;
+      doc.setTextColor(230, 230, 240);
+      doc.setFontSize(11);
+      const f = forecast.final;
+      [
+        `Expected Elo per match: ${forecast.evPerMatch}`,
+        `Gain per win (boost applied): +${forecast.gainPerWin}`,
+        `After ${f.match} matches -> Low: ${f.low} | Median: ${f.median} | High: ${f.high}`,
+      ].forEach((l) => {
+        doc.text(l, 14, y);
+        y += 8;
+      });
+    }
+
+    // Battle log summary
+    const realLog = (battleLog || []).filter((e) => !e.manual);
+    if (realLog.length > 0) {
+      y += 8;
+      doc.setTextColor(34, 211, 238);
+      doc.setFontSize(14);
+      doc.text("Battle Log Summary", 14, y);
+      y += 9;
+      doc.setFontSize(11);
+      doc.setTextColor(230, 230, 240);
+      const wins = realLog.filter((e) => e.result === "victory").length;
+      const losses = realLog.filter((e) => e.result === "defeat").length;
+      const draws = realLog.filter((e) => e.result === "draw").length;
+      [
+        `Total battles: ${realLog.length}`,
+        `Wins: ${wins}   Losses: ${losses}   Draws: ${draws}`,
+        `Best win streak: ${getBestWinStreak(battleLog)}`,
+        `Current streak: ${getWinStreak(battleLog)}`,
+      ].forEach((l) => {
+        doc.text(l, 14, y);
+        y += 8;
+      });
+    }
+
+    doc.save("ranked-analytics.pdf");
+    return { success: true };
+  } catch (err) {
+    console.error("PDF export failed:", err);
+    return { success: false, error: err.message || "Failed to export PDF." };
+  }
 }

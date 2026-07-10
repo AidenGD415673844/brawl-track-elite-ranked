@@ -57,6 +57,7 @@ import SeasonEndReport from "@/components/SeasonEndReport";
 import SeasonMomentumTracker from "@/components/SeasonMomentumTracker";
 import SafetyNetSimulator from "@/components/SafetyNetSimulator";
 import PromotionSeries from "@/components/PromotionSeries";
+import WhatYourRankShouldBe from "@/components/WhatYourRankShouldBe";
 import { useToast } from "@/components/ui/use-toast";
 import { broadcastBattle, onReceiveBattle, disconnect as disconnectP2P } from "@/lib/p2pSync";
 import { addRemoteBattle } from "@/lib/battleLog";
@@ -353,12 +354,16 @@ export default function Home() {
   if (loading) return <HomeSkeleton />;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       <div
-        className="pointer-events-none fixed inset-0 dark:opacity-40 opacity-[0.12]"
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(600px circle at 20% 0%, rgba(34,211,238,0.12), transparent 40%), radial-gradient(600px circle at 90% 10%, rgba(168,85,247,0.14), transparent 40%)",
+            "radial-gradient(1000px circle at 15% -10%, hsl(var(--primary) / 0.10), transparent 55%)," +
+            "radial-gradient(900px circle at 90% 5%, rgba(168,85,247,0.14), transparent 55%)," +
+            "radial-gradient(1200px circle at 50% 110%, rgba(34,211,238,0.10), transparent 60%)",
+          animation: "app-aurora 8s ease-in-out infinite",
         }}
       />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -409,14 +414,24 @@ export default function Home() {
             <CSVImport onImport={handleCSVImport} />
             <Button
               variant="outline"
-              onClick={() => exportCSV(player, forecast, snapshots, battleLog)}
+              onClick={() => {
+                const res = exportCSV(player, forecast, snapshots, battleLog);
+                toast(res?.success
+                  ? { title: "CSV exported", description: "Your data has been downloaded." }
+                  : { title: "CSV export failed", description: res?.error || "Unknown error", variant: "destructive" });
+              }}
               className="border-border bg-card text-foreground hover:bg-muted rounded-xl"
             >
               <FileDown className="w-4 h-4 mr-2" /> CSV
             </Button>
             <Button
               variant="outline"
-              onClick={() => exportPDF(player, forecast)}
+              onClick={() => {
+                const res = exportPDF(player, forecast, battleLog);
+                toast(res?.success
+                  ? { title: "PDF exported", description: "Your report has been downloaded." }
+                  : { title: "PDF export failed", description: res?.error || "Unknown error", variant: "destructive" });
+              }}
               className="border-border bg-card text-foreground hover:bg-muted rounded-xl"
             >
               <FileText className="w-4 h-4 mr-2" /> PDF
@@ -459,6 +474,10 @@ export default function Home() {
 
         <motion.div {...fadeUp} transition={{ delay: 0.13 }}>
           <PromotionSeries player={player} battleLog={battleLog} />
+        </motion.div>
+
+        <motion.div {...fadeUp} transition={{ delay: 0.14 }}>
+          <WhatYourRankShouldBe player={player} battleLog={battleLog} />
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.15 }}>

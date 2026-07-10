@@ -133,97 +133,95 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Tier Aura Animations — per-rank effects that loop on cards.
-   Each aura has a signature keyframe cycle. Cadence is ~0.8s
-   for the "burst" motion plus a pause so effects breathe.
+   Tier Aura Animations — smooth, premium 2s cycles.
+   All keyframes below are consumed by TierAuraOverlay.jsx.
+   Respect prefers-reduced-motion at the bottom.
    ───────────────────────────────────────────────────────────── */
 
-/* Pro — pale green up-arrow whooshing around the frame */
-@keyframes pro-arrow-orbit {
-  0%   { offset-distance: 0%;   opacity: 0; }
-  8%   { opacity: 1; }
-  92%  { opacity: 1; }
-  100% { offset-distance: 100%; opacity: 0; }
+/* Pro — prismatic sheen sweep + floating spark */
+@keyframes pro-sheen {
+  0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { transform: translateX(120%)  skewX(-18deg); opacity: 0; }
 }
-
-/* Masters — explosion burst with debris */
-@keyframes masters-explode {
-  0%   { transform: scale(0.2); opacity: 0; }
+@keyframes pro-float {
+  0%   { transform: translate(var(--x,0), 20px) scale(0.6); opacity: 0; }
   20%  { opacity: 1; }
-  60%  { transform: scale(1.4); opacity: 0.9; }
-  100% { transform: scale(1.8); opacity: 0; }
-}
-@keyframes masters-debris {
-  0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) rotate(360deg); opacity: 0; }
+  80%  { opacity: 0.9; }
+  100% { transform: translate(var(--x,0), -60px) scale(1); opacity: 0; }
 }
 
-/* Legendary — 95% opacity fire whooshing around the whole card */
-@keyframes legendary-fire-orbit {
-  0%   { offset-distance: 0%;   transform: scale(0.9); }
-  50%  { transform: scale(1.15); }
-  100% { offset-distance: 100%; transform: scale(0.9); }
+/* Masters — elegant gold/white radial pulse + slow debris orbit */
+@keyframes masters-pulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.55; }
+  50%      { transform: scale(1.15); opacity: 1; }
 }
-@keyframes legendary-flicker {
-  0%, 100% { filter: hue-rotate(0deg) brightness(1); }
-  50%      { filter: hue-rotate(-15deg) brightness(1.3); }
-}
-
-/* Mythic — cosmic vortex + lightning + supernova flares */
-@keyframes mythic-vortex-spin {
-  0%   { transform: rotate(0deg) scale(1); }
-  50%  { transform: rotate(180deg) scale(1.08); }
-  100% { transform: rotate(360deg) scale(1); }
-}
-@keyframes mythic-lightning {
-  0%, 82%, 100% { opacity: 0; }
-  84%, 88%      { opacity: 1; }
-  86%           { opacity: 0.2; }
-}
-@keyframes mythic-supernova {
-  0%, 100% { opacity: 0.2; transform: scale(0.6); }
-  40%      { opacity: 1;   transform: scale(1.6); }
-}
-
-/* Diamond — hyperborean blizzard + ice shards + strobe glints */
-@keyframes diamond-blizzard {
-  0%   { transform: translate(-30%, -20%); opacity: 0.4; }
+@keyframes masters-orbit {
+  0%   { transform: rotate(0deg)   translateX(var(--r,44px)) rotate(0deg); opacity: 0.7; }
   50%  { opacity: 1; }
-  100% { transform: translate(30%, 20%);   opacity: 0.4; }
-}
-@keyframes diamond-shard {
-  0%   { transform: translate(0,0) rotate(var(--rot,0deg)); opacity: 0; }
-  20%  { opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) rotate(calc(var(--rot,0deg) + 180deg)); opacity: 0; }
-}
-@keyframes diamond-strobe {
-  0%, 100% { opacity: 0; }
-  48%, 52% { opacity: 1; }
+  100% { transform: rotate(360deg) translateX(var(--r,44px)) rotate(-360deg); opacity: 0.7; }
 }
 
-/* Gold — solar tempest, sparks, sunburst */
+/* Legendary — smooth neon border pulse + orbiting embers */
+@keyframes legendary-border {
+  0%, 100% { box-shadow: inset 0 0 12px 2px rgba(249,115,22,0.55), inset 0 0 24px 4px rgba(220,38,38,0.35); }
+  50%      { box-shadow: inset 0 0 22px 6px rgba(254,215,170,0.85), inset 0 0 40px 10px rgba(249,115,22,0.55); }
+}
+@keyframes legendary-ember {
+  0%   { transform: translate(0, 20px) scale(0.5); opacity: 0; }
+  25%  { opacity: 1; }
+  100% { transform: translate(var(--dx,0), -80px) scale(1); opacity: 0; }
+}
+
+/* Mythic — slow cosmic nebula drift + soft violet particle float */
+@keyframes mythic-nebula {
+  0%   { transform: rotate(0deg)   scale(1); opacity: 0.65; }
+  50%  { transform: rotate(180deg) scale(1.08); opacity: 0.9; }
+  100% { transform: rotate(360deg) scale(1); opacity: 0.65; }
+}
+@keyframes mythic-particle {
+  0%   { transform: translate(0, 30px) scale(0.4); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translate(var(--dx,0), -70px) scale(1); opacity: 0; }
+}
+
+/* Diamond — hyperborean shimmer + slow shard drift */
+@keyframes diamond-shimmer {
+  0%   { transform: translateX(-100%) skewX(-20deg); opacity: 0; }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { transform: translateX(100%)  skewX(-20deg); opacity: 0; }
+}
+@keyframes diamond-drift {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(var(--dx,0), var(--dy,-60px)) rotate(180deg); opacity: 0; }
+}
+
+/* Gold — solar tempest + sparks */
 @keyframes gold-tempest {
   0%   { background-position: 0% 50%; }
   100% { background-position: 200% 50%; }
 }
 @keyframes gold-spark {
   0%   { transform: translate(0,0) scale(0.4); opacity: 0; }
-  15%  { opacity: 1; }
+  20%  { opacity: 1; }
   100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
 }
 @keyframes gold-sunburst {
-  0%, 100% { opacity: 0.2; }
+  0%, 100% { opacity: 0.3; }
   50%      { opacity: 1; }
 }
 
-/* Silver — kinetic chrome field + upward sparks + whip sheens */
+/* Silver — chrome kinetic + upward sparks + whip sheen */
 @keyframes silver-kinetic {
   0%, 100% { transform: translateY(0) scaleY(1); opacity: 0.5; }
   50%      { transform: translateY(-6px) scaleY(1.1); opacity: 1; }
 }
 @keyframes silver-spark-up {
   0%   { transform: translateY(0) scale(0.5); opacity: 0; }
-  15%  { opacity: 1; }
+  20%  { opacity: 1; }
   100% { transform: translateY(-140%) scale(1); opacity: 0; }
 }
 @keyframes silver-sheen {
@@ -232,7 +230,7 @@
   100% { transform: translateX(120%)  skewX(-25deg); opacity: 0; }
 }
 
-/* Bronze — sandstorm + copper embers + gritty friction flashes */
+/* Bronze — sandstorm + copper embers + friction flash */
 @keyframes bronze-sandstorm {
   0%   { background-position: 0% 0%;   opacity: 0.55; }
   100% { background-position: 200% 40%; opacity: 0.8; }
@@ -245,4 +243,18 @@
 @keyframes bronze-friction {
   0%, 100% { opacity: 0; transform: translateX(-50%); }
   50%      { opacity: 0.9; transform: translateX(50%); }
+}
+
+/* Aurora background for the whole app */
+@keyframes app-aurora {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
+  50%      { transform: translate3d(2%, -1%, 0) scale(1.05); opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-"],
+  [style*="animation"] {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
