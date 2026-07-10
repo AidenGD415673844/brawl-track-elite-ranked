@@ -36,7 +36,7 @@ import MatchSimulator from "@/components/MatchSimulator";
 import AchievementBadges from "@/components/AchievementBadges";
 import { getBoost, runForecast } from "@/lib/forecast";
 import { loadSnapshots, saveSnapshot, computeMilestones } from "@/lib/history";
-import { loadBattleLog, getWinStreak, addBattle } from "@/lib/battleLog";
+import { loadBattleLog, getWinStreak } from "@/lib/battleLog";
 import { getGateStatus } from "@/components/PowerBrawlerGate";
 import { loadPlayer, savePlayer, DEFAULT_PLAYER } from "@/lib/playerStorage";
 import { exportCSV, exportPDF } from "@/lib/exports";
