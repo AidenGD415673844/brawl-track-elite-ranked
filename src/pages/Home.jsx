@@ -476,6 +476,10 @@ export default function Home() {
           <PromotionSeries player={player} battleLog={battleLog} />
         </motion.div>
 
+        <motion.div {...fadeUp} transition={{ delay: 0.14 }}>
+          <WhatYourRankShouldBe player={player} battleLog={battleLog} />
+        </motion.div>
+
         <motion.div {...fadeUp} transition={{ delay: 0.15 }}>
           <SummaryCards player={player} />
         </motion.div>
