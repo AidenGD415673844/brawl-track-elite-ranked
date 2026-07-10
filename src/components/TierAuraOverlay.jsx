@@ -1,4 +1,6 @@
 import React, { useMemo, useEffect, useState } from "react";
+import { useAnimPrefs, intensityScale } from "@/lib/animPrefs";
+
 
 // Detect low-power / reduced-motion contexts. When any of these are true,
 // we render a lighter static gradient instead of the full particle aura:
@@ -74,8 +76,8 @@ const GRID_TINT = {
   Pro:       "rgba(253,224,71,0.20)",
 };
 
-// Old-school grid backdrop restored across every battle card. Renders under
-// the tier particle layer so effects still pop on top.
+// Old-school grid backdrop restored across every battle card. Rendered UNDER
+// the tier particle layer, subtle so the TIER_BG gradient still reads.
 function GridBackdrop({ tier }) {
   const line = GRID_TINT[tier] || "rgba(255,255,255,0.12)";
   return (
@@ -84,17 +86,29 @@ function GridBackdrop({ tier }) {
       style={{
         backgroundImage: `
           linear-gradient(${line} 1px, transparent 1px),
-          linear-gradient(90deg, ${line} 1px, transparent 1px),
-          radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.35) 100%)
+          linear-gradient(90deg, ${line} 1px, transparent 1px)
         `,
-        backgroundSize: "24px 24px, 24px 24px, 100% 100%",
-        backgroundPosition: "0 0, 0 0, 0 0",
-        mixBlendMode: "screen",
-        opacity: 0.9,
+        backgroundSize: "24px 24px, 24px 24px",
+        backgroundPosition: "0 0, 0 0",
+        opacity: 0.45,
       }}
     />
   );
 }
+
+// Soft vignette on top of everything so text at the bottom reads.
+function Vignette() {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none rounded-[inherit]"
+      style={{
+        background:
+          "radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.35) 100%)",
+      }}
+    />
+  );
+}
+
 
 // ─── Bronze ──────────────────────────────────────────────────
 function BronzeAura() {
@@ -110,17 +124,9 @@ function BronzeAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
-      {/* Dark brick backdrop */}
+      {/* Brick pattern overlay — multiplies onto TIER_BG so brown gradient still reads */}
       <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(180deg, #2a1207 0%, #4b1e08 55%, #6b2a0d 100%)",
-        }}
-      />
-      {/* Brick pattern overlay */}
-      <div
-        className="absolute inset-0 opacity-70"
+        className="absolute inset-0 opacity-50 mix-blend-multiply"
         style={{
           backgroundImage: `
             linear-gradient(0deg, rgba(0,0,0,0.55) 0 2px, transparent 2px 30px),
@@ -128,14 +134,6 @@ function BronzeAura() {
             linear-gradient(90deg, rgba(0,0,0,0.55) 0 2px, transparent 2px 60px)`,
           backgroundSize: "60px 30px, 60px 30px, 60px 30px",
           backgroundPosition: "0 0, 0 0, 30px 15px",
-        }}
-      />
-      {/* Slight brick texture noise */}
-      <div
-        className="absolute inset-0 opacity-40 mix-blend-overlay"
-        style={{
-          background:
-            "radial-gradient(circle at 30% 20%, rgba(255,180,120,0.15), transparent 50%), radial-gradient(circle at 80% 70%, rgba(0,0,0,0.4), transparent 55%)",
         }}
       />
       {/* Diagonally-rising bullets */}
@@ -150,6 +148,7 @@ function BronzeAura() {
             animation: `bronze-bullet ${b.duration} ${b.delay} linear infinite`,
           }}
         >
+
           <div
             style={{
               width: 6,
@@ -224,15 +223,16 @@ function SilverAura() {
           </svg>
         </div>
       ))}
-      {/* Flash overlay */}
+      {/* Flash overlay — subtle so TIER_BG shows through */}
       <div
         className="absolute inset-0"
         style={{
-          background: "rgba(226,232,240,0.6)",
+          background: "rgba(226,232,240,0.22)",
           animation: "silver-flash 1.6s ease-in-out infinite",
           mixBlendMode: "screen",
         }}
       />
+
     </div>
   );
 }
@@ -680,15 +680,27 @@ function TierExtras({ tier }) {
 
 export default function TierAuraOverlay({ tier, active = true }) {
   const lowPower = useLowPowerMode();
+  const { enabled: particlesEnabled, intensity } = useAnimPrefs();
   if (!active) return null;
   const Aura = TIER_COMPONENTS[tier];
   if (!Aura) return null;
-  if (lowPower) return <LowPowerAura tier={tier} />;
+  if (lowPower) return (<><GridBackdrop tier={tier} /><LowPowerAura tier={tier} /><Vignette /></>);
+  if (!particlesEnabled) return (<><GridBackdrop tier={tier} /><LowPowerAura tier={tier} /><Vignette /></>);
+  const auraStyle =
+    intensity === "low"
+      ? { opacity: 0.55 }
+      : intensity === "high"
+      ? { opacity: 1, filter: "saturate(1.25) brightness(1.08)" }
+      : { opacity: 1 };
   return (
     <>
-      <Aura />
       <GridBackdrop tier={tier} />
-      <TierExtras tier={tier} />
+      <div className="absolute inset-0 pointer-events-none rounded-[inherit]" style={auraStyle}>
+        <Aura />
+        <TierExtras tier={tier} />
+      </div>
+      <Vignette />
     </>
   );
 }
+
