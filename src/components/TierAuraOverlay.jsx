@@ -680,15 +680,27 @@ function TierExtras({ tier }) {
 
 export default function TierAuraOverlay({ tier, active = true }) {
   const lowPower = useLowPowerMode();
+  const { enabled: particlesEnabled, intensity } = useAnimPrefs();
   if (!active) return null;
   const Aura = TIER_COMPONENTS[tier];
   if (!Aura) return null;
-  if (lowPower) return <LowPowerAura tier={tier} />;
+  if (lowPower) return (<><GridBackdrop tier={tier} /><LowPowerAura tier={tier} /><Vignette /></>);
+  if (!particlesEnabled) return (<><GridBackdrop tier={tier} /><LowPowerAura tier={tier} /><Vignette /></>);
+  const auraStyle =
+    intensity === "low"
+      ? { opacity: 0.55 }
+      : intensity === "high"
+      ? { opacity: 1, filter: "saturate(1.25) brightness(1.08)" }
+      : { opacity: 1 };
   return (
     <>
-      <Aura />
       <GridBackdrop tier={tier} />
-      <TierExtras tier={tier} />
+      <div className="absolute inset-0 pointer-events-none rounded-[inherit]" style={auraStyle}>
+        <Aura />
+        <TierExtras tier={tier} />
+      </div>
+      <Vignette />
     </>
   );
 }
+
