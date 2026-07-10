@@ -199,25 +199,6 @@ export default function Home() {
     setPlayer((p) => ({ ...p, ...powerData }));
   };
 
-  const handleFetchLogs = (battles, isMock) => {
-    let currentElo = player.currentElo;
-    for (const battle of battles) {
-      const { entry } = addBattle(currentElo, { ...battle, highestElo: player.highestElo });
-      currentElo = entry.eloAfter;
-    }
-    const newLog = loadBattleLog();
-    setBattleLog(newLog);
-    setPlayer((p) => ({
-      ...p,
-      currentElo,
-      highestElo: Math.max(p.highestElo || 0, currentElo),
-      currentSeasonHighest: Math.max(p.currentSeasonHighest || 0, currentElo),
-    }));
-    toast({
-      title: isMock ? "Mock Logs Loaded" : "Battle Logs Fetched",
-      description: `${battles.length} ranked battle${battles.length !== 1 ? "s" : ""} imported successfully.`,
-    });
-  };
 
   const handleBattleLogged = (entry, newLog) => {
     primeAudio();
