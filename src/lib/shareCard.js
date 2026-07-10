@@ -84,8 +84,18 @@ export async function generateSeasonShareCard({ peakRank, peakElo, wins, losses,
     ctx.fillText(b.label, x + 68, y + 40);
   });
 
+  // Meme tagline pulled from the shared rankTitles library so the share
+  // card matches the vibe on Home / Deserved Rank.
+  const memeTitle = getRankTitle(peakRank.name, { streak: streak || 0 });
+
   // Footer
   ctx.textAlign = "center";
+  if (memeTitle?.subtitle) {
+    ctx.fillStyle = c.text;
+    ctx.font = "italic bold 26px system-ui, sans-serif";
+    // Word-wrap the tagline in case it's long.
+    wrapText(ctx, `"${memeTitle.subtitle}"`, W / 2, H - 110, W - 120, 32);
+  }
   ctx.fillStyle = "rgba(255,255,255,0.5)";
   ctx.font = "bold 22px system-ui, sans-serif";
   ctx.fillText("Track your rank at BrawlTrack", W / 2, H - 60);
