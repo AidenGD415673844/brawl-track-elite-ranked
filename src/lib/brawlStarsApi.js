@@ -4,7 +4,17 @@
 import { MODES } from "@/lib/battleLog";
 import { BRAWLERS } from "@/lib/brawlers";
 import { isMockDataEnabled, getPlayerTag, setPlayerTag } from "@/lib/appSettings";
-import { supabase } from "@/integrations/supabase/client";
+
+async function getBackendClient() {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    return supabase;
+  } catch {
+    throw new Error(
+      "Backend configuration is missing in this build. Publish/update the app again from Lovable, or enable Mock Data in Settings."
+    );
+  }
+}
 
 
 // ─── Mock Data ────────────────────────────────────────────────
@@ -173,6 +183,7 @@ function mapApiBattle(item, playerTag) {
 }
 
 export async function fetchRankedBattles(playerTag) {
+  const supabase = await getBackendClient();
   const { data, error } = await supabase.functions.invoke("fetch-battles", {
     body: { playerTag },
   });
