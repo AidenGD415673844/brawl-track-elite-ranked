@@ -335,13 +335,13 @@ function DiamondAura() {
 
 // ─── Mythic ──────────────────────────────────────────────────
 function MythicAura() {
-  const flames = useMemo(
+  const blasts = useMemo(
     () =>
-      Array.from({ length: 5 }).map((_, i) => ({
-        left: `${rand(0, 80)}%`,
-        delay: `${(i * rand(0.4, 0.9)).toFixed(2)}s`,
-        duration: `${rand(1.5, 2.5).toFixed(2)}s`,
-        width: rand(60, 110),
+      Array.from({ length: 3 }).map((_, i) => ({
+        left: `${18 + i * 30}%`,
+        top: `${rand(35, 70)}%`,
+        delay: `${(i * rand(0.6, 1)).toFixed(2)}s`,
+        duration: `${rand(1.8, 2.6).toFixed(2)}s`,
       })),
     []
   );
@@ -349,33 +349,69 @@ function MythicAura() {
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
       {/* Purple base glow */}
       <div
-        className="absolute inset-x-0 bottom-0 h-1/2"
+        className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 100% 100% at 50% 100%, rgba(168,85,247,0.55), rgba(139,92,246,0.25) 40%, transparent 75%)",
+            "radial-gradient(ellipse 100% 80% at 50% 100%, rgba(168,85,247,0.45), rgba(139,92,246,0.2) 40%, transparent 75%)",
         }}
       />
-      {flames.map((f, i) => (
-        <div
-          key={i}
-          className="absolute bottom-0"
-          style={{
-            left: f.left,
-            width: f.width,
-            height: 70,
-            animation: `mythic-fire ${f.duration} ${f.delay} ease-in-out infinite`,
-            filter: "blur(4px)",
-            mixBlendMode: "screen",
-          }}
-        >
+      {blasts.map((ex, i) => (
+        <div key={i} className="absolute" style={{ left: ex.left, top: ex.top }}>
+          {/* Flash */}
           <div
+            className="absolute rounded-full"
             style={{
-              width: "100%",
-              height: "100%",
+              width: 90,
+              height: 90,
+              marginLeft: -45,
+              marginTop: -45,
               background:
-                "radial-gradient(ellipse 60% 100% at 50% 100%, #f0abfc 0%, #d946ef 30%, #9333ea 65%, transparent 90%)",
+                "radial-gradient(circle, rgba(250,232,255,0.95) 0%, rgba(217,70,239,0.7) 35%, rgba(126,34,206,0.4) 60%, transparent 75%)",
+              animation: `mythic-blast ${ex.duration} ${ex.delay} ease-out infinite`,
+              filter: "blur(2px)",
+              mixBlendMode: "screen",
             }}
           />
+          {/* Shockwave ring */}
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: 60,
+              height: 60,
+              marginLeft: -30,
+              marginTop: -30,
+              border: "3px solid rgba(240,171,252,0.85)",
+              boxShadow: "0 0 12px rgba(217,70,239,0.9)",
+              animation: `mythic-ring ${ex.duration} ${ex.delay} ease-out infinite`,
+            }}
+          />
+          {/* Violet chunks */}
+          {Array.from({ length: 8 }).map((_, k) => {
+            const a = (k / 8) * Math.PI * 2 + rand(-0.15, 0.15);
+            const d = 55 + rand(0, 30);
+            return (
+              <div
+                key={k}
+                className="absolute"
+                style={{
+                  left: 0,
+                  top: 0,
+                  width: 6,
+                  height: 6,
+                  marginLeft: -3,
+                  marginTop: -3,
+                  background:
+                    "radial-gradient(circle, #f0abfc 0%, #a855f7 70%, #6b21a8 100%)",
+                  borderRadius: "2px",
+                  boxShadow: "0 0 6px rgba(217,70,239,0.9)",
+                  "--dx": `${Math.cos(a) * d}px`,
+                  "--dy": `${Math.sin(a) * d}px`,
+                  "--rot": `${rand(-360, 360)}deg`,
+                  animation: `mythic-chunk ${ex.duration} ${ex.delay} ease-out infinite`,
+                }}
+              />
+            );
+          })}
         </div>
       ))}
     </div>
