@@ -1,13 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Target, Brain, Shield, Users, ArrowLeft } from "lucide-react";
 import DeservedRankAssessment from "@/components/DeservedRankAssessment";
 import DeservedRankReveal from "@/components/DeservedRankReveal";
+import AssessmentHistoryPanel from "@/components/AssessmentHistoryPanel";
 import { computeDeservedRank, defaultResponses, CATEGORIES } from "@/lib/deservedRankEngine";
 import { loadPlayer } from "@/lib/playerStorage";
 import { loadBattleLog } from "@/lib/battleLog";
+import {
+  loadHistory,
+  saveAssessment,
+  deleteAssessment,
+  clearHistory,
+  entryToResult,
+} from "@/lib/assessmentHistory";
 
 const CAT_ICONS = { mechanics: Target, gameIQ: Brain, resilience: Shield, brawlerPool: Users };
 
@@ -16,13 +24,18 @@ export default function DeservedRank() {
   const [player] = useState(() => loadPlayer());
   const [battleLog] = useState(() => loadBattleLog());
   const [responses, setResponses] = useState(defaultResponses());
-  const [phase, setPhase] = useState("intro"); // intro | wizard | reveal
+  const [phase, setPhase] = useState("intro"); // intro | wizard | reveal | history-reveal
   const [result, setResult] = useState(null);
+  const [history, setHistory] = useState(() => loadHistory());
+
+  const refreshHistory = () => setHistory(loadHistory());
 
   const startWizard = () => setPhase("wizard");
   const handleComplete = (finalResponses) => {
     setResponses(finalResponses);
     const r = computeDeservedRank(player, finalResponses, battleLog);
+    saveAssessment(r, finalResponses);
+    refreshHistory();
     setResult(r);
     setPhase("reveal");
   };
@@ -32,8 +45,38 @@ export default function DeservedRank() {
   };
   const goHome = () => navigate("/");
 
+  const handleViewEntry = (entry) => {
+    setResult(entryToResult(entry));
+    setPhase("history-reveal");
+  };
+  const handleRerunEntry = (entry) => {
+    if (entry?.responses) setResponses(entry.responses);
+    setPhase("wizard");
+  };
+  const handleDeleteEntry = (id) => {
+    deleteAssessment(id);
+    refreshHistory();
+  };
+  const handleClearAll = () => {
+    clearHistory();
+    refreshHistory();
+  };
+  const handleBackFromHistoryReveal = () => {
+    setResult(null);
+    setPhase("intro");
+  };
+
   if (phase === "reveal" && result) {
     return <DeservedRankReveal result={result} onDone={goHome} onRetake={handleRetake} />;
+  }
+  if (phase === "history-reveal" && result) {
+    return (
+      <DeservedRankReveal
+        result={result}
+        onDone={handleBackFromHistoryReveal}
+        readOnly
+      />
+    );
   }
 
   return (
@@ -126,6 +169,14 @@ export default function DeservedRank() {
             <Sparkles className="w-4 h-4 mr-2" /> Start Assessment
           </Button>
         </Card>
+
+        <AssessmentHistoryPanel
+          history={history}
+          onView={handleViewEntry}
+          onRerun={handleRerunEntry}
+          onDelete={handleDeleteEntry}
+          onClearAll={handleClearAll}
+        />
       </div>
 
       {phase === "wizard" && (
