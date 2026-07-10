@@ -36,7 +36,7 @@ import MatchSimulator from "@/components/MatchSimulator";
 import AchievementBadges from "@/components/AchievementBadges";
 import { getBoost, runForecast } from "@/lib/forecast";
 import { loadSnapshots, saveSnapshot, computeMilestones } from "@/lib/history";
-import { loadBattleLog, getWinStreak, addBattle } from "@/lib/battleLog";
+import { loadBattleLog, getWinStreak } from "@/lib/battleLog";
 import { getGateStatus } from "@/components/PowerBrawlerGate";
 import { loadPlayer, savePlayer, DEFAULT_PLAYER } from "@/lib/playerStorage";
 import { exportCSV, exportPDF } from "@/lib/exports";
@@ -63,6 +63,8 @@ import { addRemoteBattle } from "@/lib/battleLog";
 import { primeAudio } from "@/lib/sfx";
 import { loadHistory as loadAssessmentHistory } from "@/lib/assessmentHistory";
 import BackendStatusChip from "@/components/BackendStatusChip";
+import RankUpChecklist from "@/components/RankUpChecklist";
+import RankUpSimulator from "@/components/RankUpSimulator";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -199,25 +201,6 @@ export default function Home() {
     setPlayer((p) => ({ ...p, ...powerData }));
   };
 
-  const handleFetchLogs = (battles, isMock) => {
-    let currentElo = player.currentElo;
-    for (const battle of battles) {
-      const { entry } = addBattle(currentElo, { ...battle, highestElo: player.highestElo });
-      currentElo = entry.eloAfter;
-    }
-    const newLog = loadBattleLog();
-    setBattleLog(newLog);
-    setPlayer((p) => ({
-      ...p,
-      currentElo,
-      highestElo: Math.max(p.highestElo || 0, currentElo),
-      currentSeasonHighest: Math.max(p.currentSeasonHighest || 0, currentElo),
-    }));
-    toast({
-      title: isMock ? "Mock Logs Loaded" : "Battle Logs Fetched",
-      description: `${battles.length} ranked battle${battles.length !== 1 ? "s" : ""} imported successfully.`,
-    });
-  };
 
   const handleBattleLogged = (entry, newLog) => {
     primeAudio();
@@ -503,7 +486,7 @@ export default function Home() {
             setPlayer={setPlayer}
             onSave={handleSave}
             onResetSeason={handleResetSeason}
-            onFetchLogs={handleFetchLogs}
+            
           />
         </motion.div>
 
@@ -513,6 +496,11 @@ export default function Home() {
 
         <motion.div {...fadeUp} transition={{ delay: 0.13 }}>
           <PromotionSeries player={player} battleLog={battleLog} />
+        </motion.div>
+
+        <motion.div {...fadeUp} transition={{ delay: 0.135 }} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <RankUpChecklist player={player} battleLog={battleLog} />
+          <RankUpSimulator player={player} battleLog={battleLog} />
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.14 }}>

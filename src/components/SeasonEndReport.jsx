@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Trophy, TrendingUp, Gamepad2, Target } from "lucide-react";
+import { Trophy, TrendingUp, Gamepad2, Target, Share2, Archive } from "lucide-react";
 import { getRank, TIER_COLORS } from "@/lib/ranks";
 import { TIER_BG, TIER_DECOR } from "@/lib/battleCards";
 import { computeSeasonReset } from "@/lib/seasonReset";
@@ -12,6 +12,8 @@ import SeasonTimeline from "@/components/SeasonTimeline";
 import SeasonBrawlerHighlight from "@/components/SeasonBrawlerHighlight";
 import { computeSeasonStory } from "@/lib/seasonStory";
 import { playCardSFX } from "@/lib/cardSfx";
+import { computeSeasonBadges, computeSeasonDiff, savePriorSeason } from "@/lib/seasonBadges";
+import { generateSeasonShareCard } from "@/lib/shareCard";
 
 // Season End Report — full-screen overlay with curtain reveal,
 // rank badge animation, stat grid, and Lilita One typography.
@@ -41,6 +43,22 @@ export default function SeasonEndReport({ player, battleLog, onClose }) {
   const seasonWinRate = seasonGames > 0 ? Math.round((wins / seasonGames) * 100) : 0;
   const funny = SUB_RANK_DESCRIPTIONS[peakRank.name]?.funny || "";
   const story = computeSeasonStory(realLog);
+  const badges = useMemo(() => computeSeasonBadges(player, realLog), [player, realLog]);
+  const compare = useMemo(() => computeSeasonDiff(player, realLog), [player, realLog]);
+  const [sharing, setSharing] = useState(false);
+
+  const handleShare = async () => {
+    setSharing(true);
+    try {
+      await generateSeasonShareCard({
+        peakRank, peakElo, wins, losses, games: seasonGames, winRate: seasonWinRate, badges,
+      });
+    } finally { setSharing(false); }
+  };
+
+  const handleArchive = () => {
+    savePriorSeason(player, realLog);
+  };
 
   useEffect(() => {
     const timers = [
@@ -320,6 +338,47 @@ export default function SeasonEndReport({ player, battleLog, onClose }) {
               </motion.div>
             )}
 
+            {/* Badges */}
+            {phase >= 3 && badges.length > 0 && (
+              <motion.div
+                className="w-full rounded-xl border p-3 mb-4"
+                style={{ background: `${c.from}10`, borderColor: `${c.from}33` }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <p className="text-xs font-bold text-foreground mb-2">Badges Earned ({badges.length})</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {badges.map((b) => (
+                    <div key={b.id}
+                      title={b.desc}
+                      className="rounded-lg border px-2 py-1 text-[11px] flex items-center gap-1"
+                      style={{ background: `${c.from}22`, borderColor: `${c.from}55`, color: c.text }}>
+                      <span>{b.emoji}</span><span className="font-bold">{b.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Prior season comparison */}
+            {phase >= 3 && compare.prior && (
+              <motion.div
+                className="w-full rounded-xl border p-3 mb-4"
+                style={{ background: `${c.from}10`, borderColor: `${c.from}33` }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <p className="text-xs font-bold text-foreground mb-2">vs. Previous Season</p>
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <Diff label="Peak" value={compare.diff.peakElo} />
+                  <Diff label="WR" value={compare.diff.winRate} suffix="%" />
+                  <Diff label="Games" value={compare.diff.games} />
+                  <Diff label="Streak" value={compare.diff.bestStreak} />
+                </div>
+              </motion.div>
+            )}
+
             {/* Reset info */}
             {phase >= 3 && (
               <motion.div
@@ -344,8 +403,27 @@ export default function SeasonEndReport({ player, battleLog, onClose }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mb-4"
+                className="mb-4 flex flex-wrap gap-2 justify-center"
               >
+                <Button
+                  onClick={handleShare}
+                  disabled={sharing}
+                  variant="outline"
+                  className="rounded-xl px-4 font-display tracking-wide gap-2"
+                  style={{ borderColor: `${c.text}55`, color: c.text }}
+                >
+                  <Share2 className="w-4 h-4" />
+                  {sharing ? "Rendering…" : "Share Card"}
+                </Button>
+                <Button
+                  onClick={handleArchive}
+                  variant="outline"
+                  className="rounded-xl px-4 font-display tracking-wide gap-2"
+                  style={{ borderColor: `${c.text}55`, color: c.text }}
+                >
+                  <Archive className="w-4 h-4" />
+                  Archive Season
+                </Button>
                 <Button
                   onClick={onClose}
                   className="rounded-xl px-8 font-display tracking-wide"
@@ -363,5 +441,18 @@ export default function SeasonEndReport({ player, battleLog, onClose }) {
         </div>
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+function Diff({ label, value, suffix = "" }) {
+  const positive = value > 0;
+  const zero = value === 0;
+  const tone = zero ? "text-muted-foreground" : positive ? "text-emerald-500" : "text-rose-500";
+  const sign = positive ? "+" : "";
+  return (
+    <div className="rounded-lg bg-muted/30 border border-border py-1.5">
+      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className={`text-xs font-display font-bold ${tone}`}>{zero ? "—" : `${sign}${value}${suffix}`}</p>
+    </div>
   );
 }

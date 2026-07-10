@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Save, Trophy, RotateCcw, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
-import FetchLogsButton from "@/components/FetchLogsButton";
+
 import { TIER_IMAGES, TIER_COLORS } from "@/lib/ranks";
 import { TRACKED_TIERS, getRankFrequency, setAllRankFrequency, getEffectLevel } from "@/lib/rankFrequency";
 
@@ -20,7 +20,7 @@ const fields = [
   { key: "winStreak",            label: "Current Win Streak",      type: "number" },
 ];
 
-export default function InputForm({ player, setPlayer, onSave, onResetSeason, onFetchLogs }) {
+export default function InputForm({ player, setPlayer, onSave, onResetSeason }) {
   const [freqOpen, setFreqOpen] = useState(false);
   const [freqEdits, setFreqEdits] = useState({});
 
@@ -129,12 +129,6 @@ export default function InputForm({ player, setPlayer, onSave, onResetSeason, on
           </Button>
         )}
       </div>
-
-      {onFetchLogs && (
-        <div className="mt-3">
-          <FetchLogsButton currentElo={player.currentElo} onFetch={onFetchLogs} />
-        </div>
-      )}
 
       {/* Rank Frequency — dedicated collapsible section */}
       <div className="mt-4 rounded-xl border border-border overflow-hidden">
