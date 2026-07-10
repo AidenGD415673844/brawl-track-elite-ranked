@@ -3,8 +3,9 @@
 // (Safari-friendly). Uses `html2canvas` if available; falls back to a hand-
 // drawn canvas so it works with zero deps.
 import { TIER_COLORS } from "@/lib/ranks";
+import { getRankTitle } from "@/lib/rankTitles";
 
-export async function generateSeasonShareCard({ peakRank, peakElo, wins, losses, games, winRate, badges }) {
+export async function generateSeasonShareCard({ peakRank, peakElo, wins, losses, games, winRate, badges, streak }) {
   const c = TIER_COLORS[peakRank.tier];
   const W = 1080, H = 1350;
   const canvas = document.createElement("canvas");
