@@ -8,7 +8,7 @@ import { TIER_COLORS, MAJOR_RANKS } from "@/lib/ranks";
 // premium even before animated overlays play. Higher tiers (Diamond+)
 // get more depth and vignettes so they never feel empty.
 export const TIER_BG = {
-  Bronze:    "linear-gradient(180deg, #3D1A0A 0%, #9A3412 40%, #C2410C 100%)",
+  Bronze:    "linear-gradient(180deg, #1F0A03 0%, #4A1D08 40%, #6B2A0D 100%)",
   Silver:    "linear-gradient(180deg, #1E293B 0%, #475569 45%, #94A3B8 100%)",
   Gold:      "linear-gradient(180deg, #78350F 0%, #D97706 35%, #FBBF24 100%)",
   Diamond:   "radial-gradient(ellipse at 50% 20%, #7DD3FC 0%, #0EA5E9 22%, #075985 55%, #0C1F3B 100%)",

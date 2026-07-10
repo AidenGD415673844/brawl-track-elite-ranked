@@ -137,10 +137,19 @@ function BronzeAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
-      {/* Brick pattern overlay — multiplies onto TIER_BG so brown gradient still reads */}
+      {/* Darker brown wash so bricks read without hiding TIER_BG */}
       <div
-        className="absolute inset-0 opacity-50 mix-blend-multiply"
+        className="absolute inset-0"
         style={{
+          background:
+            "linear-gradient(180deg, rgba(60,20,5,0.35) 0%, transparent 60%)",
+        }}
+      />
+      {/* Brick pattern overlay — light opacity, no blend so TIER_BG shows through */}
+      <div
+        className="absolute inset-0"
+        style={{
+          opacity: 0.28,
           backgroundImage: `
             linear-gradient(0deg, rgba(0,0,0,0.55) 0 2px, transparent 2px 30px),
             linear-gradient(90deg, rgba(0,0,0,0.55) 0 2px, transparent 2px 60px),
@@ -161,7 +170,6 @@ function BronzeAura() {
             animation: `bronze-bullet ${b.duration} ${b.delay} linear infinite`,
           }}
         >
-
           <div
             style={{
               width: 6,
@@ -180,6 +188,7 @@ function BronzeAura() {
   );
 }
 
+
 // ─── Silver ──────────────────────────────────────────────────
 function SilverAura() {
   const bolts = useMemo(
@@ -195,16 +204,6 @@ function SilverAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
-      {/* Stormy sheen */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(115deg, transparent 40%, rgba(226,232,240,0.35) 50%, transparent 60%)",
-          animation: "silver-sheen 2s ease-in-out infinite",
-          mixBlendMode: "screen",
-        }}
-      />
       {bolts.map((b, i) => (
         <div
           key={i}
@@ -236,19 +235,10 @@ function SilverAura() {
           </svg>
         </div>
       ))}
-      {/* Flash overlay — subtle so TIER_BG shows through */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "rgba(226,232,240,0.22)",
-          animation: "silver-flash 1.6s ease-in-out infinite",
-          mixBlendMode: "screen",
-        }}
-      />
-
     </div>
   );
 }
+
 
 // ─── Gold ────────────────────────────────────────────────────
 function GoldAura() {

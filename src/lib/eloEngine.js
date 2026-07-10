@@ -285,13 +285,16 @@ export function calculateElo(playerElo, opts = {}) {
     const floor = getFloorForElo(current, highestElo);
     if (floor > 0 && eloAfter < floor) eloAfter = floor;
 
-    // Diamond+ major-tier boundary safety net
+    // Mythic+ one-game safety net: any sub-rank boundary catches the first loss.
+    // If you were above `rankObj.min` and the loss would drop you below it,
+    // clamp to the baseline. Next loss will actually demote you a sub-rank.
     const curIdx = getRankIndex(current);
     const rankObj = RANKS[curIdx];
-    if (curIdx >= 9 && rankObj.roman === "I") {
+    if (curIdx >= 9 && rankObj) {
       const baseline = rankObj.min;
       if (current > baseline && eloAfter < baseline) eloAfter = baseline;
     }
+
   }
 
   eloAfter = Math.max(0, Math.round(eloAfter));

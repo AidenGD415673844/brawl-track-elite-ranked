@@ -31,19 +31,14 @@ export const PLACEHOLDER_BRAWLER =
     <text x="40" y="48" font-size="32" text-anchor="middle" fill="#64748b" font-family="sans-serif" font-weight="bold">?</text>
   </svg>`);
 
-export const BRAWLERS = [
-  "8-Bit", "Amber", "Angelo", "Ash", "Barley", "Bea", "Belle", "Berry",
-  "Bibi", "Bo", "Bonnie", "Brock", "Bull", "Buster", "Buzz", "Byron",
-  "Carl", "Charlie", "Chester", "Chuck", "Clancy", "Colette", "Colt", "Cordelius",
-  "Crow", "Darryl", "Doug", "Draco", "Dynamike", "Edgar", "El Primo", "Emz",
-  "Eve", "Fang", "Frank", "Gale", "Gene", "Gray", "Griff", "Grom",
-  "Gus", "Hank", "Jacky", "Janet", "Jessie", "Kenji", "Kit", "Larry & Lawrie",
-  "Leon", "Lily", "Lola", "Lou", "Maddie", "Maisie", "Mandy", "Max",
-  "Meg", "Melodie", "Mico", "Moe", "Mortis", "Mr. P", "Nani", "Nita",
-  "Otis", "Pam", "Pearl", "Penny", "Piper", "Poco", "R-T", "Rico",
-  "Rosa", "Ruffs", "Sam", "Sandy", "Shade", "Shelly", "Spike", "Sprout",
-  "Squeak", "Starr Nova", "Stu", "Surge", "Tara", "Tick", "Willow",
-];
+// Auto-derived from BRAWLER_IDS so future additions to the ID map
+// (Alli, Bolt, Damian, Buzz Lightyear, etc.) show up in every dropdown
+// without touching UI code. "Maddie" is excluded (not a real brawler).
+const EXCLUDED_BRAWLERS = new Set(["Maddie"]);
+export const BRAWLERS = Object.keys(BRAWLER_IDS)
+  .filter((name) => !EXCLUDED_BRAWLERS.has(name))
+  .sort((a, b) => a.localeCompare(b));
+
 
 export const MAPS = [
   "Skull Creek", "Backyard Bowl", "Super City Stadium", "Hard Rock Mine",
