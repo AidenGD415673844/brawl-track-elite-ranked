@@ -12,26 +12,27 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
+    const authHeader = req.headers.get('Authorization') || ''
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
+    if (!token) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-    )
-    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(
-      authHeader.replace('Bearer ', ''),
-    )
-    if (claimsErr || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    // Accept either the project's anon key (app has no user auth) or a valid user JWT.
+    if (token !== anonKey) {
+      const supabase = createClient(Deno.env.get('SUPABASE_URL')!, anonKey)
+      const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token)
+      if (claimsErr || !claimsData?.claims) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
     }
+
 
     const apiKey = Deno.env.get('BRAWL_STARS_API_KEY')
     if (!apiKey) {
