@@ -605,6 +605,7 @@ export default function Home() {
 
         <motion.div {...fadeUp} transition={{ delay: 0.6 }}>
           <RankScale elo={player.currentElo} seasonHighest={player.currentSeasonHighest} />
+          <RankTitleBadge player={player} battleLog={battleLog} className="mt-2 justify-center" />
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.65 }}>
