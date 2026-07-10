@@ -51,10 +51,19 @@ function useDeviceTilt() {
 export default function ShatterBurst({ color, delay = 0, intensity = 0.5 }) {
   const tilt = useDeviceTilt();
 
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  // Cap intensity so wild deltas don't spawn hundreds of shards on low-end devices
+  const cappedIntensity = Math.min(0.85, Math.max(0, intensity));
+
   const shards = useMemo(() => {
-    const count = Math.round(12 + intensity * 12);
-    const maxDistance = 140 + intensity * 260;
-    const maxRotation = 360 + intensity * 720;
+    if (prefersReducedMotion) return [];
+    const count = Math.round(12 + cappedIntensity * 10);
+    const maxDistance = 140 + cappedIntensity * 220;
+    const maxRotation = 360 + cappedIntensity * 540;
 
     return Array.from({ length: count }, (_, i) => {
       const angle = (i / count) * 360 + (Math.random() * 15 - 7.5);
@@ -64,13 +73,13 @@ export default function ShatterBurst({ color, delay = 0, intensity = 0.5 }) {
         x: Math.cos(rad) * distance,
         y: Math.sin(rad) * distance,
         rotate: Math.random() * maxRotation - maxRotation / 2,
-        size: 8 + Math.random() * (12 + intensity * 10),
+        size: 8 + Math.random() * (12 + cappedIntensity * 8),
         delayOffset: Math.random() * 0.08,
-        duration: 0.7 + Math.random() * (0.4 + intensity * 0.4),
+        duration: 0.7 + Math.random() * (0.4 + cappedIntensity * 0.4),
         isAccent: i % 3 === 0,
       };
     });
-  }, [delay, intensity]);
+  }, [delay, cappedIntensity, prefersReducedMotion]);
 
   // Tilt drift: shards lean toward the device tilt direction
   const driftX = tilt.x * 2;
@@ -78,6 +87,15 @@ export default function ShatterBurst({ color, delay = 0, intensity = 0.5 }) {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[25]">
+      {prefersReducedMotion && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(circle at center, ${color.glow}, transparent 60%)`,
+            opacity: 0.6,
+          }}
+        />
+      )}
       {shards.map((s, i) => (
         <motion.div
           key={i}

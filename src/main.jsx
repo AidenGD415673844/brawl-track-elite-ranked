@@ -1,14 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from '@/App.jsx'
 import '@/index.css'
 
-const root = ReactDOM.createRoot(document.getElementById('root'))
-try {
-  root.render(<App />)
-} catch (err) {
-  console.error("Fatal render error:", err)
-  root.render(
+const rootEl = document.getElementById('root')
+const root = ReactDOM.createRoot(rootEl)
+
+function FallbackScreen({ err }) {
+  return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
       background: "#0a0c14", color: "#e2e8f0", fontFamily: "system-ui, sans-serif", padding: 24
@@ -18,8 +16,8 @@ try {
           BrawlTrack Elite
         </div>
         <div style={{ opacity: 0.85, marginBottom: 16 }}>
-          The app failed to start. This usually means the deployed build is missing
-          backend configuration. Try republishing from the editor.
+          The app failed to start. The deployed build is likely missing backend
+          configuration. Republish from the editor to refresh it.
         </div>
         <pre style={{
           textAlign: "left", background: "#0f1420", padding: 12, borderRadius: 8,
@@ -33,3 +31,20 @@ try {
     </div>
   )
 }
+
+// Dynamic import so module-load errors (e.g. Supabase client throwing
+// "supabaseUrl is required" when env vars weren't baked into the build) are
+// caught here and shown as a helpful fallback instead of a blank white page.
+;(async () => {
+  try {
+    const { default: App } = await import('@/App.jsx')
+    root.render(<App />)
+  } catch (err) {
+    console.error("Fatal module-load error:", err)
+    try {
+      root.render(<FallbackScreen err={err} />)
+    } catch {
+      rootEl.innerHTML = `<pre style="padding:24px;color:#e2e8f0;background:#0a0c14;min-height:100vh;">${String(err?.message || err)}</pre>`
+    }
+  }
+})()
