@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, ArrowRight, Trophy } from "lucide-react";
 import RankBadge from "@/components/RankBadge";
 import ShatterBurst from "@/components/ShatterBurst";
 import { TIER_COLORS } from "@/lib/ranks";
+import RankTitleBadge from "@/components/RankTitleBadge";
 
 // Big-reveal presentation of the Deserved Rank result.
 // Shows current → deserved rank with a tier-colored ShatterBurst,
