@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, AlertCircle, Info } from "lucide-react";
-import { fetchBattles } from "@/lib/brawlStarsApi";
-import { isMockDataEnabled } from "@/lib/appSettings";
+import { Download, Loader2, AlertCircle, Info, FlaskConical } from "lucide-react";
+import { fetchBattles, generateMockBattles } from "@/lib/brawlStarsApi";
+import { isMockDataEnabled, setMockDataEnabled } from "@/lib/appSettings";
+import BackendStatusChip from "@/components/BackendStatusChip";
 
 // FetchLogsButton — fetches ranked battle logs from the Brawl Stars API
 // or generates mock data if the toggle is enabled in Settings.
@@ -10,7 +11,15 @@ export default function FetchLogsButton({ currentElo, onFetch }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [emptyMsg, setEmptyMsg] = useState(false);
-  const mockEnabled = isMockDataEnabled();
+  const [mockEnabled, setMockEnabled] = useState(isMockDataEnabled());
+
+  const loadMockLogs = () => {
+    setMockDataEnabled(true);
+    setMockEnabled(true);
+    setError(null);
+    setEmptyMsg(false);
+    onFetch(generateMockBattles(currentElo), true);
+  };
 
   const handleClick = async () => {
     setLoading(true);
@@ -43,6 +52,15 @@ export default function FetchLogsButton({ currentElo, onFetch }) {
 
   return (
     <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <BackendStatusChip probe compact />
+        {mockEnabled && (
+          <span className="inline-flex items-center gap-1 rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/10 px-2 py-1 text-[10px] font-bold text-fuchsia-300">
+            <FlaskConical className="h-3 w-3" /> Mock ready
+          </span>
+        )}
+      </div>
+
       <Button
         onClick={handleClick}
         disabled={loading}
@@ -61,10 +79,21 @@ export default function FetchLogsButton({ currentElo, onFetch }) {
       </Button>
 
       {error && (
-        <p className="text-[10px] text-red-500 flex items-start gap-1">
-          <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
-          {error}
-        </p>
+        <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-2">
+          <p className="text-[10px] text-red-400 flex items-start gap-1">
+            <AlertCircle className="w-3 h-3 mt-0.5 shrink-0" />
+            <span>{error}</span>
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={loadMockLogs}
+            className="mt-2 h-7 w-full rounded-lg border-red-500/20 bg-card text-[10px] text-foreground hover:bg-muted"
+          >
+            <FlaskConical className="mr-1.5 h-3 w-3" /> Use mock logs now
+          </Button>
+        </div>
       )}
 
       {emptyMsg && (

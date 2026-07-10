@@ -62,6 +62,7 @@ import { broadcastBattle, onReceiveBattle, disconnect as disconnectP2P } from "@
 import { addRemoteBattle } from "@/lib/battleLog";
 import { primeAudio } from "@/lib/sfx";
 import { loadHistory as loadAssessmentHistory } from "@/lib/assessmentHistory";
+import BackendStatusChip from "@/components/BackendStatusChip";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -481,6 +482,7 @@ export default function Home() {
                 <SettingsIcon className="w-4 h-4 mr-2" /> Settings
               </Button>
             </Link>
+            <BackendStatusChip compact />
           </div>
         </motion.header>
 
