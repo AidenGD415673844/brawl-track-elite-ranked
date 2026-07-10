@@ -498,6 +498,11 @@ export default function Home() {
           <PromotionSeries player={player} battleLog={battleLog} />
         </motion.div>
 
+        <motion.div {...fadeUp} transition={{ delay: 0.135 }} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <RankUpChecklist player={player} battleLog={battleLog} />
+          <RankUpSimulator player={player} battleLog={battleLog} />
+        </motion.div>
+
         <motion.div {...fadeUp} transition={{ delay: 0.14 }}>
           <SummaryCards player={player} />
         </motion.div>
