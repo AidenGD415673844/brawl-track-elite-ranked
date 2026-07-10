@@ -10,7 +10,7 @@ import { TIER_COLORS } from "@/lib/ranks";
 // Big-reveal presentation of the Deserved Rank result.
 // Shows current → deserved rank with a tier-colored ShatterBurst,
 // a skill breakdown per category, and the per-adjustment table.
-export default function DeservedRankReveal({ result, onDone, onRetake }) {
+export default function DeservedRankReveal({ result, onDone, onRetake, readOnly = false }) {
   const [showBurst, setShowBurst] = useState(false);
 
   useEffect(() => {
