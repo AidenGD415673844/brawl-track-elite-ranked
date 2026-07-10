@@ -148,14 +148,20 @@ export default function Home() {
     [snapshots, battleLog]
   );
 
-  // Days since last Deserved Rank assessment (null if <7 or none)
+  // Re-assessment reminder — trigger after 7+ days OR 20+ new logged matches
+  // since the most recent assessment. Returns { days, matches, reason } or null.
   const assessmentReminder = useMemo(() => {
     if (loading) return null;
     const hist = loadAssessmentHistory();
     if (!hist.length) return null;
-    const days = Math.floor((Date.now() - hist[0].timestamp) / 86400000);
-    return days >= 7 ? days : null;
-  }, [loading]);
+    const last = hist[0];
+    const days = Math.floor((Date.now() - last.timestamp) / 86400000);
+    const realNow = battleLog.filter((e) => !e.manual).length;
+    const newMatches = Math.max(0, realNow - (last.sampleSize || 0));
+    if (days >= 7) return { days, matches: newMatches, reason: "week" };
+    if (newMatches >= 20) return { days, matches: newMatches, reason: "matches" };
+    return null;
+  }, [loading, battleLog]);
 
   const handleSave = () => {
     setSnapshots(saveSnapshot(player));
