@@ -12,6 +12,7 @@ import Home from './pages/Home';
 import Settings from './pages/Settings';
 import SquadDashboard from './pages/SquadDashboard';
 import BrawlSpaces from './pages/BrawlSpaces';
+import DeservedRank from './pages/DeservedRank';
 
 const AuthenticatedApp = () => {
   return (
@@ -19,6 +20,7 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<Home />} />
       <Route path="/brawlspaces" element={<BrawlSpaces />} />
       <Route path="/squad" element={<SquadDashboard />} />
+      <Route path="/deserved-rank" element={<DeservedRank />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
