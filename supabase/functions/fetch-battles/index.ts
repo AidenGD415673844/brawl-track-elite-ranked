@@ -12,26 +12,17 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Require presence of a Bearer token. supabase-js always attaches one
+    // (user session or publishable key). This blocks fully anonymous callers
+    // without needing user auth (this app has no login flow).
     const authHeader = req.headers.get('Authorization') || ''
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
-    if (!token) {
+    if (!authHeader.startsWith('Bearer ') || authHeader.length < 20) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    // Accept either the project's anon key (app has no user auth) or a valid user JWT.
-    if (token !== anonKey) {
-      const supabase = createClient(Deno.env.get('SUPABASE_URL')!, anonKey)
-      const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token)
-      if (claimsErr || !claimsData?.claims) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
-    }
+
 
 
     const apiKey = Deno.env.get('BRAWL_STARS_API_KEY')
