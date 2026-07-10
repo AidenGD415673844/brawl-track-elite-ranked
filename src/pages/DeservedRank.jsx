@@ -177,6 +177,7 @@ export default function DeservedRank() {
           onRerun={handleRerunEntry}
           onDelete={handleDeleteEntry}
           onClearAll={handleClearAll}
+          onImport={(entries) => { importHistory(entries); refreshHistory(); }}
         />
       </div>
 
