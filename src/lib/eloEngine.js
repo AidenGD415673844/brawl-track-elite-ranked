@@ -27,7 +27,8 @@ const TIER_BOUNDS = {
 const UNDERDOG_BONUS = 5;
 
 // Permanent major-rank floors — Bronze through Gold can't drop below these.
-const RANK_FLOORS = { Bronze: 0, Silver: 750, Gold: 1500 };
+// Diamond floor is a permanent 3000 safety net once a player has ever reached Diamond.
+const RANK_FLOORS = { Bronze: 0, Silver: 750, Gold: 1500, Diamond: 3000 };
 
 // Match format: Mythic+ is Best of 3, below is Best of 1
 export function getFormatForTier(tier) {
