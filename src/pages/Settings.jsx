@@ -16,6 +16,16 @@ export default function Settings() {
   const { theme, toggleTheme } = useTheme();
   const [tiltLock, setTiltLock] = React.useState(isTiltLockEnabled());
   const [threshold, setThreshold] = React.useState(getTiltLockThreshold());
+  const [perfMode, setPerfMode] = React.useState(() => {
+    try { return localStorage.getItem("tierAnimPerf") || "auto"; } catch { return "auto"; }
+  });
+  const updatePerf = (mode) => {
+    setPerfMode(mode);
+    try {
+      if (mode === "auto") localStorage.removeItem("tierAnimPerf");
+      else localStorage.setItem("tierAnimPerf", mode);
+    } catch {}
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
