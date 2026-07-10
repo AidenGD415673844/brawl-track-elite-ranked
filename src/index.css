@@ -239,3 +239,70 @@
   }
 }
 
+
+/* ── TierExtras: layered flourishes on top of the base aura ── */
+
+/* Bronze: rising dust puff at the bottom edge every 3s */
+@keyframes tier-bronze-dust {
+  0%   { transform: translate(-50%, 20%) scale(0.5); opacity: 0; }
+  30%  { opacity: 0.55; }
+  100% { transform: translate(-50%, -60%) scale(1.4); opacity: 0; }
+}
+.tier-bronze-dust {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  width: 60%;
+  height: 24%;
+  background: radial-gradient(ellipse at center, rgba(180,120,60,0.55), rgba(120,70,30,0) 70%);
+  filter: blur(6px);
+  will-change: transform, opacity;
+  animation: tier-bronze-dust 3s ease-out infinite;
+}
+
+/* Mythic: rising purple embers */
+@keyframes tier-mythic-ember {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateY(-60%) scale(1); opacity: 0; }
+}
+.tier-mythic-ember {
+  position: absolute;
+  bottom: 5%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: radial-gradient(circle, #f0abfc, #a855f7 60%, transparent 80%);
+  box-shadow: 0 0 8px rgba(168,85,247,0.8);
+  will-change: transform, opacity;
+  animation: tier-mythic-ember 2.4s ease-out infinite;
+}
+
+/* Legendary: heat haze pulse over the bottom third */
+@keyframes tier-legendary-haze {
+  0%, 100% { filter: blur(0px); opacity: 0.35; }
+  50%      { filter: blur(0.6px); opacity: 0.6; }
+}
+.tier-legendary-haze {
+  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.14) 60%, rgba(220,38,38,0.18));
+  will-change: filter, opacity;
+  animation: tier-legendary-haze 2.2s ease-in-out infinite;
+}
+
+/* Masters: expanding shockwave ring every 2s */
+@keyframes tier-masters-shockwave {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0.85; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+.tier-masters-shockwave {
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  width: 40%;
+  aspect-ratio: 1 / 1;
+  border-radius: 999px;
+  border: 2px solid rgba(251,191,36,0.6);
+  box-shadow: 0 0 20px rgba(251,146,60,0.6) inset;
+  will-change: transform, opacity;
+  animation: tier-masters-shockwave 2s ease-out infinite;
+}
