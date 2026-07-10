@@ -25,7 +25,7 @@ export default function BackendStatusChip({ probe = false, compact = false }) {
     let cancelled = false;
     if (!probe) return undefined;
 
-    probeBackendFunction("fetch-battles", { playerTag: "#2PP" }).then((next) => {
+    probeBackendFunction("livekit-token", { roomName: "probe", identity: "probe" }).then((next) => {
       if (!cancelled) setStatus(next);
     });
 
