@@ -225,6 +225,39 @@
   100% { transform: translate(var(--dx), calc(var(--dy) + 25px)) rotate(var(--rot)); opacity: 0; }
 }
 
+/* Mythic — big purple explosion bursts (flash + shockwave ring + chunks) */
+@keyframes mythic-blast {
+  0%   { transform: scale(0.2); opacity: 0; }
+  15%  { transform: scale(1); opacity: 1; }
+  55%  { transform: scale(1.5); opacity: 0.45; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes mythic-ring {
+  0%   { transform: scale(0.3); opacity: 0; border-width: 3px; }
+  20%  { opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; border-width: 1px; }
+}
+@keyframes mythic-chunk {
+  0%   { transform: translate(0,0) rotate(0deg); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + 20px)) rotate(var(--rot)); opacity: 0; }
+}
+
+/* Pro — golden crowns rising from below */
+@keyframes pro-crown-rise {
+  0%   { transform: translateY(20px) rotate(-6deg) scale(0.6); opacity: 0; }
+  15%  { opacity: 1; }
+  70%  { opacity: 0.9; }
+  100% { transform: translateY(-140px) rotate(8deg) scale(1); opacity: 0; }
+}
+
+/* Masters — concrete chunk rotation */
+@keyframes masters-chunk-spin {
+  0%   { transform: translate(0,0) rotate(0deg); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + 15px)) rotate(var(--rot)); opacity: 0; }
+}
+
 /* Aurora background for the whole app */
 @keyframes app-aurora {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
