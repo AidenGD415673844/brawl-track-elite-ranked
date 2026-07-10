@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Trophy, TrendingUp, Gamepad2, Target } from "lucide-react";
+import { Trophy, TrendingUp, Gamepad2, Target, Share2, Archive } from "lucide-react";
 import { getRank, TIER_COLORS } from "@/lib/ranks";
 import { TIER_BG, TIER_DECOR } from "@/lib/battleCards";
 import { computeSeasonReset } from "@/lib/seasonReset";
@@ -12,6 +12,8 @@ import SeasonTimeline from "@/components/SeasonTimeline";
 import SeasonBrawlerHighlight from "@/components/SeasonBrawlerHighlight";
 import { computeSeasonStory } from "@/lib/seasonStory";
 import { playCardSFX } from "@/lib/cardSfx";
+import { computeSeasonBadges, computeSeasonDiff, savePriorSeason } from "@/lib/seasonBadges";
+import { generateSeasonShareCard } from "@/lib/shareCard";
 
 // Season End Report — full-screen overlay with curtain reveal,
 // rank badge animation, stat grid, and Lilita One typography.
