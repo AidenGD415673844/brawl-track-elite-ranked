@@ -20,6 +20,25 @@ const fields = [
   { key: "winStreak",            label: "Current Win Streak",      type: "number" },
 ];
 
+function FrequencyStars({ count, color }) {
+  const lit = Math.min(6, Math.max(0, Number(count) || 0));
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`${lit} of 6 stars`}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <svg key={i} width="11" height="11" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+          <path
+            d="M12,2 L14.5,9 L22,9.5 L16,14.5 L18,22 L12,17.5 L6,22 L8,14.5 L2,9.5 L9.5,9 Z"
+            fill={i < lit ? color.text : "rgba(255,255,255,0.13)"}
+            stroke={i < lit ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.24)"}
+            strokeWidth="1"
+            style={i < lit ? { filter: `drop-shadow(0 0 4px ${color.glow || color.text})` } : undefined}
+          />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 export default function InputForm({ player, setPlayer, onSave, onResetSeason }) {
   const [freqOpen, setFreqOpen] = useState(false);
   const [freqEdits, setFreqEdits] = useState({});
@@ -161,7 +180,10 @@ export default function InputForm({ player, setPlayer, onSave, onResetSeason }) 
                       className="w-6 h-6 object-contain shrink-0"
                       style={{ filter: level >= 2 ? `drop-shadow(0 0 6px ${tc.glow})` : "none" }}
                     />
-                    <span className="text-[9px] font-bold flex-1 truncate" style={{ color: tc.text }}>{tier}</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="block text-[9px] font-bold truncate" style={{ color: tc.text }}>{tier}</span>
+                      <FrequencyStars count={count} color={tc} />
+                    </div>
                     <Input
                       type="number"
                       min="0"
