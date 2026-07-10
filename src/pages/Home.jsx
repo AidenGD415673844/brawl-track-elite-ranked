@@ -57,7 +57,6 @@ import SeasonEndReport from "@/components/SeasonEndReport";
 import SeasonMomentumTracker from "@/components/SeasonMomentumTracker";
 import SafetyNetSimulator from "@/components/SafetyNetSimulator";
 import PromotionSeries from "@/components/PromotionSeries";
-import { Link } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { broadcastBattle, onReceiveBattle, disconnect as disconnectP2P } from "@/lib/p2pSync";
 import { addRemoteBattle } from "@/lib/battleLog";
