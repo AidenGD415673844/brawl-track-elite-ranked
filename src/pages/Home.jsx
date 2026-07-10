@@ -420,7 +420,11 @@ export default function Home() {
                 {assessmentReminder && (
                   <span
                     className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-background"
-                    title={`It's been ${assessmentReminder}d since your last assessment`}
+                    title={
+                      assessmentReminder.reason === "matches"
+                        ? `${assessmentReminder.matches} new matches since your last assessment — retake it`
+                        : `It's been ${assessmentReminder.days}d since your last assessment`
+                    }
                   >
                     !
                   </span>
