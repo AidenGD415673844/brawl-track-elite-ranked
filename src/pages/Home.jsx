@@ -417,7 +417,9 @@ export default function Home() {
               onClick={() => {
                 const res = exportCSV(player, forecast, snapshots, battleLog);
                 toast(res?.success
-                  ? { title: "CSV exported", description: "Your data has been downloaded." }
+                  ? { title: "CSV exported", description: res.ios
+                      ? "Opened in a new tab — use Share → Save to Files."
+                      : "Your data has been downloaded." }
                   : { title: "CSV export failed", description: res?.error || "Unknown error", variant: "destructive" });
               }}
               className="border-border bg-card text-foreground hover:bg-muted rounded-xl"
@@ -429,7 +431,9 @@ export default function Home() {
               onClick={() => {
                 const res = exportPDF(player, forecast, battleLog);
                 toast(res?.success
-                  ? { title: "PDF exported", description: "Your report has been downloaded." }
+                  ? { title: "PDF exported", description: res.ios
+                      ? "Opened in a new tab — use Share → Save to Files."
+                      : "Your report has been downloaded." }
                   : { title: "PDF export failed", description: res?.error || "Unknown error", variant: "destructive" });
               }}
               className="border-border bg-card text-foreground hover:bg-muted rounded-xl"

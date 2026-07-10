@@ -286,8 +286,9 @@ export function exportPDF(player, forecast, battleLog = []) {
       });
     }
 
-    doc.save("ranked-analytics.pdf");
-    return { success: true };
+    const blob = doc.output("blob");
+    const { ios } = downloadBlob(blob, "ranked-analytics.pdf");
+    return { success: true, ios };
   } catch (err) {
     console.error("PDF export failed:", err);
     return { success: false, error: err.message || "Failed to export PDF." };
