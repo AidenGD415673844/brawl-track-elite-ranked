@@ -61,6 +61,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { broadcastBattle, onReceiveBattle, disconnect as disconnectP2P } from "@/lib/p2pSync";
 import { addRemoteBattle } from "@/lib/battleLog";
 import { primeAudio } from "@/lib/sfx";
+import { loadHistory as loadAssessmentHistory } from "@/lib/assessmentHistory";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -82,6 +83,11 @@ export default function Home() {
     const p = loadPlayer();
     const s = loadSnapshots();
     const bl = loadBattleLog();
+    // Safety net: season-highest should never sit below current Elo
+    if ((p.currentSeasonHighest || 0) < (p.currentElo || 0)) {
+      p.currentSeasonHighest = p.currentElo;
+      savePlayer(p);
+    }
     setPlayer(p);
     setSnapshots(s);
     setBattleLog(bl);
@@ -138,6 +144,15 @@ export default function Home() {
     () => computeMilestones(snapshots, battleLog),
     [snapshots, battleLog]
   );
+
+  // Days since last Deserved Rank assessment (null if <7 or none)
+  const assessmentReminder = useMemo(() => {
+    if (loading) return null;
+    const hist = loadAssessmentHistory();
+    if (!hist.length) return null;
+    const days = Math.floor((Date.now() - hist[0].timestamp) / 86400000);
+    return days >= 7 ? days : null;
+  }, [loading]);
 
   const handleSave = () => {
     setSnapshots(saveSnapshot(player));
@@ -408,10 +423,18 @@ export default function Home() {
                 variant="outline"
                 title="Assess Rank"
                 aria-label="Assess Rank"
-                className="border-border bg-card text-foreground hover:bg-muted rounded-xl px-3 sm:px-4"
+                className="border-border bg-card text-foreground hover:bg-muted rounded-xl px-3 sm:px-4 relative"
               >
                 <Sparkles className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Assess Rank</span>
+                {assessmentReminder && (
+                  <span
+                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-background"
+                    title={`It's been ${assessmentReminder}d since your last assessment`}
+                  >
+                    !
+                  </span>
+                )}
               </Button>
             </Link>
             <Button
