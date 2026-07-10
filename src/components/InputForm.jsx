@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Save, Trophy, RotateCcw, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
-import FetchLogsButton from "@/components/FetchLogsButton";
+
 import { TIER_IMAGES, TIER_COLORS } from "@/lib/ranks";
 import { TRACKED_TIERS, getRankFrequency, setAllRankFrequency, getEffectLevel } from "@/lib/rankFrequency";
 
