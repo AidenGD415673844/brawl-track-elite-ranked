@@ -65,6 +65,7 @@ import { loadHistory as loadAssessmentHistory } from "@/lib/assessmentHistory";
 import BackendStatusChip from "@/components/BackendStatusChip";
 import RankUpChecklist from "@/components/RankUpChecklist";
 import RankUpSimulator from "@/components/RankUpSimulator";
+import RankTitleBadge from "@/components/RankTitleBadge";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
