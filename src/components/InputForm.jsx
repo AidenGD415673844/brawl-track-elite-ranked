@@ -130,12 +130,6 @@ export default function InputForm({ player, setPlayer, onSave, onResetSeason }) 
         )}
       </div>
 
-      {onFetchLogs && (
-        <div className="mt-3">
-          <FetchLogsButton currentElo={player.currentElo} onFetch={onFetchLogs} />
-        </div>
-      )}
-
       {/* Rank Frequency — dedicated collapsible section */}
       <div className="mt-4 rounded-xl border border-border overflow-hidden">
         <button
