@@ -455,10 +455,4 @@ function Diff({ label, value, suffix = "" }) {
       <p className={`text-xs font-display font-bold ${tone}`}>{zero ? "—" : `${sign}${value}${suffix}`}</p>
     </div>
   );
-            )}
-          </div>
-        </div>
-      </motion.div>
-    </AnimatePresence>
-  );
 }
