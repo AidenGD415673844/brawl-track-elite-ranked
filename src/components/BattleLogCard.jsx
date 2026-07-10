@@ -4,6 +4,7 @@ import { getRank, TIER_COLORS } from "@/lib/ranks";
 import { computeParticipantTransitions } from "@/lib/battleLog";
 import { computeFairness, computeWhatIf } from "@/lib/matchAnalysis";
 import RankBadge from "@/components/RankBadge";
+import BrawlerPortrait from "@/components/BrawlerPortrait";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import { Clock, Sliders, Trash2, Star, Pencil, FlaskConical, BarChart3, Trophy, Gauge, Swords, Shield, Flame } from "lucide-react";
 
