@@ -54,6 +54,38 @@ export default function Settings() {
         </div>
 
         <Card className="bg-card border-border p-5 rounded-2xl">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
+                {isAuthenticated ? <LogOut className="w-5 h-5 text-white" /> : <LogIn className="w-5 h-5 text-white" />}
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground">
+                  {isAuthenticated ? "Signed in" : "Account (optional)"}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {isAuthenticated
+                    ? user?.email
+                    : "Sign in for real-time rooms & battle sharing. Not needed for tracking."}
+                </p>
+              </div>
+            </div>
+            {isAuthenticated ? (
+              <Button onClick={logout} variant="outline" className="rounded-xl">
+                Sign out
+              </Button>
+            ) : (
+              <Link to="/auth">
+                <Button className="rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white">
+                  Sign in
+                </Button>
+              </Link>
+            )}
+          </div>
+        </Card>
+
+
+        <Card className="bg-card border-border p-5 rounded-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-purple-600 flex items-center justify-center">
