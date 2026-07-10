@@ -118,6 +118,8 @@ export function entryToResult(entry) {
     adjustments: entry.adjustments,
     confidence: entry.confidence,
     sampleSize: entry.sampleSize,
+    focusNotes: entry.focusNotes,
+    gapExplanation: entry.gapExplanation,
     savedAt: entry.timestamp,
   };
 }
