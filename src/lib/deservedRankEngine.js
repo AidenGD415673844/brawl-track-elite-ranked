@@ -229,18 +229,17 @@ export function computeDeservedRank(player, responses, battleLog = []) {
   let deservedElo = Math.max(0, baseElo + totalAdjust);
 
   // ─── Evidence gates: high tiers require real proof ─────
-  // Masters (8250+) needs ≥20 real matches AND winRate ≥58%.
-  // Pro (11250+) needs ≥40 matches AND winRate ≥62% AND ≥30% star rate.
-  if (deservedElo >= 8250 && !(real.length >= 20 && winRate >= 58)) {
+  if (deservedElo >= 8250 && !(real.length >= 20 && winRate >= 60)) {
     deservedElo = Math.min(deservedElo, 8000);
   }
-  if (deservedElo >= 11250 && !(real.length >= 40 && winRate >= 62 && starRate >= 0.3)) {
+  if (deservedElo >= 11250 && !(real.length >= 40 && winRate >= 64 && starRate >= 0.33)) {
     deservedElo = Math.min(deservedElo, 10500);
   }
-  // Low-confidence samples get capped at Diamond III until they prove themselves.
-  if (confidence < 0.3 && deservedElo > 4499) {
-    deservedElo = 4499;
+  // Low-confidence samples get capped at Diamond I until they prove themselves.
+  if (confidence < 0.3 && deservedElo > 3749) {
+    deservedElo = 3749;
   }
+
   deservedElo = Math.min(RANKS[RANKS.length - 1].min + 2000, deservedElo);
 
   const currentRank = getRank(currentElo);
