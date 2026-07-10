@@ -103,6 +103,32 @@ export default function Settings() {
             />
           </div>
         </Card>
+
+        <Card className="bg-card border-border p-5 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-500 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-foreground">Tier Animation Performance</h3>
+              <p className="text-xs text-muted-foreground">
+                Auto reduces heavy tier auras on low-power devices. Force high for full effects, low to save battery.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {["auto", "high", "low"].map((mode) => (
+              <Button
+                key={mode}
+                onClick={() => updatePerf(mode)}
+                variant={perfMode === mode ? "default" : "outline"}
+                className="rounded-xl capitalize"
+              >
+                {mode}
+              </Button>
+            ))}
+          </div>
+        </Card>
       </div>
     </div>
   );
