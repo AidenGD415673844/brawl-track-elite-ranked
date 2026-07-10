@@ -149,6 +149,11 @@ export default function DeservedRankReveal({ result, onDone, onRetake, readOnly 
             <p className="text-sm text-center text-foreground mt-2 max-w-md">
               {result.verdict}
             </p>
+            <RankTitleBadge
+              rankName={result.deservedRank.name}
+              deservedGap={result.deltaElo}
+              className="mt-1 justify-center"
+            />
           </motion.div>
         </Card>
 
