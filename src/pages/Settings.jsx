@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, ArrowLeft, Radio, ShieldAlert, Zap, Vibrate, Sparkles, LogIn, LogOut } from "lucide-react";
+import { Sun, Moon, ArrowLeft, ShieldAlert, Zap, Vibrate, Sparkles, LogIn, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 import { useAuth } from "@/lib/AuthContext";
