@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { FileDown, FileText, Gauge, Settings as SettingsIcon, Users, Flag, Sparkles } from "lucide-react";
+import { FileDown, FileText, Gauge, Settings as SettingsIcon, Users, Flag, Sparkles, Undo2 } from "lucide-react";
 import InputForm from "@/components/InputForm";
 import ProfileBadge from "@/components/ProfileBadge";
 import SummaryCards from "@/components/SummaryCards";
