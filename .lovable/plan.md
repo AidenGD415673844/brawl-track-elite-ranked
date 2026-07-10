@@ -1,78 +1,87 @@
-# BrawlTrack Elite Upgrade Plan
+# Plan — Battle Card Polish, Rank Meme Titles, Simulator Fix
 
-## Hotfix Completed
+## 1. Bug fix — Rank-Up Simulator breaks after "New Season"
 
-- Removed the fatal startup dependency on the backend client from battle-log fetching and P2P sync.
-- The app now renders even if the deployed build is missing backend env config instead of stopping at `supabaseUrl is required`.
-- Verified locally with an iPad/Safari-style browser profile: the home screen loads with no page errors.
-- Backend-powered actions now fail gracefully with a clear message instead of breaking the full app.
+**Root cause candidates found in `handleResetSeason` (`src/pages/Home.jsx:178`) + `simulateWinShare` (`src/lib/rankUp.js:172`):**
+- After reset, `player.currentElo` drops (e.g. 750) but `player.highestElo` stays high → `predictBattles` uses the old highestElo which is far above currentElo, causing lopsided deltas.
+- The Diamond+ floor line `Math.max(3000 <= player.currentElo ? 3000 : 0, ...)` is fine at 750, but if `player.currentElo` ever transiently becomes `undefined`/`NaN`, `getRank(NaN)` returns undefined → `result.projectedRank.tier` throws → white simulator card.
+- Slider retains previous `total`/`wins` state; if `wins > total` after a re-render race, the slider prop errors.
 
-Note: the published URL must be updated/published from Lovable for this code fix to reach the live site.
+**Fix:**
+- Harden `simulateWinShare`: coerce `currentElo`, `highestElo`, `winRate` to numbers with fallbacks; if invalid return a safe zero-delta result.
+- Harden `RankUpSimulator.jsx`: guard `result.projectedRank`, `currentRank`, `cCur`, `cNew` with fallbacks to Bronze tokens; wrap in a small error boundary so it never blanks the Home page.
+- In `handleResetSeason`, also reset `teamElos`/`teamProfiles` staleness by keeping them but re-syncing `highestElo` for simulation purposes (do NOT overwrite the lifetime peak — pass an effective peak = max(currentElo, currentSeasonHighest) into the simulator).
+- Clamp slider state on player change: `useEffect([player.currentElo]) → if (wins > total) setWins(total)`.
 
-## Phase 1: Stability and Setup Feedback
+## 2. New feature — "Rank Meme Title" on the Deserved-Rank / Rank badge
 
-1. Add a small backend status chip near Settings/Fetch Logs:
-   - Ready
-   - Missing config
-   - Function unavailable
-   - Auth required
-2. Improve Fetch Logs errors:
-   - Detect missing backend config separately from Brawl Stars API failure.
-   - Offer one-click Mock Data fallback when real logs cannot be fetched.
-3. Improve P2P Sync errors:
-   - Show whether local tab sync is active.
-   - Show whether cross-device sync is unavailable.
+A tongue-in-cheek subtitle that adapts to the player's **highest reached rank this season** (falls back to current tier if no season data).
 
-## Phase 2: Rank-Up Add-ons
+- New file `src/lib/rankTitles.js` exporting `getRankTitle(rankName, { context })` returning `{ title, subtitle }`.
+- One entry per sub-rank (Bronze I → Pro), themed in the BrawlTrack voice. Examples:
+  - Bronze I → *"The one who thinks Shelly is broken"*
+  - Silver III → *"Randoms enthusiast"*
+  - Gold II → *"Gets carried on Heist"*
+  - Diamond III → *"Spends 6 hours grinding, never reaches Mythic"*
+  - Mythic I → *"Bans Kenji, first-picks Mortis"*
+  - Legendary II → *"Actually reads the enemy comp"*
+  - Masters → *"You're the reason your teammates tilt"*
+  - Pro → *"Touch grass. Please."*
+- Context modifiers (optional additive line):
+  - On a 5+ win streak → *"…on a heater"*
+  - Long loss streak → *"…in a tilt spiral"*
+  - Deserved > current by 300 → *"…and underranked"*
+- Render locations:
+  - `DeservedRankReveal.jsx` — under the tier name, small italic.
+  - `RankBadge` header on Home (subtle, one line).
+  - Season Report share card (`shareCard.js`) as a footer tagline.
 
-1. Rank-up checklist:
-   - Shows what the player needs next: win streak, fewer throws, better brawler pool, safer modes.
-2. Promotion readiness score:
-   - Combines win rate, recent trend, tilt risk, and matchup quality.
-3. Rank-up simulator:
-   - Lets the player test “what if I win 3 of next 5?” scenarios.
-4. Anti-tilt lock:
-   - Optional warning after repeated losses before logging another match.
+## 3. Battle-card animation upgrades (no core mechanic changes)
 
-## Phase 3: Season Report Upgrades
+Add on top of existing `TierAuraOverlay` effects — all gated by the existing low-power mode:
+- **Bronze** — occasional dust puff at the bottom edge (every 3s) to sell the brick vibe.
+- **Silver** — after each lightning strike, a subtle screen-shake on the card (2px, 120ms) + a faint white flash overlay at 15% opacity.
+- **Gold** — sparkle trail that briefly follows the cursor/tap point on hover.
+- **Diamond** — parallax: front-layer whoosh moves faster than a back-layer whoosh for depth.
+- **Mythic** — purple embers rise from the fire, fading out at 60% height.
+- **Legendary** — heat-haze distortion (CSS `filter: blur(0.4px)` pulsing) over the bottom third.
+- **Masters** — camera-shake pulse on each explosion (150ms) + fading shockwave ring.
+- **Pro** — crowns rotate slowly while rising; occasional golden confetti burst on rank change.
 
-1. Season timeline:
-   - Peak Elo, worst dip, biggest comeback, longest streak, most-used brawlers.
-2. Season badges:
-   - Clutch finisher, comeback king, consistent climber, tilt survivor, MVP streak.
-3. Report comparison:
-   - Compare this season vs last season.
-4. Export polish:
-   - Better mobile PDF layout.
-   - Add “share card” image export for season highlights.
+Shared polish:
+- Unify z-index layering (overlay 1 = background, 2 = particles, 3 = content).
+- Add `will-change: transform, opacity` on animated nodes.
+- Respect the Auto/High/Low toggle already in Settings.
 
-## Phase 4: Deserved Rank Extensions
+## 4. Logic + polish quick wins
 
-1. Assessment history trends:
-   - Show deserved Elo movement over time.
-   - Highlight which skill category improved or declined.
-2. Feedback engine:
-   - Generate specific focus notes from assessment inputs and battle-log data.
-3. Rank gap explainer:
-   - Explains why current Elo differs from deserved Elo.
-4. Re-assessment reminders:
-   - Weekly or after 20 logged matches.
+- **Season Momentum Tracker**: after "New Season" reset, show a "Fresh season · 0 logged" state instead of the previous season's chart bleeding through.
+- **Rank-Up Checklist**: hide the "Push X more Elo" line if the next rank is a major-tier jump the user hasn't unlocked mechanically (e.g. brawler count req) — instead show the brawler requirement.
+- **Anti-Tilt Lock**: after user overrides the lock 3 times in a session, surface a soft reminder card ("You've queued through the lock 3 times — consider a break").
+- **Assessment History**: add per-entry delete + clear-all with confirm.
+- **Progress bar**: animate the fill on Elo change (400ms spring) instead of snapping.
+- **Share card**: include the meme title from feature 2.
+- **Rank Reveal**: haptic vibration (mobile) on tier promotion, gated by a Settings toggle.
 
-## Phase 5: UI and Animation Fixes
+## 5. Files to create / edit
 
-1. Battle card asset cleanup:
-   - Fix broken/missing brawler portrait placeholders visible in the card gallery.
-2. Mobile header polish:
-   - Reduce cramped nav buttons on iPad/mobile widths.
-3. Tier animation performance mode:
-   - Automatically reduce heavy effects on low-power/mobile browsers.
-4. Progress bar clarity:
-   - Better labels for current Elo vs season-high ghost bar.
+**Create**
+- `src/lib/rankTitles.js`
+- `src/components/RankTitleBadge.jsx` (small reusable renderer)
 
-## Recommended Build Order
+**Edit**
+- `src/lib/rankUp.js` — hardened `simulateWinShare`
+- `src/components/RankUpSimulator.jsx` — guards + slider clamp effect + local error boundary
+- `src/pages/Home.jsx` — pass effective peak, reset Momentum on new season
+- `src/components/TierAuraOverlay.jsx` — new sub-effects per tier
+- `src/components/DeservedRankReveal.jsx` — render meme title
+- `src/components/SeasonEndReport.jsx` + `src/lib/shareCard.js` — tagline
+- `src/pages/Settings.jsx` — haptic toggle
+- `src/components/AssessmentHistoryPanel.jsx` — delete + clear-all
 
-1. Backend status and graceful Fetch Logs/P2P messages.
-2. Broken portrait/card image cleanup.
-3. Rank-up checklist and promotion readiness score.
-4. Season report timeline and badges.
-5. Deserved Rank trend + feedback engine.
+## Order of work (build phase)
+
+1. Simulator crash fix (highest priority — blocks Home).
+2. `rankTitles.js` + integrate on Home + Deserved Rank + Share card.
+3. Battle-card animation upgrades.
+4. Polish quick wins (Momentum reset, checklist edge case, tilt reminder, history delete, progress bar spring, haptics).
