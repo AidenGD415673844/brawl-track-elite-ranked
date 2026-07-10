@@ -78,23 +78,36 @@ function validateCrossTierRules(playerElo, teammateElos, enemyElos, queueType) {
   const premadeIndices =
     queueType === "duo" ? [0] : queueType === "trio" ? [0, 1] : [];
 
+  const inDiamond = (elo) => {
+    const idx = getRankIndex(elo);
+    return idx >= 9 && idx <= 11;
+  };
+  const inMythic = (elo) => {
+    const idx = getRankIndex(elo);
+    return idx >= 12 && idx <= 14;
+  };
+
   const isGoldOrBelow = playerIdx <= 8; // Bronze I – Gold III
   const isDiamond = playerIdx >= 9 && playerIdx <= 11; // Diamond I – Diamond III
+  const isMythicPlus = playerIdx >= 12;
+
+  const warnings = [];
 
   // --- Gold or below: Diamond restrictions ---
   if (isGoldOrBelow) {
-    const inDiamond = (elo) => {
-      const idx = getRankIndex(elo);
-      return idx >= 9 && idx <= 11;
-    };
+    const hasDiamondPremade = teammateElos.some(
+      (e, i) => premadeIndices.includes(i) && inDiamond(e)
+    );
 
-    // Enemies cannot be Diamond
-    for (const e of enemyElos) {
-      if (inDiamond(e)) {
-        return {
-          valid: false,
-          message: `Lobby Configuration Error: ${getRank(e).name} enemy is not allowed — enemies cannot be Diamond unless you are Diamond.`,
-        };
+    // Enemies cannot be Diamond UNLESS pre-made has a Diamond player
+    if (!hasDiamondPremade) {
+      for (const e of enemyElos) {
+        if (inDiamond(e)) {
+          return {
+            valid: false,
+            message: `Lobby Configuration Error: ${getRank(e).name} enemy is not allowed — enemies cannot be Diamond unless you are Diamond or bring a pre-made Diamond teammate.`,
+          };
+        }
       }
     }
 
@@ -110,9 +123,6 @@ function validateCrossTierRules(playerElo, teammateElos, enemyElos, queueType) {
     }
 
     // Pre-made Diamond teammates require at least 1 Diamond enemy
-    const hasDiamondPremade = teammateElos.some(
-      (e, i) => premadeIndices.includes(i) && inDiamond(e)
-    );
     if (hasDiamondPremade && !enemyElos.some(inDiamond)) {
       return {
         valid: false,
@@ -123,18 +133,19 @@ function validateCrossTierRules(playerElo, teammateElos, enemyElos, queueType) {
 
   // --- Diamond: Mythic restrictions ---
   if (isDiamond) {
-    const inMythic = (elo) => {
-      const idx = getRankIndex(elo);
-      return idx >= 12 && idx <= 14;
-    };
+    const hasMythicPremade = teammateElos.some(
+      (e, i) => premadeIndices.includes(i) && inMythic(e)
+    );
 
-    // Enemies cannot be Mythic
-    for (const e of enemyElos) {
-      if (inMythic(e)) {
-        return {
-          valid: false,
-          message: `Lobby Configuration Error: ${getRank(e).name} enemy is not allowed — enemies cannot be Mythic unless you are Mythic.`,
-        };
+    // Enemies cannot be Mythic UNLESS pre-made has a Mythic player
+    if (!hasMythicPremade) {
+      for (const e of enemyElos) {
+        if (inMythic(e)) {
+          return {
+            valid: false,
+            message: `Lobby Configuration Error: ${getRank(e).name} enemy is not allowed — enemies cannot be Mythic unless you are Mythic or bring a pre-made Mythic teammate.`,
+          };
+        }
       }
     }
 
@@ -150,9 +161,6 @@ function validateCrossTierRules(playerElo, teammateElos, enemyElos, queueType) {
     }
 
     // Pre-made Mythic teammates require at least 1 Mythic enemy
-    const hasMythicPremade = teammateElos.some(
-      (e, i) => premadeIndices.includes(i) && inMythic(e)
-    );
     if (hasMythicPremade && !enemyElos.some(inMythic)) {
       return {
         valid: false,
@@ -161,7 +169,19 @@ function validateCrossTierRules(playerElo, teammateElos, enemyElos, queueType) {
     }
   }
 
-  return { valid: true };
+  // --- Mythic+: warn on lone-Diamond enemy in a Mythic party ---
+  // Prevents accidental big Elo swings from mis-entered Diamond opponents.
+  if (isMythicPlus) {
+    const diamondEnemies = enemyElos.filter(inDiamond);
+    const mythicEnemies = enemyElos.filter(inMythic);
+    if (diamondEnemies.length === 1 && mythicEnemies.length >= 1) {
+      warnings.push(
+        `Enemy team has 1 Diamond player and ${mythicEnemies.length} Mythic — are you sure the enemies are a pre-made squad including that Diamond player?`
+      );
+    }
+  }
+
+  return { valid: true, warnings };
 }
 
 // Validates the entire lobby (all players incl. enemies) against rank restrictions.
@@ -170,7 +190,7 @@ export function validateLobby(playerElo, teammateElos = [], enemyElos = [], queu
     .map(Number)
     .filter((e) => !isNaN(e) && e > 0);
 
-  if (allElos.length === 0) return { valid: true };
+  if (allElos.length === 0) return { valid: true, warnings: [] };
 
   const indices = allElos.map(getRankIndex);
   const highestIdx = Math.max(...indices);
@@ -182,6 +202,7 @@ export function validateLobby(playerElo, teammateElos = [], enemyElos = [], queu
       const offenderRank = getRank(allElos[i]);
       return {
         valid: false,
+        warnings: [],
         message: `Lobby Configuration Error: ${offenderRank.name} is outside the ±${gap} rank restriction for ${highestRank.name}.`,
       };
     }
@@ -189,9 +210,9 @@ export function validateLobby(playerElo, teammateElos = [], enemyElos = [], queu
 
   // Cross-tier rules (Gold↔Diamond, Diamond↔Mythic)
   const crossTier = validateCrossTierRules(playerElo, teammateElos, enemyElos, queueType);
-  if (!crossTier.valid) return crossTier;
+  if (!crossTier.valid) return { ...crossTier, warnings: [] };
 
-  return { valid: true };
+  return { valid: true, warnings: crossTier.warnings || [] };
 }
 
 // Validates team composition for matchmaking.
