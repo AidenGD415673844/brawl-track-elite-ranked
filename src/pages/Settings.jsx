@@ -106,18 +106,6 @@ export default function Settings() {
           </div>
         </Card>
 
-        <Card className="bg-card border-border p-5 rounded-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
-              <Radio className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-foreground">P2P Sync (LiveKit)</h3>
-              <p className="text-xs text-muted-foreground">Connect with friends via WebRTC data channels</p>
-            </div>
-          </div>
-          <LiveKitSettings />
-        </Card>
 
         <Card className="bg-card border-border p-5 rounded-2xl">
           <div className="flex items-start justify-between gap-4 mb-4">
