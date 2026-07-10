@@ -22,6 +22,8 @@ import {
 
 export default function Settings() {
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, user, logout } = useAuth();
+
   const [tiltLock, setTiltLock] = React.useState(isTiltLockEnabled());
   const [threshold, setThreshold] = React.useState(getTiltLockThreshold());
   const [haptics, setHaptics] = React.useState(areHapticsEnabled());
