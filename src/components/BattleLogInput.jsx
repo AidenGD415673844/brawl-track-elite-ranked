@@ -201,6 +201,15 @@ export default function BattleLogInput({
 
   const handleLog = () => {
     if (!canSubmit) return;
+    // Anti-tilt lock — refuse to log another battle when the player is on a
+    // configured loss streak unless they explicitly confirm.
+    const tilt = checkTiltLock(battleLog);
+    if (tilt.locked) {
+      const ok = typeof window !== "undefined" && window.confirm(
+        `Anti-tilt lock: you're on a ${tilt.lossStreak}-game losing streak.\n\nTake a short break before queueing again. Log this battle anyway?`
+      );
+      if (!ok) return;
+    }
     // If lobby validation surfaced a soft warning (e.g. lone Diamond enemy in a
     // Mythic party), require explicit confirmation before logging so accidental
     // Elo swings from mis-entered opponents are avoided.
