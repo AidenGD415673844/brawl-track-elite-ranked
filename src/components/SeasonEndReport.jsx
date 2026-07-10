@@ -403,8 +403,27 @@ export default function SeasonEndReport({ player, battleLog, onClose }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mb-4"
+                className="mb-4 flex flex-wrap gap-2 justify-center"
               >
+                <Button
+                  onClick={handleShare}
+                  disabled={sharing}
+                  variant="outline"
+                  className="rounded-xl px-4 font-display tracking-wide gap-2"
+                  style={{ borderColor: `${c.text}55`, color: c.text }}
+                >
+                  <Share2 className="w-4 h-4" />
+                  {sharing ? "Rendering…" : "Share Card"}
+                </Button>
+                <Button
+                  onClick={handleArchive}
+                  variant="outline"
+                  className="rounded-xl px-4 font-display tracking-wide gap-2"
+                  style={{ borderColor: `${c.text}55`, color: c.text }}
+                >
+                  <Archive className="w-4 h-4" />
+                  Archive Season
+                </Button>
                 <Button
                   onClick={onClose}
                   className="rounded-xl px-8 font-display tracking-wide"
@@ -417,6 +436,25 @@ export default function SeasonEndReport({ player, battleLog, onClose }) {
                   Continue
                 </Button>
               </motion.div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function Diff({ label, value, suffix = "" }) {
+  const positive = value > 0;
+  const zero = value === 0;
+  const tone = zero ? "text-muted-foreground" : positive ? "text-emerald-500" : "text-rose-500";
+  const sign = positive ? "+" : "";
+  return (
+    <div className="rounded-lg bg-muted/30 border border-border py-1.5">
+      <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className={`text-xs font-display font-bold ${tone}`}>{zero ? "—" : `${sign}${value}${suffix}`}</p>
+    </div>
+  );
             )}
           </div>
         </div>
