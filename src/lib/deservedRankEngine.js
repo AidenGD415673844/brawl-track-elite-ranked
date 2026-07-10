@@ -162,9 +162,8 @@ export function computeDeservedRank(player, responses, battleLog = []) {
     { label: `Base (self-assessment)`,           value: baseElo,      good: true },
     { label: `Win rate (${winRate}%)`,           value: wrAdj },
     { label: `Star player (${Math.round(starRate * 100)}%)`, value: impactCapped },
-    { label: `Impact grades (${Math.round(starRate * 100)}%)`, value: 0 },
     { label: `Consistency (${Math.round(stability)}/100)`,   value: stabilityAdj },
-    { label: `Comebacks (${best})`,              value: streakBonus },
+    { label: `Best streak (${best})`,            value: streakBonus },
   ];
 
   const totalAdjust = wrAdj + impactCapped + stabilityAdj + streakBonus;
