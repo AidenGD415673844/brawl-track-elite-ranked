@@ -251,6 +251,12 @@ export default function Home() {
       if (entry.rankUp && entry.rankUp.isRankUp) {
         notifyRankUp(entry.rankUp.oldRank, entry.rankUp.newRank, entry.rankUp.isMajorRankUp);
         setRankUpAnim({ oldRank: entry.rankUp.oldRank, newRank: entry.rankUp.newRank, isMajor: entry.rankUp.isMajorRankUp });
+        // Haptic buzz — major tier promotions get the big pattern, sub-rank
+        // bumps get a quick tap. Gated by the Settings toggle.
+        import("@/lib/haptics").then(({ vibratePromotion, vibrate }) => {
+          if (entry.rankUp.isMajorRankUp) vibratePromotion();
+          else vibrate(25);
+        });
         // Deep-analysis notification on major tier upgrade
         if (entry.rankUp.isMajorRankUp) {
           const newTier = entry.rankUp.newRank.tier;
