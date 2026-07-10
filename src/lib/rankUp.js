@@ -170,42 +170,56 @@ export function promotionReadiness(player, battleLog) {
 // Simulate "if I win X of the next Y matches" using the deterministic Elo
 // engine via predictBattles at extremes and interpolating win share.
 export function simulateWinShare(player, wins, total, battleLog) {
-  const w = Math.max(0, Math.min(total, wins));
-  const losses = total - w;
-  const teammateElos = (player.teamElos || []).map(Number).filter(Boolean);
-  const highestElo = Math.max(player.highestElo || 0, player.currentElo);
-
-  // Use predictBattles' extremes to grab per-battle deltas, then compose.
-  const preview = predictBattles(
-    player.currentElo,
-    player.winRate || 50,
-    "solo",
-    teammateElos,
-    [],
-    highestElo,
+  // Defensive coercion — after "New Season" reset, player fields can be
+  // undefined/NaN mid-render. Never let this throw.
+  const safePlayer = player || {};
+  const currentElo = Number.isFinite(Number(safePlayer.currentElo))
+    ? Math.max(0, Number(safePlayer.currentElo))
+    : 0;
+  const winRate = Number.isFinite(Number(safePlayer.winRate))
+    ? Math.max(0, Math.min(100, Number(safePlayer.winRate)))
+    : 50;
+  const t = Math.max(1, Math.min(50, Number(total) || 1));
+  const w = Math.max(0, Math.min(t, Number(wins) || 0));
+  const losses = t - w;
+  const teammateElos = (safePlayer.teamElos || []).map(Number).filter((n) => Number.isFinite(n) && n > 0);
+  // For simulation purposes use the effective peak = max(current, seasonHighest, highestElo)
+  const highestElo = Math.max(
+    currentElo,
+    Number(safePlayer.currentSeasonHighest) || 0,
+    Number(safePlayer.highestElo) || 0,
   );
-  const avgWinDelta = preview.bestCase.path[0]?.delta ?? 30;
-  const avgLossDelta = preview.worstCase.path[0]?.delta ?? -30;
 
+  let avgWinDelta = 30;
+  let avgLossDelta = -30;
+  try {
+    const preview = predictBattles(currentElo, winRate, "solo", teammateElos, [], highestElo);
+    avgWinDelta = Number(preview?.bestCase?.path?.[0]?.delta);
+    avgLossDelta = Number(preview?.worstCase?.path?.[0]?.delta);
+    if (!Number.isFinite(avgWinDelta)) avgWinDelta = 30;
+    if (!Number.isFinite(avgLossDelta)) avgLossDelta = -30;
+  } catch { /* keep defaults */ }
+
+  const projectedEloRaw = currentElo + w * avgWinDelta + losses * avgLossDelta;
   const projectedElo = Math.max(
-    3000 <= player.currentElo ? 3000 : 0, // Diamond+ floor
-    Math.round(player.currentElo + w * avgWinDelta + losses * avgLossDelta),
+    currentElo >= 3000 ? 3000 : 0, // Diamond+ floor
+    Math.round(Number.isFinite(projectedEloRaw) ? projectedEloRaw : currentElo),
   );
-  const projectedRank = getRank(projectedElo);
-  const startIdx = getRankIndex(player.currentElo);
+  const projectedRank = getRank(projectedElo) || getRank(0);
+  const startIdx = getRankIndex(currentElo);
   const endIdx = getRankIndex(projectedElo);
   const rankChange = endIdx - startIdx;
 
   return {
     wins: w,
     losses,
-    total,
+    total: t,
     winDelta: avgWinDelta,
     lossDelta: avgLossDelta,
     projectedElo,
     projectedRank,
     rankChange,
-    eloChange: projectedElo - player.currentElo,
+    eloChange: projectedElo - currentElo,
   };
 }
 
