@@ -184,8 +184,8 @@ export function computeDeservedRank(player, responses, battleLog = []) {
   let rawBase = 0;
   const catBreakdown = CATEGORIES.map((cat) => {
     const score = categoryScore(responses, cat.id);
-    // Nonlinear curve: 50 → 35% of weight, 70 → 59%, 90 → 85%, 100 → 100%.
-    const curved = Math.pow(score / 100, 1.6) * 100;
+    // Nonlinear curve (1.8): 50 → 28%, 70 → 53%, 90 → 82%, 100 → 100%.
+    const curved = Math.pow(score / 100, 1.8) * 100;
     const contribution = Math.round(curved * cat.weight * 0.75); // 25% haircut
     rawBase += contribution;
     return {
@@ -198,7 +198,8 @@ export function computeDeservedRank(player, responses, battleLog = []) {
       max: Math.round(cat.weight * 100 * 0.75),
     };
   });
-  const baseElo = Math.max(0, rawBase - 1800);
+  const baseElo = Math.max(0, rawBase - 2100);
+
 
   // ─── Data-driven adjustments (also stricter) ────────────
   const winRate = Number(player?.winRate) || 50;
