@@ -45,7 +45,7 @@ import {
 } from "@/lib/inbox";
 import { notifyTierUpgrade } from "@/lib/tierUpgrades";
 import { checkAchievements } from "@/lib/achievements";
-import LiveKitLobby from "@/components/LiveKitLobby";
+import RoomLobby from "@/components/RoomLobby";
 import { syncActiveSpace } from "@/lib/brawlSpaces";
 import { Layers } from "lucide-react";
 import RankDecayWarning from "@/components/RankDecayWarning";
