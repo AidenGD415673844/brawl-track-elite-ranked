@@ -65,6 +65,7 @@ import { loadHistory as loadAssessmentHistory } from "@/lib/assessmentHistory";
 import BackendStatusChip from "@/components/BackendStatusChip";
 import RankUpChecklist from "@/components/RankUpChecklist";
 import RankUpSimulator from "@/components/RankUpSimulator";
+import RankTitleBadge from "@/components/RankTitleBadge";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -528,7 +529,7 @@ export default function Home() {
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.22 }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <SeasonMomentumTracker battleLog={battleLog} />
+          <SeasonMomentumTracker battleLog={battleLog} seasonStartDate={player.seasonStartDate} />
           <SafetyNetSimulator currentElo={player.currentElo} battleLog={battleLog} />
         </motion.div>
 
@@ -605,6 +606,7 @@ export default function Home() {
 
         <motion.div {...fadeUp} transition={{ delay: 0.6 }}>
           <RankScale elo={player.currentElo} seasonHighest={player.currentSeasonHighest} />
+          <RankTitleBadge player={player} battleLog={battleLog} className="mt-2 justify-center" />
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.65 }}>

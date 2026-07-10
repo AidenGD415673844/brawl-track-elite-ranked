@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, ArrowRight, Trophy } from "lucide-react";
 import RankBadge from "@/components/RankBadge";
 import ShatterBurst from "@/components/ShatterBurst";
 import { TIER_COLORS } from "@/lib/ranks";
+import RankTitleBadge from "@/components/RankTitleBadge";
 
 // Big-reveal presentation of the Deserved Rank result.
 // Shows current → deserved rank with a tier-colored ShatterBurst,
@@ -149,6 +150,11 @@ export default function DeservedRankReveal({ result, onDone, onRetake, readOnly 
             <p className="text-sm text-center text-foreground mt-2 max-w-md">
               {result.verdict}
             </p>
+            <RankTitleBadge
+              rankName={result.deservedRank.name}
+              deservedGap={result.deltaElo}
+              className="mt-1 justify-center"
+            />
           </motion.div>
         </Card>
 
