@@ -168,6 +168,20 @@ export default function Home() {
     setSnapshots(saveSnapshot(player));
   };
 
+  const handleRevert = () => {
+    const snaps = loadSnapshots();
+    if (!snaps.length) {
+      toast({ title: "No save to revert to", description: "Save your data first to enable revert." });
+      return;
+    }
+    const last = snaps[snaps.length - 1];
+    if (!window.confirm(`Revert to save from ${new Date(last.date).toLocaleString()}?`)) return;
+    const { date, ...restored } = last;
+    setPlayer((p) => ({ ...p, ...restored }));
+    savePlayer({ ...player, ...restored });
+    toast({ title: "Reverted", description: `Restored save from ${new Date(date).toLocaleString()}` });
+  };
+
   const handleCSVImport = (data) => {
     setPlayer((p) => ({
       ...p,
