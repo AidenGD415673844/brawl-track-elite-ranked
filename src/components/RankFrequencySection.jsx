@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TIER_IMAGES, TIER_COLORS } from "@/lib/ranks";
 import {
-  getRankFrequency, setAllRankFrequency, getEffectLevel, TRACKED_TIERS,
+  getRankFrequency, setAllRankFrequency, TRACKED_TIERS,
 } from "@/lib/rankFrequency";
+
 
 // RankFrequencySection — displays how many times the player has reached
 // each tier, with escalating visual effects (1=icon, 2=glow, 3=particles,
