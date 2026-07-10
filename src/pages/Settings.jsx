@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, ArrowLeft, Radio, ShieldAlert, Zap } from "lucide-react";
+import { Sun, Moon, ArrowLeft, Radio, ShieldAlert, Zap, Vibrate } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 import LiveKitSettings from "@/components/LiveKitSettings";
@@ -11,6 +11,7 @@ import {
   isTiltLockEnabled, setTiltLockEnabled,
   getTiltLockThreshold, setTiltLockThreshold,
 } from "@/lib/rankUp";
+import { areHapticsEnabled, setHapticsEnabled, vibratePromotion } from "@/lib/haptics";
 
 export default function Settings() {
   const { theme, toggleTheme } = useTheme();
