@@ -338,6 +338,47 @@ export default function SeasonEndReport({ player, battleLog, onClose }) {
               </motion.div>
             )}
 
+            {/* Badges */}
+            {phase >= 3 && badges.length > 0 && (
+              <motion.div
+                className="w-full rounded-xl border p-3 mb-4"
+                style={{ background: `${c.from}10`, borderColor: `${c.from}33` }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <p className="text-xs font-bold text-foreground mb-2">Badges Earned ({badges.length})</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {badges.map((b) => (
+                    <div key={b.id}
+                      title={b.desc}
+                      className="rounded-lg border px-2 py-1 text-[11px] flex items-center gap-1"
+                      style={{ background: `${c.from}22`, borderColor: `${c.from}55`, color: c.text }}>
+                      <span>{b.emoji}</span><span className="font-bold">{b.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Prior season comparison */}
+            {phase >= 3 && compare.prior && (
+              <motion.div
+                className="w-full rounded-xl border p-3 mb-4"
+                style={{ background: `${c.from}10`, borderColor: `${c.from}33` }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <p className="text-xs font-bold text-foreground mb-2">vs. Previous Season</p>
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <Diff label="Peak" value={compare.diff.peakElo} />
+                  <Diff label="WR" value={compare.diff.winRate} suffix="%" />
+                  <Diff label="Games" value={compare.diff.games} />
+                  <Diff label="Streak" value={compare.diff.bestStreak} />
+                </div>
+              </motion.div>
+            )}
+
             {/* Reset info */}
             {phase >= 3 && (
               <motion.div
