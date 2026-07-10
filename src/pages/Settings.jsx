@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
 import { useAuth } from "@/lib/AuthContext";
 
-import LiveKitSettings from "@/components/LiveKitSettings";
+
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
