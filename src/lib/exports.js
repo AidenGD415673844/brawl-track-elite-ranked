@@ -3,6 +3,45 @@ import jsPDF from "jspdf";
 import { getRank, RANKS, TIER_COLORS } from "@/lib/ranks";
 import { getBestWinStreak, getWinStreak } from "@/lib/battleLog";
 
+// iOS Safari ignores the `download` attribute on blob URLs and often refuses
+// to save the file at all — the tap looks successful but nothing lands on disk.
+// Detect iOS/iPadOS and open the blob in a new tab so the user can save it
+// via the browser's share sheet.
+function isIOS() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const iOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  // iPadOS 13+ reports as Mac; detect via touch points.
+  const iPadOS = ua.includes("Mac") && typeof document !== "undefined" && "ontouchend" in document;
+  return iOS || iPadOS;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  if (isIOS()) {
+    // Open in a new tab; user long-presses / uses Share → Save to Files.
+    const win = window.open(url, "_blank");
+    if (!win) {
+      // Popup blocked — fall through to anchor approach so at least *something* happens.
+      const a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return { ios: true };
+  }
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return { ios: false };
+}
+
+
 export function exportCSV(player, forecast, snapshots, battleLog = []) {
   const rows = [];
   rows.push(["Ranked Analytics — Full Data Export"]);
