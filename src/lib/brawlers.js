@@ -41,8 +41,8 @@ export const BRAWLERS = [
   "Leon", "Lily", "Lola", "Lou", "Maddie", "Maisie", "Mandy", "Max",
   "Meg", "Melodie", "Mico", "Moe", "Mortis", "Mr. P", "Nani", "Nita",
   "Otis", "Pam", "Pearl", "Penny", "Piper", "Poco", "R-T", "Rico",
-  "Rosa", "Ruffs", "Sam", "Sandy", "Shelly", "Spike", "Sprout", "Squeak",
-  "Stu", "Surge", "Tara", "Tick", "Willow",
+  "Rosa", "Ruffs", "Sam", "Sandy", "Shade", "Shelly", "Spike", "Sprout",
+  "Squeak", "Starr Nova", "Stu", "Surge", "Tara", "Tick", "Willow",
 ];
 
 export const MAPS = [
