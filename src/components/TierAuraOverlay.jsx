@@ -591,8 +591,10 @@ const TIER_COMPONENTS = {
 };
 
 export default function TierAuraOverlay({ tier, active = true }) {
+  const lowPower = useLowPowerMode();
   if (!active) return null;
   const Aura = TIER_COMPONENTS[tier];
   if (!Aura) return null;
+  if (lowPower) return <LowPowerAura tier={tier} />;
   return <Aura />;
 }
