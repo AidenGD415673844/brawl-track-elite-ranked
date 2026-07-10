@@ -174,12 +174,18 @@ export function computeDeservedRank(player, responses, battleLog = []) {
   const currentElo = Math.max(0, Number(player?.currentElo) || 0);
   const real = (battleLog || []).filter((e) => !e.manual);
 
-  // ─── Baseline from self-assessment ───────────────────────
-  let baseElo = 0;
+  // ─── Baseline from self-assessment (STRICT) ─────────────
+  // Casual players self-score around 50s. Under the old formula that
+  // handed them Legendary. New curve: cube-root of avg/100 flattens
+  // low scores, a harsh -1800 floor removes automatic climbs, and
+  // sample-size confidence is required to unlock high tiers.
+  let rawBase = 0;
   const catBreakdown = CATEGORIES.map((cat) => {
     const score = categoryScore(responses, cat.id);
-    const contribution = Math.round(score * cat.weight);
-    baseElo += contribution;
+    // Nonlinear curve: 50 → 35% of weight, 70 → 59%, 90 → 85%, 100 → 100%.
+    const curved = Math.pow(score / 100, 1.6) * 100;
+    const contribution = Math.round(curved * cat.weight * 0.75); // 25% haircut
+    rawBase += contribution;
     return {
       id: cat.id,
       label: cat.label,
@@ -187,40 +193,52 @@ export function computeDeservedRank(player, responses, battleLog = []) {
       color: cat.color,
       score: Math.round(score),
       contribution,
-      max: cat.weight * 100,
+      max: Math.round(cat.weight * 100 * 0.75),
     };
   });
+  const baseElo = Math.max(0, rawBase - 1800);
 
-  // ─── Data-driven adjustments ─────────────────────────────
+  // ─── Data-driven adjustments (also stricter) ────────────
   const winRate = Number(player?.winRate) || 50;
-  const wrAdj = Math.round(((winRate - 50) / 50) * 800);
+  const wrAdj = Math.round(((winRate - 55) / 45) * 700); // 50% wr = -78, 60% = +78
 
   const starCount = real.filter((e) => e.starPlayer === "self").length;
   const starRate = real.length > 0 ? starCount / real.length : 0;
-  const impactAdj = Math.round((starRate - 0.2) * 2000);
-  const impactCapped = Math.max(-400, Math.min(400, impactAdj));
+  const impactAdj = Math.max(-500, Math.min(400, Math.round((starRate - 0.25) * 2000)));
 
   const stability = streakStability(real);
-  const stabilityAdj = Math.round(((stability - 50) / 50) * 300);
+  const stabilityAdj = Math.round(((stability - 60) / 40) * 350);
 
   const best = bestStreak(real);
-  const streakBonus = best >= 10 ? 200 : best >= 6 ? 100 : best >= 3 ? 40 : 0;
+  const streakBonus = best >= 12 ? 200 : best >= 8 ? 100 : best >= 5 ? 40 : 0;
 
   const confidence = Math.min(1, real.length / 30);
 
   const adjustments = [
     { label: `Base (self-assessment)`,           value: baseElo,      good: true },
     { label: `Win rate (${winRate}%)`,           value: wrAdj },
-    { label: `Star player (${Math.round(starRate * 100)}%)`, value: impactCapped },
+    { label: `Star player (${Math.round(starRate * 100)}%)`, value: impactCapped(impactAdj) },
     { label: `Consistency (${Math.round(stability)}/100)`,   value: stabilityAdj },
     { label: `Best streak (${best})`,            value: streakBonus },
   ];
 
-  const totalAdjust = wrAdj + impactCapped + stabilityAdj + streakBonus;
-  const deservedElo = Math.max(
-    0,
-    Math.min(RANKS[RANKS.length - 1].min + 3000, baseElo + totalAdjust)
-  );
+  const totalAdjust = wrAdj + impactCapped(impactAdj) + stabilityAdj + streakBonus;
+  let deservedElo = Math.max(0, baseElo + totalAdjust);
+
+  // ─── Evidence gates: high tiers require real proof ─────
+  // Masters (8250+) needs ≥20 real matches AND winRate ≥58%.
+  // Pro (11250+) needs ≥40 matches AND winRate ≥62% AND ≥30% star rate.
+  if (deservedElo >= 8250 && !(real.length >= 20 && winRate >= 58)) {
+    deservedElo = Math.min(deservedElo, 8000);
+  }
+  if (deservedElo >= 11250 && !(real.length >= 40 && winRate >= 62 && starRate >= 0.3)) {
+    deservedElo = Math.min(deservedElo, 10500);
+  }
+  // Low-confidence samples get capped at Diamond III until they prove themselves.
+  if (confidence < 0.3 && deservedElo > 4499) {
+    deservedElo = 4499;
+  }
+  deservedElo = Math.min(RANKS[RANKS.length - 1].min + 2000, deservedElo);
 
   const currentRank = getRank(currentElo);
   const deservedRank = getRank(deservedElo);
