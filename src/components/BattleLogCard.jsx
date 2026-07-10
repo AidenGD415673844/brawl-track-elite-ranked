@@ -51,8 +51,7 @@ function TeamMember({ label, elo, beforeElo, afterElo, brawler, isStar, isYou, p
   const portraitSize = 44;
   const rankIconSize = Math.round(portraitSize * 0.4); // ≈ 18px
 
-  // Lazy import to avoid circular deps at top of file.
-  const BrawlerPortrait = require("@/components/BrawlerPortrait").default;
+  // Lazy import removed — BrawlerPortrait is a top-level import.
 
   return (
     <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
