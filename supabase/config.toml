@@ -1,1 +1,3 @@
 project_id = "uudxwsxuehwocnexpany"
+VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1ZHh3c3h1ZWh3b2NuZXhwYW55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NzQ3OTgsImV4cCI6MjA5OTE1MDc5OH0.owXj5n0JgOMlpjM12Bm6pPsNyrHE2mKE82EnjpySd2E"
+VITE_SUPABASE_URL="https://uudxwsxuehwocnexpany.supabase.co"
