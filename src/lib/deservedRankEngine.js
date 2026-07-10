@@ -119,6 +119,57 @@ function streakStability(log) {
  * Main computation.
  * Returns { deservedElo, currentRank, deservedRank, deltaIdx, categories, adjustments }
  */
+// ─── Feedback engine ────────────────────────────────────────
+// Turns the raw responses + battle-log signals into specific,
+// human-readable focus notes. Used by DeservedRankReveal and
+// stored on the result for history rehydration.
+function buildFocusNotes(responses, real, stability, best) {
+  const notes = [];
+  // Lowest-scoring individual question inside each category.
+  for (const cat of CATEGORIES) {
+    let lowest = null;
+    for (const q of cat.questions) {
+      const v = Number(responses?.[cat.id]?.[q.id] ?? 50);
+      if (!lowest || v < lowest.v) lowest = { q, v };
+    }
+    if (lowest && lowest.v <= 40) {
+      notes.push({
+        category: cat.label,
+        severity: lowest.v <= 25 ? "high" : "medium",
+        text: `${cat.label}: ${lowest.q.label.replace(/\?$/, "")} scored ${lowest.v}/100 — pick this as your daily rep.`,
+      });
+    }
+  }
+  // Battle-log driven notes.
+  if (real.length >= 10) {
+    const wins = real.filter((e) => e.result === "victory").length;
+    const wr = Math.round((wins / real.length) * 100);
+    if (wr < 45) notes.push({ category: "Battle log", severity: "high", text: `Win rate ${wr}% over last ${real.length} — queue only your top-3 brawlers this week.` });
+    else if (wr >= 60) notes.push({ category: "Battle log", severity: "low", text: `Win rate ${wr}% — keep momentum, avoid experimenting with off-meta picks now.` });
+  }
+  if (stability <= 40) {
+    notes.push({ category: "Mental", severity: "high", text: `Loss streaks are hurting you (stability ${Math.round(stability)}/100). Hard-stop after 2 losses in a row.` });
+  }
+  if (best >= 6) {
+    notes.push({ category: "Momentum", severity: "low", text: `You've hit a ${best}-win streak — you can climb hard, log matches while the feel is on.` });
+  }
+  return notes.slice(0, 5);
+}
+
+// ─── Rank-gap explainer ─────────────────────────────────────
+function buildGapExplanation(deltaElo, adjustments, baseElo) {
+  if (Math.abs(deltaElo) < 150) {
+    return "Your current Elo lines up with your true skill. Small gap, likely just ladder variance.";
+  }
+  // Sort adjustments by absolute impact to find the biggest drivers.
+  const sorted = [...adjustments]
+    .filter((a) => a.value !== undefined)
+    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+  const top = sorted.slice(0, 2).map((a) => a.label);
+  const dir = deltaElo > 0 ? "higher" : "lower";
+  return `You're sitting ${Math.abs(deltaElo).toLocaleString()} Elo ${dir} than deserved. Biggest drivers: ${top.join(", ")}. Baseline from self-assessment: ${baseElo.toLocaleString()}.`;
+}
+
 export function computeDeservedRank(player, responses, battleLog = []) {
   const currentElo = Math.max(0, Number(player?.currentElo) || 0);
   const real = (battleLog || []).filter((e) => !e.manual);
@@ -142,20 +193,19 @@ export function computeDeservedRank(player, responses, battleLog = []) {
 
   // ─── Data-driven adjustments ─────────────────────────────
   const winRate = Number(player?.winRate) || 50;
-  const wrAdj = Math.round(((winRate - 50) / 50) * 800); // ±800
+  const wrAdj = Math.round(((winRate - 50) / 50) * 800);
 
   const starCount = real.filter((e) => e.starPlayer === "self").length;
   const starRate = real.length > 0 ? starCount / real.length : 0;
-  const impactAdj = Math.round((starRate - 0.2) * 2000); // 20% baseline → 0. Cap ±400
+  const impactAdj = Math.round((starRate - 0.2) * 2000);
   const impactCapped = Math.max(-400, Math.min(400, impactAdj));
 
   const stability = streakStability(real);
-  const stabilityAdj = Math.round(((stability - 50) / 50) * 300); // ±300
+  const stabilityAdj = Math.round(((stability - 50) / 50) * 300);
 
   const best = bestStreak(real);
   const streakBonus = best >= 10 ? 200 : best >= 6 ? 100 : best >= 3 ? 40 : 0;
 
-  // Sample-size confidence: 0..1 (30+ games = full confidence)
   const confidence = Math.min(1, real.length / 30);
 
   const adjustments = [
@@ -191,6 +241,9 @@ export function computeDeservedRank(player, responses, battleLog = []) {
     verdict = `You're over-ranked. ${deservedRank.name} matches your profile better. Focus on fundamentals to defend.`;
   }
 
+  const focusNotes = buildFocusNotes(responses, real, stability, best);
+  const gapExplanation = buildGapExplanation(deltaElo, adjustments, baseElo);
+
   return {
     deservedElo: Math.round(deservedElo),
     currentElo,
@@ -206,5 +259,7 @@ export function computeDeservedRank(player, responses, battleLog = []) {
     adjustments,
     confidence,
     sampleSize: real.length,
+    focusNotes,
+    gapExplanation,
   };
 }
