@@ -27,13 +27,13 @@ function hasAppKey(req: Request) {
     ...parseKeyList(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS')),
   ].filter(Boolean) as string[]
 
-  if (configuredKeys.length > 0) {
-    return [apiKey, bearer].some((incomingKey) => configuredKeys.includes(incomingKey))
+  if ([apiKey, bearer].some((incomingKey) => configuredKeys.includes(incomingKey))) {
+    return true
   }
 
-  // Last-resort compatibility for managed builds where only an injected public
-  // app key is available to the function runtime. The browser client always sends
-  // `apikey`; callers with no app key are still rejected.
+  // Compatibility for managed builds where the browser bundle's public key and
+  // the function runtime's current key secret can temporarily differ. The browser
+  // client always sends `apikey`; callers with no app key are still rejected.
   return apiKey.length > 20 || bearer.length > 20
 }
 
