@@ -204,16 +204,8 @@ export function exportCSV(player, forecast, snapshots, battleLog = []) {
     .join("\n");
   try {
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "ranked-analytics-full-export.csv";
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    return { success: true };
+    const { ios } = downloadBlob(blob, "ranked-analytics-full-export.csv");
+    return { success: true, ios };
   } catch (err) {
     console.error("CSV export failed:", err);
     return { success: false, error: err.message || "Failed to export CSV." };
