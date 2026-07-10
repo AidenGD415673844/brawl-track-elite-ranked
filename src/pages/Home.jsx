@@ -529,7 +529,7 @@ export default function Home() {
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.22 }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <SeasonMomentumTracker battleLog={battleLog} />
+          <SeasonMomentumTracker battleLog={battleLog} seasonStartDate={player.seasonStartDate} />
           <SafetyNetSimulator currentElo={player.currentElo} battleLog={battleLog} />
         </motion.div>
 
