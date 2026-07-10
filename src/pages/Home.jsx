@@ -573,7 +573,7 @@ export default function Home() {
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.42 }}>
-          <LiveKitLobby />
+          <RoomLobby />
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.45 }}>
