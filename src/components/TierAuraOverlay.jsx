@@ -76,8 +76,8 @@ const GRID_TINT = {
   Pro:       "rgba(253,224,71,0.20)",
 };
 
-// Old-school grid backdrop restored across every battle card. Renders under
-// the tier particle layer so effects still pop on top.
+// Old-school grid backdrop restored across every battle card. Rendered UNDER
+// the tier particle layer, subtle so the TIER_BG gradient still reads.
 function GridBackdrop({ tier }) {
   const line = GRID_TINT[tier] || "rgba(255,255,255,0.12)";
   return (
@@ -86,17 +86,29 @@ function GridBackdrop({ tier }) {
       style={{
         backgroundImage: `
           linear-gradient(${line} 1px, transparent 1px),
-          linear-gradient(90deg, ${line} 1px, transparent 1px),
-          radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.35) 100%)
+          linear-gradient(90deg, ${line} 1px, transparent 1px)
         `,
-        backgroundSize: "24px 24px, 24px 24px, 100% 100%",
-        backgroundPosition: "0 0, 0 0, 0 0",
-        mixBlendMode: "screen",
-        opacity: 0.9,
+        backgroundSize: "24px 24px, 24px 24px",
+        backgroundPosition: "0 0, 0 0",
+        opacity: 0.45,
       }}
     />
   );
 }
+
+// Soft vignette on top of everything so text at the bottom reads.
+function Vignette() {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none rounded-[inherit]"
+      style={{
+        background:
+          "radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.35) 100%)",
+      }}
+    />
+  );
+}
+
 
 // ─── Bronze ──────────────────────────────────────────────────
 function BronzeAura() {
