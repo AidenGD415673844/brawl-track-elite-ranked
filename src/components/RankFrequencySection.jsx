@@ -99,85 +99,60 @@ export default function RankFrequencySection({ peakTier }) {
       <div className="flex items-center justify-center flex-wrap gap-3">
         {reachedTiers.map((tier) => {
           const count = freq[tier] || 0;
-          const level = getEffectLevel(count);
           const c = TIER_COLORS[tier];
           const img = TIER_IMAGES[tier];
-
           return (
-            <FrequencyBadge key={tier} tier={tier} count={count} level={level} color={c} image={img} />
+            <FrequencyBadge key={tier} tier={tier} count={count} color={c} image={img} />
           );
         })}
+
       </div>
     </div>
   );
 }
 
-function FrequencyBadge({ tier, count, level, color, image }) {
+function Star({ lit, color }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+      <path
+        d="M12,2 L14.5,9 L22,9.5 L16,14.5 L18,22 L12,17.5 L6,22 L8,14.5 L2,9.5 L9.5,9 Z"
+        fill={lit ? color.text : "rgba(255,255,255,0.12)"}
+        stroke={lit ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.25)"}
+        strokeWidth="1"
+        style={
+          lit
+            ? { filter: `drop-shadow(0 0 4px ${color.glow || color.text})` }
+            : undefined
+        }
+      />
+    </svg>
+  );
+}
+
+function FrequencyBadge({ tier, count, color, image }) {
+  const lit = Math.min(6, count);
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.5 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="relative flex flex-col items-center"
+      className="relative flex flex-col items-center gap-1"
     >
-      <div className="relative">
-        {/* Level 2: glow ring */}
-        {level >= 2 && (
-          <motion.div
-            className="absolute inset-0 rounded-full"
-            style={{ boxShadow: `0 0 15px ${color.glow}, 0 0 30px ${color.glow}` }}
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-        )}
-        {/* Level 4: mastery frame */}
-        {level >= 4 && (
-          <motion.div
-            className="absolute -inset-2 rounded-full border-2"
-            style={{ borderColor: color.text, boxShadow: `0 0 20px ${color.glow}` }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-          />
-        )}
-        <img
-          src={image}
-          alt={tier}
-          className="relative w-10 h-10 object-contain"
-          style={{ filter: `drop-shadow(0 0 ${level >= 3 ? 10 : 5}px ${color.glow})` }}
-        />
-        {/* Level 3: particles */}
-        {level >= 3 && (
-          <>
-            {[0, 1, 2, 3].map((i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 rounded-full"
-                style={{
-                  background: color.text,
-                  top: "50%",
-                  left: "50%",
-                }}
-                animate={{
-                  x: [0, Math.cos((i * Math.PI) / 2) * 25],
-                  y: [0, Math.sin((i * Math.PI) / 2) * 25],
-                  opacity: [1, 0],
-                  scale: [1, 0.3],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  delay: i * 0.3,
-                  ease: "easeOut",
-                }}
-              />
-            ))}
-          </>
-        )}
+      <img
+        src={image}
+        alt={tier}
+        className="w-10 h-10 object-contain"
+        style={{ filter: `drop-shadow(0 0 5px ${color.glow || color.text})` }}
+      />
+      <div className="flex items-center gap-0.5">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Star key={i} lit={i < lit} color={color} />
+        ))}
       </div>
-      <span className="text-[9px] font-bold mt-1" style={{ color: color.text }}>
+      <span className="text-[9px] font-bold" style={{ color: color.text }}>
         {tier}
       </span>
       <span className="text-[8px] text-muted-foreground">
-        {count}x
+        {Math.min(count, 6)}/6{count > 6 ? ` (${count}x)` : ""}
       </span>
     </motion.div>
   );
