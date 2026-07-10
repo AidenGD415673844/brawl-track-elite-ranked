@@ -3,30 +3,75 @@ const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me
 // Rank scale, bands, and color/tier utilities for the ranked tracker.
 // Each sub-rank has its own distinct image asset.
 
-// Individual sub-rank images — ordered I, II, III per tier
+// Rank icons — generated as inline SVG data URLs so they always render
+// (the previous /__l5e/ CDN paths were unavailable outside Base44 hosting
+// and showed as broken images on other environments).
+//
+// Each icon is a chunky shield in the tier's brand gradient with the tier
+// initial + roman numeral stacked on top, matching Brawl Stars' visual
+// hierarchy without pulling in external assets.
+const TIER_ICON_STOPS = {
+  Bronze:    ["#f59e0b", "#78350f"],
+  Silver:    ["#e2e8f0", "#475569"],
+  Gold:      ["#fde047", "#a16207"],
+  Diamond:   ["#7dd3fc", "#075985"],
+  Mythic:    ["#f0abfc", "#6b21a8"],
+  Legendary: ["#fca5a5", "#7f1d1d"],
+  Masters:   ["#fbbf24", "#7c2d12"],
+  Pro:       ["#fef08a", "#b45309"],
+};
+
+function rankIconDataUrl(tier, roman) {
+  const [c1, c2] = TIER_ICON_STOPS[tier] || ["#94a3b8", "#334155"];
+  const initial = tier[0];
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+    <defs>
+      <linearGradient id='g' x1='0' y1='0' x2='0' y2='1'>
+        <stop offset='0%' stop-color='${c1}'/>
+        <stop offset='100%' stop-color='${c2}'/>
+      </linearGradient>
+      <linearGradient id='rim' x1='0' y1='0' x2='0' y2='1'>
+        <stop offset='0%' stop-color='rgba(255,255,255,0.65)'/>
+        <stop offset='100%' stop-color='rgba(0,0,0,0.35)'/>
+      </linearGradient>
+    </defs>
+    <path d='M50 6 L88 20 V52 C88 74 72 88 50 94 C28 88 12 74 12 52 V20 Z'
+          fill='url(#g)' stroke='url(#rim)' stroke-width='3'/>
+    <path d='M50 12 L82 24 V52 C82 70 68 82 50 87 C32 82 18 70 18 52 V24 Z'
+          fill='none' stroke='rgba(0,0,0,0.35)' stroke-width='1.5'/>
+    <text x='50' y='52' text-anchor='middle' font-family='Impact, "Arial Black", sans-serif'
+          font-size='34' fill='white' stroke='rgba(0,0,0,0.55)' stroke-width='2'
+          paint-order='stroke' font-weight='900'>${initial}</text>
+    <text x='50' y='78' text-anchor='middle' font-family='Impact, "Arial Black", sans-serif'
+          font-size='18' fill='white' stroke='rgba(0,0,0,0.55)' stroke-width='1.5'
+          paint-order='stroke' font-weight='900'>${roman || ""}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 const RANK_IMAGES = {
-  "Bronze I":      "/__l5e/assets-v1/bc4d1fce-7506-4029-ad9d-3195e6110056/IMG_1357.png",
-  "Bronze II":     "/__l5e/assets-v1/ddb8507e-d0c3-4738-b3d2-920523478941/IMG_1356.png",
-  "Bronze III":    "/__l5e/assets-v1/425d4e48-7f77-4404-a749-70fd78da66fe/IMG_1355.png",
-  "Silver I":      "/__l5e/assets-v1/1990f39c-5fc8-4252-b36a-32139bcf1d93/IMG_1354.png",
-  "Silver II":     "/__l5e/assets-v1/ce35b435-4ec4-4b49-9ddd-1eec4bc0ab6f/IMG_1353.png",
-  "Silver III":    "/__l5e/assets-v1/462e3f9e-36dc-43ea-897a-0c17fd1b32c0/IMG_1352.png",
-  "Gold I":        "/__l5e/assets-v1/c261a606-bc90-4834-8217-8b9d20b348e7/IMG_1351.png",
-  "Gold II":       "/__l5e/assets-v1/a7076a7e-8506-4bb2-b64a-3ec694538824/IMG_1350.png",
-  "Gold III":      "/__l5e/assets-v1/4995f95a-a8eb-4557-9b4b-5998865056d4/IMG_1349.png",
-  "Diamond I":     "/__l5e/assets-v1/f5004267-2b3e-45f4-bbdf-90c9eed72f02/IMG_1348.png",
-  "Diamond II":    "/__l5e/assets-v1/271d3bec-9931-4621-ad75-1a719be33cf4/IMG_1347.png",
-  "Diamond III":   "/__l5e/assets-v1/1372bf67-4eac-42a8-a745-1d4a9f9267c5/IMG_1346.png",
-  "Mythic I":      "/__l5e/assets-v1/f95b93fd-f3b4-4f24-8429-c8c7dc770943/IMG_1345.png",
-  "Mythic II":     "/__l5e/assets-v1/a8c8c627-9ea4-44fc-80f3-a018d09915fb/IMG_1344.png",
-  "Mythic III":    "/__l5e/assets-v1/ce550d9f-6efb-4c55-8f43-a52db8aa1773/IMG_1343.png",
-  "Legendary I":   "/__l5e/assets-v1/3b972475-5ce8-4dbc-b0c8-50148e4e5883/IMG_1342.png",
-  "Legendary II":  "/__l5e/assets-v1/1ee4f875-8c0f-4329-8740-eb1afbc85508/IMG_1341.png",
-  "Legendary III": "/__l5e/assets-v1/9e3eb9e0-c4f4-4ece-919f-9276b6cf5d7f/IMG_1340.png",
-  "Masters I":     "/__l5e/assets-v1/dc4b35d0-1524-4afb-a9c8-66c62135a391/IMG_1339.png",
-  "Masters II":    "/__l5e/assets-v1/cba4c399-86a0-4812-9fbc-50611436e260/IMG_1338.png",
-  "Masters III":   "/__l5e/assets-v1/aac66757-f507-4b81-8422-350c3d01f464/IMG_1337.png",
-  "Pro":           "/__l5e/assets-v1/381bb0fd-3508-4ee6-91b1-574efc3acdd4/IMG_1336.png",
+  "Bronze I":      rankIconDataUrl("Bronze", "I"),
+  "Bronze II":     rankIconDataUrl("Bronze", "II"),
+  "Bronze III":    rankIconDataUrl("Bronze", "III"),
+  "Silver I":      rankIconDataUrl("Silver", "I"),
+  "Silver II":     rankIconDataUrl("Silver", "II"),
+  "Silver III":    rankIconDataUrl("Silver", "III"),
+  "Gold I":        rankIconDataUrl("Gold", "I"),
+  "Gold II":       rankIconDataUrl("Gold", "II"),
+  "Gold III":      rankIconDataUrl("Gold", "III"),
+  "Diamond I":     rankIconDataUrl("Diamond", "I"),
+  "Diamond II":    rankIconDataUrl("Diamond", "II"),
+  "Diamond III":   rankIconDataUrl("Diamond", "III"),
+  "Mythic I":      rankIconDataUrl("Mythic", "I"),
+  "Mythic II":     rankIconDataUrl("Mythic", "II"),
+  "Mythic III":    rankIconDataUrl("Mythic", "III"),
+  "Legendary I":   rankIconDataUrl("Legendary", "I"),
+  "Legendary II":  rankIconDataUrl("Legendary", "II"),
+  "Legendary III": rankIconDataUrl("Legendary", "III"),
+  "Masters I":     rankIconDataUrl("Masters", "I"),
+  "Masters II":    rankIconDataUrl("Masters", "II"),
+  "Masters III":   rankIconDataUrl("Masters", "III"),
+  "Pro":           rankIconDataUrl("Pro", ""),
 };
 
 // TIER_IMAGES kept for backward compat — points to the I sub-rank image of each tier

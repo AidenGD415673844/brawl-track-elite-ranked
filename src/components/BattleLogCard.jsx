@@ -4,6 +4,7 @@ import { getRank, TIER_COLORS } from "@/lib/ranks";
 import { computeParticipantTransitions } from "@/lib/battleLog";
 import { computeFairness, computeWhatIf } from "@/lib/matchAnalysis";
 import RankBadge from "@/components/RankBadge";
+import BrawlerPortrait from "@/components/BrawlerPortrait";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import { Clock, Sliders, Trash2, Star, Pencil, FlaskConical, BarChart3, Trophy, Gauge, Swords, Shield, Flame } from "lucide-react";
 
@@ -45,16 +46,41 @@ function TeamMember({ label, elo, beforeElo, afterElo, brawler, isStar, isYou, p
   const c = TIER_COLORS[rank.tier];
   const gap = isYou ? 0 : Math.round(elo - playerElo);
 
+  // Brawler portrait replaces the rank icon slot; rank icon sits
+  // underneath at 40% of the portrait's size (per user spec).
+  const portraitSize = 44;
+  const rankIconSize = Math.round(portraitSize * 0.4); // ≈ 18px
+
+  // Lazy import removed — BrawlerPortrait is a top-level import.
+
   return (
-    <div className="flex flex-col items-center gap-0.5 min-w-[44px]">
+    <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
       <div className={`relative ${isYou ? "ring-2 ring-cyan-400 rounded-lg" : ""}`}>
-        <RankBadge elo={elo} size={36} />
+        <BrawlerPortrait
+          brawler={brawler}
+          elo={elo}
+          size={portraitSize}
+          showRankOverlay={false}
+          showElo={false}
+        />
         {isStar && (
-          <div className="absolute -top-1 -right-1 bg-yellow-500 rounded-full p-0.5">
+          <div className="absolute -top-1 -right-1 bg-yellow-500 rounded-full p-0.5 z-10">
             <Star className="w-2.5 h-2.5 text-white fill-white" />
           </div>
         )}
       </div>
+      {/* Rank icon — 40% of portrait, directly beneath the portrait */}
+      <img
+        src={rank.image}
+        alt={rank.name}
+        className="rounded-full bg-card/60 -mt-1"
+        style={{
+          width: rankIconSize,
+          height: rankIconSize,
+          objectFit: "contain",
+          filter: `drop-shadow(0 0 3px ${c.glow})`,
+        }}
+      />
       <span className={`text-[8px] font-display font-bold ${isYou ? "text-cyan-400" : "text-muted-foreground"}`}>
         {label}
       </span>
@@ -62,7 +88,7 @@ function TeamMember({ label, elo, beforeElo, afterElo, brawler, isStar, isYou, p
         {rank.name}
       </span>
       {brawler && (
-        <span className="text-[7px] text-foreground/50 max-w-[44px] truncate text-center">
+        <span className="text-[7px] text-foreground/50 max-w-[52px] truncate text-center">
           {brawler}
         </span>
       )}

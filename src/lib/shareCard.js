@@ -3,8 +3,9 @@
 // (Safari-friendly). Uses `html2canvas` if available; falls back to a hand-
 // drawn canvas so it works with zero deps.
 import { TIER_COLORS } from "@/lib/ranks";
+import { getRankTitle } from "@/lib/rankTitles";
 
-export async function generateSeasonShareCard({ peakRank, peakElo, wins, losses, games, winRate, badges }) {
+export async function generateSeasonShareCard({ peakRank, peakElo, wins, losses, games, winRate, badges, streak }) {
   const c = TIER_COLORS[peakRank.tier];
   const W = 1080, H = 1350;
   const canvas = document.createElement("canvas");
@@ -83,8 +84,18 @@ export async function generateSeasonShareCard({ peakRank, peakElo, wins, losses,
     ctx.fillText(b.label, x + 68, y + 40);
   });
 
+  // Meme tagline pulled from the shared rankTitles library so the share
+  // card matches the vibe on Home / Deserved Rank.
+  const memeTitle = getRankTitle(peakRank.name, { streak: streak || 0 });
+
   // Footer
   ctx.textAlign = "center";
+  if (memeTitle?.subtitle) {
+    ctx.fillStyle = c.text;
+    ctx.font = "italic bold 26px system-ui, sans-serif";
+    // Word-wrap the tagline in case it's long.
+    wrapText(ctx, `"${memeTitle.subtitle}"`, W / 2, H - 110, W - 120, 32);
+  }
   ctx.fillStyle = "rgba(255,255,255,0.5)";
   ctx.font = "bold 22px system-ui, sans-serif";
   ctx.fillText("Track your rank at BrawlTrack", W / 2, H - 60);
@@ -113,4 +124,23 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
+}
+
+// Simple canvas word-wrapper — draws multi-line centered text starting at (x,y).
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = String(text || "").split(" ");
+  const lines = [];
+  let line = "";
+  for (const w of words) {
+    const test = line ? `${line} ${w}` : w;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = w;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  const startY = y - ((lines.length - 1) * lineHeight) / 2;
+  lines.forEach((ln, i) => ctx.fillText(ln, x, startY + i * lineHeight));
 }

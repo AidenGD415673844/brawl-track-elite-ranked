@@ -52,6 +52,7 @@ export default function SeasonEndReport({ player, battleLog, onClose }) {
     try {
       await generateSeasonShareCard({
         peakRank, peakElo, wins, losses, games: seasonGames, winRate: seasonWinRate, badges,
+        streak: story?.bestStreak || 0,
       });
     } finally { setSharing(false); }
   };
