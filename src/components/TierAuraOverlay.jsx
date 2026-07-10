@@ -370,7 +370,22 @@ function MythicAura() {
       />
       {blasts.map((ex, i) => (
         <div key={i} className="absolute" style={{ left: ex.left, top: ex.top }}>
-          {/* Flash */}
+          {/* Flash — bigger, brighter */}
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: 140,
+              height: 140,
+              marginLeft: -70,
+              marginTop: -70,
+              background:
+                "radial-gradient(circle, rgba(250,232,255,1) 0%, rgba(217,70,239,0.85) 35%, rgba(126,34,206,0.5) 60%, transparent 78%)",
+              animation: `mythic-blast ${ex.duration} ${ex.delay} ease-out infinite`,
+              filter: "blur(3px)",
+              mixBlendMode: "screen",
+            }}
+          />
+          {/* Shockwave ring — larger */}
           <div
             className="absolute rounded-full"
             style={{
@@ -378,30 +393,38 @@ function MythicAura() {
               height: 90,
               marginLeft: -45,
               marginTop: -45,
-              background:
-                "radial-gradient(circle, rgba(250,232,255,0.95) 0%, rgba(217,70,239,0.7) 35%, rgba(126,34,206,0.4) 60%, transparent 75%)",
-              animation: `mythic-blast ${ex.duration} ${ex.delay} ease-out infinite`,
-              filter: "blur(2px)",
-              mixBlendMode: "screen",
-            }}
-          />
-          {/* Shockwave ring */}
-          <div
-            className="absolute rounded-full"
-            style={{
-              width: 60,
-              height: 60,
-              marginLeft: -30,
-              marginTop: -30,
-              border: "3px solid rgba(240,171,252,0.85)",
-              boxShadow: "0 0 12px rgba(217,70,239,0.9)",
+              border: "4px solid rgba(240,171,252,0.95)",
+              boxShadow: "0 0 18px rgba(217,70,239,1)",
               animation: `mythic-ring ${ex.duration} ${ex.delay} ease-out infinite`,
             }}
           />
-          {/* Violet chunks */}
-          {Array.from({ length: 8 }).map((_, k) => {
-            const a = (k / 8) * Math.PI * 2 + rand(-0.15, 0.15);
-            const d = 55 + rand(0, 30);
+          {/* Violet chunks — more, farther */}
+          {Array.from({ length: 12 }).map((_, k) => {
+            const a = (k / 12) * Math.PI * 2 + rand(-0.15, 0.15);
+            const d = 80 + rand(0, 45);
+            return (
+              <div
+                key={k}
+                className="absolute"
+                style={{
+                  left: 0,
+                  top: 0,
+                  width: 8,
+                  height: 8,
+                  marginLeft: -4,
+                  marginTop: -4,
+                  background:
+                    "radial-gradient(circle, #f0abfc 0%, #a855f7 70%, #6b21a8 100%)",
+                  borderRadius: "2px",
+                  boxShadow: "0 0 8px rgba(217,70,239,1)",
+                  "--dx": `${Math.cos(a) * d}px`,
+                  "--dy": `${Math.sin(a) * d}px`,
+                  "--rot": `${rand(-360, 360)}deg`,
+                  animation: `mythic-chunk ${ex.duration} ${ex.delay} ease-out infinite`,
+                }}
+              />
+            );
+          })}
             return (
               <div
                 key={k}
