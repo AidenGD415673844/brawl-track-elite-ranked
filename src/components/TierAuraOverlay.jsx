@@ -535,25 +535,26 @@ function MastersAura() {
           className="absolute"
           style={{ left: ex.left, top: ex.top }}
         >
-          {/* Flash */}
+          {/* Flash — bigger */}
           <div
             className="absolute rounded-full"
             style={{
-              width: 60,
-              height: 60,
-              marginLeft: -30,
-              marginTop: -30,
+              width: 110,
+              height: 110,
+              marginLeft: -55,
+              marginTop: -55,
               background:
-                "radial-gradient(circle, rgba(254,243,199,0.95) 0%, rgba(251,146,60,0.6) 40%, transparent 70%)",
+                "radial-gradient(circle, rgba(254,243,199,1) 0%, rgba(251,146,60,0.75) 40%, rgba(220,38,38,0.35) 65%, transparent 78%)",
               animation: `masters-flash 2s ${ex.delay} ease-out infinite`,
-              filter: "blur(1px)",
+              filter: "blur(2px)",
+              mixBlendMode: "screen",
             }}
           />
-          {/* Concrete debris chunks (rock icons) */}
-          {Array.from({ length: 8 }).map((_, k) => {
-            const a = (k / 8) * Math.PI * 2 + rand(-0.15, 0.15);
-            const d = 55 + rand(0, 30);
-            const size = 8 + Math.round(rand(0, 4));
+          {/* Concrete debris chunks — more, farther */}
+          {Array.from({ length: 12 }).map((_, k) => {
+            const a = (k / 12) * Math.PI * 2 + rand(-0.15, 0.15);
+            const d = 80 + rand(0, 40);
+            const size = 10 + Math.round(rand(0, 5));
             return (
               <svg
                 key={k}
