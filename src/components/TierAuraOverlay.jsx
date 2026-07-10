@@ -1,4 +1,6 @@
 import React, { useMemo, useEffect, useState } from "react";
+import { useAnimPrefs, intensityScale } from "@/lib/animPrefs";
+
 
 // Detect low-power / reduced-motion contexts. When any of these are true,
 // we render a lighter static gradient instead of the full particle aura:
