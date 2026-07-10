@@ -60,9 +60,13 @@ function avgElo(elos) {
   return valid.reduce((a, b) => a + b, 0) / valid.length;
 }
 
-function getFloorForElo(elo) {
+function getFloorForElo(elo, highestElo = 0) {
   const tier = getRank(elo).tier;
-  return RANK_FLOORS[tier] ?? 0;
+  let floor = RANK_FLOORS[tier] ?? 0;
+  // Permanent Diamond safety net: once a player ever reached Diamond (>= 2250),
+  // they can never drop below 3000 regardless of current tier.
+  if ((Number(highestElo) || 0) >= 2250) floor = Math.max(floor, RANK_FLOORS.Diamond);
+  return floor;
 }
 
 // Sub-rank index of an average enemy Elo (uses same RANKS boundaries)
