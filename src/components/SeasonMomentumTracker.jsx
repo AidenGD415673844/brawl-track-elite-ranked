@@ -6,10 +6,23 @@ import { Card } from "@/components/ui/card";
 // SeasonMomentumTracker — compares the player's recent Elo gain rate
 // (last 20 games) against their all-time average to show whether
 // they're trending above or below their typical performance.
-export default function SeasonMomentumTracker({ battleLog }) {
+export default function SeasonMomentumTracker({ battleLog, seasonStartDate }) {
+  // Only battles logged after the current season's start count toward
+  // this season's momentum. This prevents the previous season's chart
+  // from bleeding through after clicking "New Season".
+  const seasonStartTs = seasonStartDate ? new Date(seasonStartDate).getTime() : 0;
+  const seasonLogAll = useMemo(() => {
+    const real = (battleLog || []).filter((e) => !e.manual);
+    if (!seasonStartTs) return real;
+    return real.filter((e) => {
+      const ts = e.timestamp ? new Date(e.timestamp).getTime() : 0;
+      return ts >= seasonStartTs;
+    });
+  }, [battleLog, seasonStartTs]);
+
   const data = useMemo(() => {
-    const realLog = (battleLog || []).filter((e) => !e.manual);
-    if (realLog.length < 2) return null;
+    if (seasonLogAll.length < 2) return null;
+    const realLog = seasonLogAll;
 
     // Battle log is newest-first; reverse for chronological order
     const chrono = [...realLog].reverse();
@@ -33,9 +46,27 @@ export default function SeasonMomentumTracker({ battleLog }) {
       momentum,
       seasonGames,
     };
-  }, [battleLog]);
+  }, [seasonLogAll]);
 
-  if (!data) return null;
+  if (!data) {
+    // Fresh-season empty state — replaces the stale prior-season chart.
+    if (seasonStartTs) {
+      return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="p-5 rounded-2xl bg-card border-border">
+            <div className="flex items-center gap-2 mb-1">
+              <Minus className="w-5 h-5 text-muted-foreground" />
+              <h3 className="text-sm font-display font-bold text-foreground">Season Momentum</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Fresh season · 0 logged. Play a couple of matches to see your trend.
+            </p>
+          </Card>
+        </motion.div>
+      );
+    }
+    return null;
+  }
 
   const isUp = data.momentum > 5;
   const isDown = data.momentum < -5;
