@@ -1,91 +1,64 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
-import React, { createContext, useState, useContext, useEffect } from 'react';
-
-import { appParams } from '@/lib/app-params';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
-  const [authError, setAuthError] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
-  const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    checkAppState();
+    // Register listener FIRST
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, sess) => {
+      setSession(sess);
+      setUser(sess?.user ?? null);
+      setIsAuthenticated(!!sess);
+    });
+    // Then hydrate initial session
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      setIsAuthenticated(!!data.session);
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  const checkAppState = async () => {
-    // Base44 backend removed — run as an unauthenticated public app.
-    // The tracker is fully client-side (localStorage), so no auth needed.
-    setAppPublicSettings({ id: appParams?.appId || "local", public_settings: {} });
-    setIsLoadingPublicSettings(false);
-    setIsAuthenticated(false);
-    setIsLoadingAuth(false);
+  const checkUserAuth = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    setSession(data.session);
+    setUser(data.session?.user ?? null);
+    setIsAuthenticated(!!data.session);
     setAuthChecked(true);
-    setAuthError(null);
-  };
+    setIsLoadingAuth(false);
+  }, []);
 
-  const checkUserAuth = async () => {
-    try {
-      // Now check if the user is authenticated
-      setIsLoadingAuth(true);
-      const currentUser = await db.auth.me();
-      setUser(currentUser);
-      setIsAuthenticated(true);
-      setIsLoadingAuth(false);
-      setAuthChecked(true);
-    } catch (error) {
-      console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-      setAuthChecked(true);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      }
-    }
-  };
-
-  const logout = (shouldRedirect = true) => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    setSession(null);
     setIsAuthenticated(false);
-    
-    if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      db.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      db.auth.logout();
-    }
-  };
-
-  const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    db.auth.redirectToLogin(window.location.href);
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
+    <AuthContext.Provider value={{
+      user,
+      session,
+      isAuthenticated,
       isLoadingAuth,
-      isLoadingPublicSettings,
+      isLoadingPublicSettings: false,
       authError,
-      appPublicSettings,
+      appPublicSettings: { id: 'local', public_settings: {} },
       authChecked,
       logout,
-      navigateToLogin,
+      navigateToLogin: () => { window.location.href = '/auth'; },
       checkUserAuth,
-      checkAppState
+      checkAppState: checkUserAuth,
     }}>
       {children}
     </AuthContext.Provider>
@@ -93,9 +66,7 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
 };

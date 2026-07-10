@@ -1,9 +1,11 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, ArrowLeft, Radio, ShieldAlert, Zap, Vibrate, Sparkles } from "lucide-react";
+import { Sun, Moon, ArrowLeft, Radio, ShieldAlert, Zap, Vibrate, Sparkles, LogIn, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
+import { useAuth } from "@/lib/AuthContext";
+
 import LiveKitSettings from "@/components/LiveKitSettings";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -20,6 +22,8 @@ import {
 
 export default function Settings() {
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, user, logout } = useAuth();
+
   const [tiltLock, setTiltLock] = React.useState(isTiltLockEnabled());
   const [threshold, setThreshold] = React.useState(getTiltLockThreshold());
   const [haptics, setHaptics] = React.useState(areHapticsEnabled());
@@ -48,6 +52,38 @@ export default function Settings() {
           </Link>
           <h1 className="text-2xl font-bold">Settings</h1>
         </div>
+
+        <Card className="bg-card border-border p-5 rounded-2xl">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
+                {isAuthenticated ? <LogOut className="w-5 h-5 text-white" /> : <LogIn className="w-5 h-5 text-white" />}
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground">
+                  {isAuthenticated ? "Signed in" : "Account (optional)"}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {isAuthenticated
+                    ? user?.email
+                    : "Sign in for real-time rooms & battle sharing. Not needed for tracking."}
+                </p>
+              </div>
+            </div>
+            {isAuthenticated ? (
+              <Button onClick={logout} variant="outline" className="rounded-xl">
+                Sign out
+              </Button>
+            ) : (
+              <Link to="/auth">
+                <Button className="rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white">
+                  Sign in
+                </Button>
+              </Link>
+            )}
+          </div>
+        </Card>
+
 
         <Card className="bg-card border-border p-5 rounded-2xl">
           <div className="flex items-center justify-between">

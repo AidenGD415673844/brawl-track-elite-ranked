@@ -13,15 +13,18 @@ import Settings from './pages/Settings';
 import SquadDashboard from './pages/SquadDashboard';
 import BrawlSpaces from './pages/BrawlSpaces';
 import DeservedRank from './pages/DeservedRank';
+import Auth from './pages/Auth';
 
 const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/auth" element={<Auth />} />
       <Route path="/brawlspaces" element={<BrawlSpaces />} />
       <Route path="/squad" element={<SquadDashboard />} />
       <Route path="/deserved-rank" element={<DeservedRank />} />
       <Route path="/settings" element={<Settings />} />
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
