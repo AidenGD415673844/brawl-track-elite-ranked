@@ -262,18 +262,34 @@ export default function DeservedRankReveal({ result, onDone, onRetake, readOnly 
           </div>
         </Card>
 
-        {/* Suggested Focus — the two weakest categories */}
+        {/* Rank Gap Explainer */}
+        {result.gapExplanation && (
+          <Card className="bg-card border-border rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-1.5 h-5 rounded-full bg-gradient-to-b from-cyan-400 to-purple-500" />
+              <h2 className="text-base font-display font-bold text-foreground">
+                Why the gap?
+              </h2>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {result.gapExplanation}
+            </p>
+          </Card>
+        )}
+
+        {/* Personalized Focus Notes (feedback engine) */}
         {(() => {
           const DRILLS = {
-            mechanics: "Grind Showdown solo for 30 min — pure aim + dodge reps, no team crutch.",
-            gameIQ: "Watch one pro match with sound off and predict every rotation before it happens.",
-            resilience: "Set a hard 3-loss stop rule for one week. Journal what tilted you.",
-            brawlerPool: "Pick your 3 weakest roles and P11 one brawler per role this season.",
+            Mechanics: "Grind Showdown solo for 30 min — pure aim + dodge reps, no team crutch.",
+            "Game IQ": "Watch one pro match with sound off and predict every rotation before it happens.",
+            Mental: "Set a hard 3-loss stop rule for one week. Journal what tilted you.",
+            "Brawler Pool": "Pick your 3 weakest roles and P11 one brawler per role this season.",
           };
+          const notes = result.focusNotes || [];
           const weakest = [...(result.categories || [])]
             .sort((a, b) => a.score - b.score)
             .slice(0, 2);
-          if (!weakest.length) return null;
+          if (!notes.length && !weakest.length) return null;
           return (
             <Card className="bg-card border-border rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
@@ -283,6 +299,22 @@ export default function DeservedRankReveal({ result, onDone, onRetake, readOnly 
                 </h2>
               </div>
               <div className="space-y-2">
+                {notes.map((n, i) => {
+                  const sevColor =
+                    n.severity === "high"
+                      ? "border-rose-500/40 bg-rose-500/5 text-rose-300"
+                      : n.severity === "medium"
+                      ? "border-amber-500/40 bg-amber-500/5 text-amber-300"
+                      : "border-emerald-500/40 bg-emerald-500/5 text-emerald-300";
+                  return (
+                    <div key={i} className={`rounded-xl p-3 border ${sevColor}`}>
+                      <div className="text-[10px] uppercase tracking-widest opacity-80 mb-1">
+                        {n.category}
+                      </div>
+                      <p className="text-xs text-foreground/90 leading-snug">{n.text}</p>
+                    </div>
+                  );
+                })}
                 {weakest.map((cat) => (
                   <div
                     key={cat.id}
@@ -298,7 +330,7 @@ export default function DeservedRankReveal({ result, onDone, onRetake, readOnly 
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-snug">
-                      {DRILLS[cat.id] || "Focus a full session on this pillar and re-assess."}
+                      {DRILLS[cat.label] || "Focus a full session on this pillar and re-assess."}
                     </p>
                   </div>
                 ))}

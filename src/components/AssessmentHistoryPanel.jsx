@@ -140,6 +140,22 @@ export default function AssessmentHistoryPanel({
     [history]
   );
 
+  // Biggest category gainer & decliner across the full history
+  // (oldest → newest). Only meaningful with 2+ runs.
+  const categoryTrend = useMemo(() => {
+    if (history.length < 2) return null;
+    const oldest = history[history.length - 1];
+    const newest = history[0];
+    if (!oldest?.categories || !newest?.categories) return null;
+    const diffs = oldest.categories.map((c) => {
+      const nb = newest.categories.find((x) => x.id === c.id);
+      return { id: c.id, label: c.label, color: c.color, delta: (nb?.score ?? 0) - c.score };
+    });
+    const gainer = [...diffs].sort((a, b) => b.delta - a.delta)[0];
+    const decliner = [...diffs].sort((a, b) => a.delta - b.delta)[0];
+    return { gainer, decliner };
+  }, [history]);
+
   const toggleSelect = (id) => {
     setSelectedIds((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
@@ -282,6 +298,34 @@ export default function AssessmentHistoryPanel({
                         </span>
                       </div>
                       <Sparkline points={trendPoints} />
+                    </div>
+                  )}
+                  {categoryTrend && !compareMode && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: "gainer", label: "Most improved", entry: categoryTrend.gainer, positive: true },
+                        { key: "decliner", label: "Biggest drop", entry: categoryTrend.decliner, positive: false },
+                      ].map(({ key, label, entry, positive }) => {
+                        if (!entry) return null;
+                        const isGain = entry.delta > 0;
+                        const isLoss = entry.delta < 0;
+                        const tone = (positive && isGain) || (!positive && isLoss)
+                          ? positive
+                            ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
+                            : "border-rose-500/30 bg-rose-500/5 text-rose-300"
+                          : "border-border bg-muted/30 text-muted-foreground";
+                        return (
+                          <div key={key} className={`rounded-xl border px-3 py-2 ${tone}`}>
+                            <div className="text-[9px] uppercase tracking-widest opacity-70">{label}</div>
+                            <div className="text-[12px] font-bold" style={{ color: entry.color?.text }}>
+                              {entry.label}
+                            </div>
+                            <div className="text-[11px] font-bold tabular-nums">
+                              {entry.delta > 0 ? "+" : ""}{entry.delta} pts
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                   <div className="space-y-2">

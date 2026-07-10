@@ -58,6 +58,8 @@ export function saveAssessment(result, responses) {
     adjustments: result.adjustments,
     verdict: result.verdict,
     verdictClass: result.verdictClass,
+    focusNotes: result.focusNotes,
+    gapExplanation: result.gapExplanation,
     responses,
   };
   const list = [entry, ...loadHistory()].slice(0, MAX_ENTRIES);
@@ -116,6 +118,8 @@ export function entryToResult(entry) {
     adjustments: entry.adjustments,
     confidence: entry.confidence,
     sampleSize: entry.sampleSize,
+    focusNotes: entry.focusNotes,
+    gapExplanation: entry.gapExplanation,
     savedAt: entry.timestamp,
   };
 }
