@@ -459,6 +459,14 @@ export default function Home() {
             >
               <Flag className="w-4 h-4 mr-2" /> Season Report
             </Button>
+            <Button
+              variant="outline"
+              onClick={handleRevert}
+              title="Revert to last save"
+              className="border-border bg-card text-foreground hover:bg-muted rounded-xl"
+            >
+              <Undo2 className="w-4 h-4 mr-2" /> Revert
+            </Button>
             <CSVImport onImport={handleCSVImport} />
             <Button
               variant="outline"
