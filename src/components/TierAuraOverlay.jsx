@@ -2,13 +2,8 @@ import React, { useMemo, useEffect, useState } from "react";
 import { useAnimPrefs, intensityScale } from "@/lib/animPrefs";
 
 
-// Detect low-power / reduced-motion contexts. When any of these are true,
-// we render a lighter static gradient instead of the full particle aura:
-//   • prefers-reduced-motion: reduce
-//   • hardwareConcurrency <= 4 (older mobiles / iPads)
-//   • deviceMemory <= 4 (Android low-RAM)
-//   • window inner width <= 480 (phones)
-// Users can override via localStorage.setItem('tierAnimPerf', 'high'|'low').
+// Reduced-motion fallback. User override still works, but iPads/phones are no
+// longer auto-downgraded because that hid the restored battle-card backgrounds.
 function useLowPowerMode() {
   const [low, setLow] = useState(false);
   useEffect(() => {
@@ -18,10 +13,7 @@ function useLowPowerMode() {
       if (override === "high") { setLow(false); return; }
       const mm = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
       const reduced = !!(mm && mm.matches);
-      const cores = typeof navigator !== "undefined" ? (navigator.hardwareConcurrency || 8) : 8;
-      const mem = typeof navigator !== "undefined" ? (navigator.deviceMemory || 8) : 8;
-      const narrow = typeof window !== "undefined" && window.innerWidth <= 480;
-      setLow(reduced || cores <= 4 || mem <= 4 || narrow);
+      setLow(reduced);
     } catch { /* noop */ }
   }, []);
   return low;
@@ -66,8 +58,8 @@ const rand = (min, max) => min + Math.random() * (max - min);
 
 // Per-tier grid tint. Neon-boosted so the grid reads on every card.
 const GRID_TINT = {
-  Bronze:    "rgba(253,224,71,0.35)",
-  Silver:    "rgba(226,232,240,0.32)",
+  Bronze:    "rgba(0,0,0,0.48)",
+  Silver:    "rgba(255,255,255,0.34)",
   Gold:      "rgba(253,224,71,0.42)",
   Diamond:   "rgba(125,211,252,0.42)",
   Mythic:    "rgba(240,171,252,0.42)",
@@ -101,9 +93,9 @@ function GridBackdrop({ tier }) {
         `,
         backgroundSize: "24px 24px, 24px 24px",
         backgroundPosition: "0 0, 0 0",
-        opacity: 0.9,
+        opacity: tier === "Bronze" ? 0.72 : 0.82,
         filter: `drop-shadow(0 0 2px ${glow})`,
-        mixBlendMode: "screen",
+        mixBlendMode: tier === "Bronze" ? "multiply" : "screen",
       }}
     />
   );
@@ -142,14 +134,14 @@ function BronzeAura() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(60,20,5,0.35) 0%, transparent 60%)",
+            "linear-gradient(180deg, rgba(31,10,3,0.42) 0%, transparent 60%)",
         }}
       />
       {/* Brick pattern overlay — light opacity, no blend so TIER_BG shows through */}
       <div
         className="absolute inset-0"
         style={{
-          opacity: 0.28,
+          opacity: 0.62,
           backgroundImage: `
             linear-gradient(0deg, rgba(0,0,0,0.55) 0 2px, transparent 2px 30px),
             linear-gradient(90deg, rgba(0,0,0,0.55) 0 2px, transparent 2px 60px),
@@ -197,7 +189,7 @@ function SilverAura() {
         left: `${rand(8, 88)}%`,
         delay: `${(i * rand(0.5, 2)).toFixed(2)}s`,
         duration: `${rand(0.6, 1.1).toFixed(2)}s`,
-        cycle: `${rand(1.2, 3).toFixed(2)}s`,
+        cycle: `${rand(0.5, 2).toFixed(2)}s`,
         d: `M 0 0 L 6 22 L 2 24 L 9 50 L -2 26 L 3 24 Z`,
       })),
     []
@@ -213,7 +205,7 @@ function SilverAura() {
             top: 0,
             width: 12,
             height: 60,
-            animation: `silver-bolt ${b.duration} ${b.delay} steps(2,end) infinite`,
+            animation: `silver-bolt ${b.cycle} ${b.delay} steps(2,end) infinite`,
             animationDelay: b.delay,
           }}
         >
@@ -338,83 +330,47 @@ function DiamondAura() {
 
 // ─── Mythic ──────────────────────────────────────────────────
 function MythicAura() {
-  const blasts = useMemo(
+  const flames = useMemo(
     () =>
-      Array.from({ length: 3 }).map((_, i) => ({
-        left: `${18 + i * 30}%`,
-        top: `${rand(35, 70)}%`,
-        delay: `${(i * rand(0.6, 1)).toFixed(2)}s`,
-        duration: `${rand(1.8, 2.6).toFixed(2)}s`,
+      Array.from({ length: 8 }).map((_, i) => ({
+        left: `${rand(-4, 86)}%`,
+        delay: `${(i * rand(0.25, 0.45)).toFixed(2)}s`,
+        duration: `${rand(1.5, 2.5).toFixed(2)}s`,
+        width: rand(58, 118),
+        height: rand(72, 118),
       })),
     []
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
-      {/* Purple base glow */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-x-0 bottom-0 h-3/5"
         style={{
           background:
-            "radial-gradient(ellipse 100% 80% at 50% 100%, rgba(168,85,247,0.45), rgba(139,92,246,0.2) 40%, transparent 75%)",
+            "radial-gradient(ellipse 110% 100% at 50% 100%, rgba(217,70,239,0.62), rgba(126,34,206,0.32) 42%, transparent 78%)",
         }}
       />
-      {blasts.map((ex, i) => (
-        <div key={i} className="absolute" style={{ left: ex.left, top: ex.top }}>
-          {/* Flash — bigger, brighter */}
+      {flames.map((f, i) => (
+        <div
+          key={i}
+          className="absolute bottom-[-28px]"
+          style={{
+            left: f.left,
+            width: f.width,
+            height: f.height,
+            animation: `mythic-fire ${f.duration} ${f.delay} ease-in-out infinite`,
+            filter: "blur(4px)",
+            mixBlendMode: "screen",
+          }}
+        >
           <div
-            className="absolute rounded-full"
             style={{
-              width: 140,
-              height: 140,
-              marginLeft: -70,
-              marginTop: -70,
+              width: "100%",
+              height: "100%",
               background:
-                "radial-gradient(circle, rgba(250,232,255,1) 0%, rgba(217,70,239,0.85) 35%, rgba(126,34,206,0.5) 60%, transparent 78%)",
-              animation: `mythic-blast ${ex.duration} ${ex.delay} ease-out infinite`,
-              filter: "blur(3px)",
-              mixBlendMode: "screen",
+                "radial-gradient(ellipse 55% 100% at 50% 100%, #f5d0fe 0%, #d946ef 24%, #7e22ce 62%, transparent 90%)",
             }}
           />
-          {/* Shockwave ring — larger */}
-          <div
-            className="absolute rounded-full"
-            style={{
-              width: 90,
-              height: 90,
-              marginLeft: -45,
-              marginTop: -45,
-              border: "4px solid rgba(240,171,252,0.95)",
-              boxShadow: "0 0 18px rgba(217,70,239,1)",
-              animation: `mythic-ring ${ex.duration} ${ex.delay} ease-out infinite`,
-            }}
-          />
-          {/* Violet chunks — more, farther */}
-          {Array.from({ length: 12 }).map((_, k) => {
-            const a = (k / 12) * Math.PI * 2 + rand(-0.15, 0.15);
-            const d = 80 + rand(0, 45);
-            return (
-              <div
-                key={k}
-                className="absolute"
-                style={{
-                  left: 0,
-                  top: 0,
-                  width: 8,
-                  height: 8,
-                  marginLeft: -4,
-                  marginTop: -4,
-                  background:
-                    "radial-gradient(circle, #f0abfc 0%, #a855f7 70%, #6b21a8 100%)",
-                  borderRadius: "2px",
-                  boxShadow: "0 0 8px rgba(217,70,239,1)",
-                  "--dx": `${Math.cos(a) * d}px`,
-                  "--dy": `${Math.sin(a) * d}px`,
-                  "--rot": `${rand(-360, 360)}deg`,
-                  animation: `mythic-chunk ${ex.duration} ${ex.delay} ease-out infinite`,
-                }}
-              />
-            );
-          })}
         </div>
       ))}
     </div>
@@ -688,8 +644,8 @@ export default function TierAuraOverlay({ tier, active = true }) {
   if (!active) return null;
   const Aura = TIER_COMPONENTS[tier];
   if (!Aura) return null;
-  if (lowPower) return (<><GridBackdrop tier={tier} /><LowPowerAura tier={tier} /><Vignette /></>);
-  if (!particlesEnabled) return (<><GridBackdrop tier={tier} /><LowPowerAura tier={tier} /><Vignette /></>);
+  if (lowPower) return (<><LowPowerAura tier={tier} /><GridBackdrop tier={tier} /><Vignette /></>);
+  if (!particlesEnabled) return (<><LowPowerAura tier={tier} /><GridBackdrop tier={tier} /><Vignette /></>);
   const auraStyle =
     intensity === "low"
       ? { opacity: 0.55 }
@@ -698,11 +654,11 @@ export default function TierAuraOverlay({ tier, active = true }) {
       : { opacity: 1 };
   return (
     <>
-      <GridBackdrop tier={tier} />
       <div className="absolute inset-0 pointer-events-none rounded-[inherit]" style={auraStyle}>
         <Aura />
         <TierExtras tier={tier} />
       </div>
+      <GridBackdrop tier={tier} />
       <Vignette />
     </>
   );

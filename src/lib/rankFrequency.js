@@ -4,6 +4,14 @@
 
 const FREQ_KEY = "ranked_rank_frequency_v1";
 
+function emitRankFrequencyUpdated(freq) {
+  try {
+    window.dispatchEvent(new CustomEvent("rank-frequency-updated", { detail: freq }));
+  } catch {
+    // Non-browser contexts ignore UI refresh events.
+  }
+}
+
 export const TRACKED_TIERS = [
   "Bronze", "Silver", "Gold", "Diamond",
   "Mythic", "Legendary", "Masters", "Pro",
@@ -22,6 +30,7 @@ export function setRankFrequency(tier, count) {
   const freq = getRankFrequency();
   freq[tier] = Math.max(0, Math.min(99, Math.floor(Number(count) || 0)));
   localStorage.setItem(FREQ_KEY, JSON.stringify(freq));
+  emitRankFrequencyUpdated(freq);
   return freq;
 }
 
@@ -31,6 +40,7 @@ export function setAllRankFrequency(freqMap) {
     cleaned[tier] = Math.max(0, Math.min(99, Math.floor(Number(freqMap[tier]) || 0)));
   }
   localStorage.setItem(FREQ_KEY, JSON.stringify(cleaned));
+  emitRankFrequencyUpdated(cleaned);
   return cleaned;
 }
 
@@ -38,6 +48,7 @@ export function incrementRankFrequency(tier) {
   const freq = getRankFrequency();
   freq[tier] = (freq[tier] || 0) + 1;
   localStorage.setItem(FREQ_KEY, JSON.stringify(freq));
+  emitRankFrequencyUpdated(freq);
   return freq;
 }
 

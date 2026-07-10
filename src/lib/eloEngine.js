@@ -26,8 +26,8 @@ const TIER_BOUNDS = {
 
 const UNDERDOG_BONUS = 5;
 
-// Permanent major-rank floors — Bronze through Gold can't drop below these.
-// Diamond floor is a permanent 3000 safety net once a player has ever reached Diamond.
+// Permanent major-rank floors — Bronze through Diamond can't drop below these.
+// Mythic+ uses a one-loss safety net only at major-rank boundaries, not sub-ranks.
 const RANK_FLOORS = { Bronze: 0, Silver: 750, Gold: 1500, Diamond: 3000 };
 
 // Match format: Mythic+ is Best of 3, below is Best of 1
@@ -63,10 +63,15 @@ function avgElo(elos) {
 function getFloorForElo(elo, highestElo = 0) {
   const tier = getRank(elo).tier;
   let floor = RANK_FLOORS[tier] ?? 0;
-  // Permanent Diamond safety net: once a player ever reached Diamond (>= 2250),
+  // Permanent Diamond safety net: once a player ever reached Diamond (>= 3000),
   // they can never drop below 3000 regardless of current tier.
-  if ((Number(highestElo) || 0) >= 2250) floor = Math.max(floor, RANK_FLOORS.Diamond);
+  if ((Number(highestElo) || 0) >= RANK_FLOORS.Diamond) floor = Math.max(floor, RANK_FLOORS.Diamond);
   return floor;
+}
+
+function getMajorTierMin(tier) {
+  const major = RANKS.find((r) => r.tier === tier && (r.roman === "I" || r.roman === ""));
+  return major?.min ?? 0;
 }
 
 // Sub-rank index of an average enemy Elo (uses same RANKS boundaries)
@@ -285,14 +290,12 @@ export function calculateElo(playerElo, opts = {}) {
     const floor = getFloorForElo(current, highestElo);
     if (floor > 0 && eloAfter < floor) eloAfter = floor;
 
-    // Mythic+ one-game safety net: any sub-rank boundary catches the first loss.
-    // If you were above `rankObj.min` and the loss would drop you below it,
-    // clamp to the baseline. Next loss will actually demote you a sub-rank.
-    const curIdx = getRankIndex(current);
-    const rankObj = RANKS[curIdx];
-    if (curIdx >= 9 && rankObj) {
-      const baseline = rankObj.min;
-      if (current > baseline && eloAfter < baseline) eloAfter = baseline;
+    // Mythic+ one-game safety net: only the MAJOR rank baseline catches a loss.
+    // Example: 6030 Legendary I -> 6000, then the next loss can drop to Mythic III.
+    // Sub-rank baselines such as Mythic II/III or Legendary II/III are not protected.
+    if (["Mythic", "Legendary", "Masters", "Pro"].includes(tier)) {
+      const majorBaseline = getMajorTierMin(tier);
+      if (current > majorBaseline && eloAfter < majorBaseline) eloAfter = majorBaseline;
     }
 
   }

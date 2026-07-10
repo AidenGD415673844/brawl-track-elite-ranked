@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Award } from "lucide-react";
@@ -6,6 +6,7 @@ import BattleCard from "@/components/BattleCard";
 import CardMasteryProgress from "@/components/CardMasteryProgress";
 import ProfileBattleCard from "@/components/ProfileBattleCard";
 import { BATTLE_CARDS, isCardUnlocked } from "@/lib/battleCards";
+import { getRankFrequency } from "@/lib/rankFrequency";
 import { playCardSFX, primeCardAudio } from "@/lib/cardSfx";
 import TierSparkles from "@/components/TierSparkles";
 
@@ -14,7 +15,18 @@ import TierSparkles from "@/components/TierSparkles";
 export default function BattleCardGallery({ player, onEquip }) {
   const [equipAnim, setEquipAnim] = useState(null);
   const [animNonce, setAnimNonce] = useState(0);
+  const [frequency, setFrequency] = useState(() => getRankFrequency());
   const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    const refresh = () => setFrequency(getRankFrequency());
+    window.addEventListener("rank-frequency-updated", refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener("rank-frequency-updated", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, []);
 
   const handleEquip = (card) => {
     if (!isCardUnlocked(card, player)) return;
@@ -63,6 +75,7 @@ export default function BattleCardGallery({ player, onEquip }) {
             card={card}
             unlocked={isCardUnlocked(card, player)}
             equipped={player.equippedCard === card.tier}
+            frequency={frequency[card.tier]}
             onClick={() => handleEquip(card)}
           />
         ))}

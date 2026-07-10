@@ -6,10 +6,16 @@ import CardParticleBg from "@/components/CardParticleBg";
 import HolographicOverlay from "@/components/HolographicOverlay";
 import TierAuraOverlay from "@/components/TierAuraOverlay";
 
-function StarIcon({ color, size = 7 }) {
+function StarIcon({ color, lit, size = 9 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <path d="M12,2 L14.5,9 L22,9.5 L16,14.5 L18,22 L12,17.5 L6,22 L8,14.5 L2,9.5 L9.5,9 Z" />
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+      <path
+        d="M12,2 L14.5,9 L22,9.5 L16,14.5 L18,22 L12,17.5 L6,22 L8,14.5 L2,9.5 L9.5,9 Z"
+        fill={lit ? color : "rgba(0,0,0,0.42)"}
+        stroke={lit ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.22)"}
+        strokeWidth="1"
+        style={lit ? { filter: `drop-shadow(0 0 4px ${color})` } : undefined}
+      />
     </svg>
   );
 }
@@ -17,10 +23,12 @@ function StarIcon({ color, size = 7 }) {
 // Single battle card — CSS-based design matching the official Brawl Stars
 // card aesthetic. Enhanced with holographic shimmer overlay and 3D tilt
 // that tracks mouse position for an interactive foil-card feel.
-export default function BattleCard({ card, unlocked, equipped, onClick }) {
+export default function BattleCard({ card, unlocked, equipped, onClick, frequency }) {
   const c = card.color;
   const ref = useRef(null);
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
+  const hasFrequency = Number.isFinite(Number(frequency));
+  const starCount = unlocked ? Math.min(6, Math.max(0, hasFrequency ? Number(frequency) : 1)) : 0;
 
   const handleMouseMove = (e) => {
     if (!unlocked || !ref.current) return;
@@ -66,9 +74,9 @@ export default function BattleCard({ card, unlocked, equipped, onClick }) {
       {unlocked && <TierAuraOverlay tier={card.tier} />}
 
       {/* Top star row */}
-      <div className="absolute top-1 left-0 right-0 flex items-center justify-center gap-0.5 z-10">
+      <div className="absolute top-1.5 left-0 right-0 flex items-center justify-center gap-1 z-20">
         {Array.from({ length: 6 }).map((_, i) => (
-          <StarIcon key={i} color={unlocked ? c.text : "rgba(255,255,255,0.2)"} />
+          <StarIcon key={i} color={c.text} lit={i < starCount} />
         ))}
       </div>
 
