@@ -1,9 +1,11 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, ArrowLeft, Radio, ShieldAlert, Zap, Vibrate, Sparkles } from "lucide-react";
+import { Sun, Moon, ArrowLeft, Radio, ShieldAlert, Zap, Vibrate, Sparkles, LogIn, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/lib/ThemeContext";
+import { useAuth } from "@/lib/AuthContext";
+
 import LiveKitSettings from "@/components/LiveKitSettings";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
