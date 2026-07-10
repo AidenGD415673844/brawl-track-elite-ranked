@@ -425,29 +425,6 @@ function MythicAura() {
               />
             );
           })}
-            return (
-              <div
-                key={k}
-                className="absolute"
-                style={{
-                  left: 0,
-                  top: 0,
-                  width: 6,
-                  height: 6,
-                  marginLeft: -3,
-                  marginTop: -3,
-                  background:
-                    "radial-gradient(circle, #f0abfc 0%, #a855f7 70%, #6b21a8 100%)",
-                  borderRadius: "2px",
-                  boxShadow: "0 0 6px rgba(217,70,239,0.9)",
-                  "--dx": `${Math.cos(a) * d}px`,
-                  "--dy": `${Math.sin(a) * d}px`,
-                  "--rot": `${rand(-360, 360)}deg`,
-                  animation: `mythic-chunk ${ex.duration} ${ex.delay} ease-out infinite`,
-                }}
-              />
-            );
-          })}
         </div>
       ))}
     </div>
