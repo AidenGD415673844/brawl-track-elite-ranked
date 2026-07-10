@@ -406,9 +406,12 @@ export default function Home() {
             <Link to="/deserved-rank">
               <Button
                 variant="outline"
-                className="border-border bg-card text-foreground hover:bg-muted rounded-xl"
+                title="Assess Rank"
+                aria-label="Assess Rank"
+                className="border-border bg-card text-foreground hover:bg-muted rounded-xl px-3 sm:px-4"
               >
-                <Sparkles className="w-4 h-4 mr-2" /> Assess Rank
+                <Sparkles className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Assess Rank</span>
               </Button>
             </Link>
             <Button

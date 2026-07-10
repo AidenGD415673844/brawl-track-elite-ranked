@@ -1,113 +1,68 @@
-## Phase 1 — do now
 
-### 1. Critical bug & visual fixes
+# Deserved Rank History + Polish Pass
 
-**1.1 Battle log recovery bug**
-- `saveBattleLog` in `src/lib/battleLog.js` currently swallows quota errors and trims to 500 silently. Wrap all mutating entry points (`addBattle`, `editBattle`, `deleteBattle`, `addRemoteBattle`, manual adjust) in a single "read → mutate → write → re-read verify" pass that returns the persisted log.
-- Add a hydration guard in `Home.jsx`: only write `player`/log to storage after the initial `loadPlayer/loadBattleLog` completes (already partially in place — extend to log). Prevents a race where an empty state overwrites saved logs on hot reload.
-- On mount, if `localStorage[ranked_battle_log_v2]` is missing but a stale backup key exists, restore it. Also mirror the log to a second key (`ranked_battle_log_v2.backup`) on every save.
+## 1. Assessment History Panel (main ask)
 
-**1.2 Blank page on publish**
-- Root cause candidates: (a) `src/api/base44Client.js` shim errors surfacing only in prod, (b) an unguarded top-level throw in `AuthProvider` / `ThemeProvider`, (c) an asset import that resolves in dev but not the built bundle.
-- Wrap `<App/>` in an error boundary that renders a visible fallback (so we stop shipping a truly blank page).
-- Run `bun run build` and inspect `dist/` for missing chunks; fix any import that references a non-existent file or a `.asset.json` that hasn't been resolved.
-- Verify `index.html` mounts `#root` and `main.jsx` imports resolve after build.
+**Storage** — new `src/lib/assessmentHistory.js`
+- localStorage key `deserved_rank_history_v1` (dual-write backup key like the battle log).
+- Cap 50 entries, FIFO trim. Each entry:
+  ```
+  { id, timestamp, currentElo, currentRankName, deservedElo,
+    deservedRankName, deltaElo, deltaIdx, confidence, sampleSize,
+    responses, categories, adjustments, verdict, verdictClass }
+  ```
+- API: `loadHistory()`, `saveAssessment(result, responses)`, `deleteAssessment(id)`, `clearHistory()`.
 
-**1.3 Background & high-tier animations overhaul**
-- Fix `Home.jsx` background container (currently `fixed inset-0` radial that clips under scroll on mobile). Move to a `min-h-dvh` layered gradient on `<body>` via `index.css` with proper `background-attachment: fixed` and a subtle animated aurora.
-- Fully rewrite the Mythic / Legendary / Masters / Pro keyframes in `index.css` and their overlays in `TierAuraOverlay.jsx`:
-  - **Mythic** — slow cosmic nebula drift + soft violet particle float (no more strobe lightning).
-  - **Legendary** — smooth orange/red neon border pulse + orbiting embers (drop the whooshing fire).
-  - **Masters** — elegant gold/white radial pulse with slow debris orbit.
-  - **Pro** — prismatic sheen sweep + slow rising particles.
-- Cadence: 2s cycle, ease-in-out, `will-change: transform, opacity`, respect `prefers-reduced-motion`.
+**Auto-save** — in `DeservedRank.jsx`, call `saveAssessment(...)` inside `handleComplete` before showing the reveal.
 
-**1.4 Asset verification**
-- Enumerate the 23 rank icons under `src/assets/ranks/`, confirm each `.asset.json` resolves, and add a dev-only sanity check in `src/lib/ranks.js` that logs any missing image. Fix any broken references in `RankBadge`, `ProfileBadge`, `RankScale`.
+**History panel** — new `src/components/AssessmentHistoryPanel.jsx`
+- Rendered on the intro screen below the "Start Assessment" card.
+- Collapsed by default with a header row: `History · {n} runs` + trash-all button.
+- Each row shows: date/time, current-rank badge → deserved-rank badge, Elo delta chip (green/red/amber), confidence %, sample size.
+- Click a row to expand inline: skill breakdown bars + adjustments table (reuses the same visual language as the reveal), plus two actions:
+  - **View full reveal** — pushes the entry through `DeservedRankReveal` in read-only mode (hides the Retake button, keeps Done).
+  - **Rerun with these answers** — seeds `responses` state and jumps to the wizard.
+- Empty state: subtle prompt "Complete your first assessment to start tracking your growth."
 
-**1.5 CSV + PDF export/import**
-- CSV export: unchanged output, but wire a working download on Safari (use `URL.createObjectURL` + anchor with `document.body.appendChild` then `remove`). Confirm click handler in `Home.jsx` isn't blocked by the `themeAccent` border overlay.
-- CSV import: extend `parseCSV` to also accept the `=== BATTLE LOG ===` section produced by the exporter, so users can round-trip. Show a toast on success/failure instead of only an inline error.
-- PDF export: current `jsPDF` code is fine — add a try/catch and toast, and include battle-log summary + rank progression pages so the button feels meaningful.
+**Trend strip** — small sparkline at the top of the panel showing deserved Elo over time (SVG polyline, tier-colored gradient). Skipped if fewer than 2 entries.
 
----
+**Reveal tweak** — `DeservedRankReveal` gains an optional `readOnly` prop and a `savedAt` label chip when viewing a historical entry.
 
-### 2. Elo engine rewrite (`src/lib/eloEngine.js`)
+## 2. Bug + logic fixes
 
-Full rewrite around your tier table. New pipeline:
+- **Duplicate "Impact grades" row** in `deservedRankEngine.js` — the adjustments array lists Star player and then a zero-value Impact grades row for the same metric. Remove the dead row.
+- **Battle log filter mismatch** — the intro says "N battles feeding this analysis" using `!e.manual`, but the engine's `streakStability` / `bestStreak` use the full log. Standardize on the non-manual filter everywhere so numbers match what the user sees.
+- **Season-highest never decreases mid-session** — `Home.jsx` currently only bumps `currentSeasonHighest` on save. Recompute it from the battle log on load so a browser reset can't wipe it below current Elo.
+- **Diamond floor edge case** — the 3000 floor kicks in for anyone who *ever* touched Diamond, but a player who reset their profile keeps the flag. Add a "Reset Diamond floor" toggle inside the profile settings sheet for the rare user who wants a clean slate.
+- **Assess Rank nav button** wraps awkwardly on the 586px viewport the user is on — shrink to icon-only under `sm:` with a tooltip.
 
-1. **Classify match type** by comparing player's sub-rank index to the average enemy sub-rank index:
-   - `equal` — same sub-rank
-   - `slight` — 1 sub-rank apart
-   - `large` — 2+ sub-ranks apart
-2. **Base delta from tier table** (equal-battle ranges below are the "equal" band; slight/large scale linearly toward the absolute bounds):
+## 3. New features
 
-```text
-Tier        Equal Win   Equal Loss   Abs Win min/max   Abs Loss min/max
-Bronze      100..120    30..50       80 / 200          20 / 100
-Silver       90..115    35..55       80 / 200          20 / 100
-Gold         85..110    45..70       80 / 200          25 / 120
-Diamond      80..110    50..75       75 / 180          30 / 140
-Mythic       75..105    50..80       75 / 165          35 / 150
-Legendary    70..100    55..90       60 / 150          40 / 165
-Masters      70..95     60..100      55 / 140          50 / 185
-Pro          65..90     70..110      50 / 130          60 / 250
-```
+- **Compare mode** — from history, long-press (or a "Compare" button on two selected rows) opens a side-by-side diff: category deltas, adjustment deltas, Elo swing. Useful for "am I actually improving?"
+- **Weekly reminder chip** — if the newest history entry is > 7 days old, show a soft pill on the Home header: "It's been 9 days — reassess?" that deep-links into `/deserved-rank`.
+- **Export / Import assessment history** — piggyback on the existing CSV/PDF exporter. New JSON export for the full history (portable across devices) and a matching import button.
+- **"Suggested focus" card on the reveal** — reads the two lowest category scores and surfaces one concrete drill per pillar (curated list, not AI). Keeps the reveal actionable rather than just diagnostic.
 
-3. **Scaling rule inside the equal band:** use the standard expected-score formula (divisor 400) to map win probability → position inside the tier's equal min/max (favored wins land near the low end, upset wins near the high end; favored losses near the high loss end, upset losses near the low end).
-4. **Cross-band scaling:** for `slight` / `large` gaps, extrapolate outward toward the absolute min/max, clamped rigidly to those bounds. `large` upset wins can reach the absolute max; heavily favored losses can reach the absolute max loss.
-5. **Underdog bonus:** if the player's sub-rank index is exactly 1 below the enemy avg sub-rank (even by 1 Elo across the boundary), add **+5** to the base delta on both wins and draws for the lower player, and on losses reduce the magnitude by 5 (floor to tier abs min). Applies before final clamp.
-6. **Star player / premade / ranked-boost / season-refresh / floor protection:** keep current modifiers but re-apply the tier abs bounds as the *final* clamp so nothing exceeds the table.
-7. Include a `details` block explaining which band was used, so the UI can display "Equal-band win", "Upset win", etc.
+## 4. Animation + UI polish
 
-Testing harness prints Bronze III vs Bronze I, equal battles per tier, and 2-sub-rank upsets/blowouts across Legendary/Masters/Pro, so we can confirm outputs land in-band before shipping.
+- **Reveal ShatterBurst intensity** currently scales linearly with |deltaIdx|; cap it so massive deltas don't nuke low-end devices. Add `prefers-reduced-motion` bypass that swaps in a static tier-colored glow.
+- **RankScale ghost bar** — the dashed peak marker gets clipped when the peak is exactly at a sub-rank boundary. Nudge it 2px inward and add a small chevron.
+- **Tier aura overlays** — the Legendary lightning + fire combo overlaps the card copy at narrow widths. Gate the lightning layer behind `min-width: 380px` and reduce fire opacity to 0.55.
+- **Home header** — the aurora radial-gradient re-renders every frame because it's inline; move to a keyframed CSS class so it composites on the GPU.
+- **Confetti-free reveal on "over-ranked"** — right now the ShatterBurst fires regardless; use a muted implosion animation when `verdictClass === "over"` so the tone matches the message.
 
----
+## 5. Technical notes
 
-### 3. MUST-DO features
+- All new files are frontend-only, no schema changes, no edge functions.
+- History payload for 50 entries × ~4KB ≈ 200KB — well under localStorage's 5MB budget.
+- `readOnly` reveal path avoids re-running `computeDeservedRank`; it renders straight from the stored entry so historical results stay stable even if the engine constants change.
+- No changes to the Elo engine, matchmaking validator, or edge functions.
 
-**3.1 Battle-card selector background overhaul (Diamond → Pro)**
-- Replace the current empty/broken CSS backgrounds in `TIER_BG`/`TIER_DECOR` for Diamond, Mythic, Legendary, Masters, Pro with rich, layered gradients + subtle static texture so cards read as premium even before the animated overlay plays.
-- Slow all card aura animations to a **2s ease-in-out** cycle in `index.css` (currently a mix of 0.8–3s). Reduce particle count, increase blur, add a soft vignette so the card doesn't feel busy.
-- Scope changes to `BattleCard.jsx` / `BattleCardGallery.jsx` / `TierAuraOverlay.jsx` / `index.css` only. No engine changes.
+## 6. Scope this turn
 
-**3.2 "What Your Rank Should Be" analyser (new component)**
-- New route section on Home: `WhatYourRankShouldBe.jsx`.
-- Checklist (all preset toggles / sliders, no free text):
-  - Trophies bracket (preset ranges)
-  - Current rank (auto-filled from `player.currentElo`)
-  - Self-skill 1–10 (already in player)
-  - Power 9 / Power 11 counts (already in player)
-  - Consistency: current win rate bracket
-  - Recent form: last-20 W/L from `battleLog`
-  - Premade frequency (solo / duo / trio preset)
-  - Star-player rate bracket
-  - Best win streak bracket
-- Pure deterministic scoring function `computeDeservedRank(player, checklist, battleLog)` in `src/lib/deservedRank.js`:
-  - Assigns weighted points to each factor, produces a "true skill Elo".
-  - Snaps to the nearest sub-rank via `getRank`.
-  - Returns `{ currentRank, deservedRank, delta (sub-rank indices), verdict }` where `verdict` is picked from a preset table:
-    - `|delta| ≤ 2` → "You deserve your current rank"
-    - `delta > 2` → "You're under-ranked" (preset message per magnitude)
-    - `delta < -2` → "You're over-ranked" (preset message per magnitude)
-- UI: current rank icon + label on the left, arrow, deserved rank icon + label on the right, preset verdict paragraph below, and a factor breakdown list (each checklist item + how many points it contributed). Styled with the existing Lilita One / card tokens.
+Confirm which of these to ship now. Default recommendation:
+1. History panel (storage + panel + auto-save + rerun/view actions) — the explicit ask.
+2. Fixes 2.1 (duplicate adjustment row), 2.2 (filter mismatch), 2.5 (nav wrap).
+3. Feature 3.4 (Suggested focus card) since it's a small addition to the reveal.
 
----
-
-## Phase 2 — planned, executed on your next turn
-
-Kept here so we agree on scope now but only ship after Phase 1 lands.
-
-- **SHOULD-DO — Season End Report visual upgrade:** cinematic reveal for the equipped tier card (holographic sweep, tier-matched confetti, animated Elo count-up per stat row), staged intro (rank icon → season high → W/L → best streak → equipped card reveal), all reusing existing tier tokens.
-- **Battle Log analytics upgrade:** an "Elo momentum" panel — rolling 10-match Elo delta, current variance vs season average, and a per-mode "profit/loss per match" mini table, all derived from existing log data.
-- **Ranked rules refresh:** cross-check tier gates, format (Bo1/Bo3), and modifiers against the linked Supercell/Fandom articles and update `getFormatForTier` and rules copy if anything drifted.
-
-Deferred (mentioned in your list, not in scope this pass): promotion-series polish, Elo count-up + streak flames, Win Probability meter in `BattlePredictor`, Bronze/Silver SFX swap, extensions to "What your rank means", additional invented features beyond the 2 MUST-DO ones. Say the word and they go into a Phase 3 plan.
-
----
-
-## Technical notes
-
-- Files touched Phase 1: `src/lib/battleLog.js`, `src/lib/eloEngine.js` (rewrite), `src/lib/exports.js`, `src/components/CSVImport.jsx`, `src/pages/Home.jsx`, `src/App.jsx` (error boundary), `src/index.css` (backgrounds + high-tier keyframes + 2s cadence), `src/components/TierAuraOverlay.jsx`, `src/components/BattleCard.jsx`, `src/components/BattleCardGallery.jsx`, `src/lib/battleCards.js` (TIER_BG/DECOR for Diamond+), plus new `src/lib/deservedRank.js` and `src/components/WhatYourRankShouldBe.jsx` wired into `Home.jsx`.
-- No backend/schema changes. Secrets already present.
-- Ranked rules cross-referenced against the Supercell "Ranked is back" post and the Fandom Ranked page while keeping your exact Elo table.
+Push the rest (compare mode, reminder chip, export/import, larger animation refactor, Diamond floor toggle, season-highest recompute) to a follow-up so this turn stays reviewable.
