@@ -170,6 +170,8 @@ function buildGapExplanation(deltaElo, adjustments, baseElo) {
   return `You're sitting ${Math.abs(deltaElo).toLocaleString()} Elo ${dir} than deserved. Biggest drivers: ${top.join(", ")}. Baseline from self-assessment: ${baseElo.toLocaleString()}.`;
 }
 
+const impactCapped = (v) => Math.max(-500, Math.min(400, v));
+
 export function computeDeservedRank(player, responses, battleLog = []) {
   const currentElo = Math.max(0, Number(player?.currentElo) || 0);
   const real = (battleLog || []).filter((e) => !e.manual);
