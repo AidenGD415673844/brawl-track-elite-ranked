@@ -1,4 +1,52 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
+
+// Detect low-power / reduced-motion contexts. When any of these are true,
+// we render a lighter static gradient instead of the full particle aura:
+//   • prefers-reduced-motion: reduce
+//   • hardwareConcurrency <= 4 (older mobiles / iPads)
+//   • deviceMemory <= 4 (Android low-RAM)
+//   • window inner width <= 480 (phones)
+// Users can override via localStorage.setItem('tierAnimPerf', 'high'|'low').
+function useLowPowerMode() {
+  const [low, setLow] = useState(false);
+  useEffect(() => {
+    try {
+      const override = typeof localStorage !== "undefined" && localStorage.getItem("tierAnimPerf");
+      if (override === "low") { setLow(true); return; }
+      if (override === "high") { setLow(false); return; }
+      const mm = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
+      const reduced = !!(mm && mm.matches);
+      const cores = typeof navigator !== "undefined" ? (navigator.hardwareConcurrency || 8) : 8;
+      const mem = typeof navigator !== "undefined" ? (navigator.deviceMemory || 8) : 8;
+      const narrow = typeof window !== "undefined" && window.innerWidth <= 480;
+      setLow(reduced || cores <= 4 || mem <= 4 || narrow);
+    } catch { /* noop */ }
+  }, []);
+  return low;
+}
+
+// Lightweight static gradient fallback per tier.
+const LOW_POWER_BG = {
+  Bronze: "linear-gradient(180deg, #2a1207 0%, #5a2410 100%)",
+  Silver: "linear-gradient(180deg, #1e293b 0%, #475569 100%)",
+  Gold: "radial-gradient(ellipse at 50% 100%, rgba(250,204,21,0.35), transparent 70%)",
+  Diamond: "radial-gradient(ellipse at 50% 40%, rgba(125,211,252,0.25), transparent 70%)",
+  Mythic: "radial-gradient(ellipse at 50% 100%, rgba(168,85,247,0.5), transparent 75%)",
+  Legendary: "radial-gradient(ellipse at 50% 100%, rgba(249,115,22,0.55), rgba(220,38,38,0.3) 40%, transparent 75%)",
+  Masters: "radial-gradient(ellipse at 50% 100%, rgba(251,191,36,0.45), transparent 75%)",
+  Pro: "radial-gradient(ellipse at 50% 100%, rgba(250,204,21,0.5), transparent 75%)",
+};
+
+function LowPowerAura({ tier }) {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none rounded-[inherit]"
+      style={{ background: LOW_POWER_BG[tier] || "transparent" }}
+    />
+  );
+}
+
+
 
 // Full-card tier-specific animated auras.
 // Each tier has its own signature effect matching the spec:
