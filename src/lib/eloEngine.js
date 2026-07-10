@@ -282,7 +282,7 @@ export function calculateElo(playerElo, opts = {}) {
 
   // --- Floor protection ---
   if (!isWin) {
-    const floor = getFloorForElo(current);
+    const floor = getFloorForElo(current, highestElo);
     if (floor > 0 && eloAfter < floor) eloAfter = floor;
 
     // Diamond+ major-tier boundary safety net
