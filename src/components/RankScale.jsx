@@ -7,7 +7,8 @@ import { RankClickSplash } from "@/components/RankUpAnimation";
 import { playScaleSFX } from "@/lib/sfx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function RankScale({ elo }) {
+export default function RankScale({ elo, seasonHighest }) {
+  const peakSeason = Math.max(Number(seasonHighest) || 0, Number(elo) || 0);
   const currentRank = getRank(elo);
   const currentMajorIdx = MAJOR_RANKS.findIndex(
     (r) => r.tier === currentRank.tier
@@ -159,17 +160,37 @@ export default function RankScale({ elo }) {
         </div>
         <div className="flex gap-1">
           {tierRanks.map((r) => {
+            const span = isFinite(r.max) ? r.max - r.min : 1000;
+            const pct = (v) => Math.min(100, Math.max(0, ((v - r.min) / span) * 100));
+            const inBand = (v) => v >= r.min && (isFinite(r.max) ? v <= r.max : true);
             const isPassed = elo >= r.max;
-            const isCurrent = elo >= r.min && elo <= r.max;
-            const progress = isPassed ? 100 : isCurrent
-              ? Math.min(100, Math.max(0, ((elo - r.min) / (r.max - r.min)) * 100))
-              : 0;
+            const isCurrent = inBand(elo);
+            const progress = isPassed ? 100 : isCurrent ? pct(elo) : 0;
+            // Ghost bar to season peak — extends past current only if peak > elo
+            const peakPassed = peakSeason >= r.max;
+            const peakInBand = inBand(peakSeason);
+            const peakProgress = peakPassed ? 100 : peakInBand ? pct(peakSeason) : peakSeason > r.max ? 100 : 0;
+            const showPeak = peakSeason > elo && peakProgress > progress;
             const c = TIER_COLORS[r.tier];
             return (
               <div key={r.name} className="flex-1">
                 <div className="h-3 rounded-full bg-muted overflow-hidden relative">
+                  {/* Transparent ghost bar — season highest */}
+                  {showPeak && (
+                    <motion.div
+                      className="absolute inset-y-0 left-0 h-full rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${peakProgress}%` }}
+                      transition={{ duration: 0.7 }}
+                      style={{
+                        background: `linear-gradient(90deg, ${c.from}55, ${c.to}66)`,
+                        border: `1px dashed ${c.to}80`,
+                      }}
+                    />
+                  )}
+                  {/* Solid bar — current Elo */}
                   <motion.div
-                    className="h-full rounded-full"
+                    className="h-full rounded-full relative z-[1]"
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.5 }}
@@ -177,8 +198,19 @@ export default function RankScale({ elo }) {
                   />
                   {isCurrent && (
                     <div
-                      className="absolute top-0 w-1 h-full bg-white rounded-full shadow-[0_0_6px_rgba(255,255,255,0.8)]"
+                      className="absolute top-0 w-1 h-full bg-white rounded-full shadow-[0_0_6px_rgba(255,255,255,0.8)] z-[2]"
                       style={{ left: `calc(${progress}% - 2px)` }}
+                    />
+                  )}
+                  {/* Peak marker */}
+                  {showPeak && peakInBand && (
+                    <div
+                      className="absolute top-0 w-[2px] h-full rounded-full z-[3]"
+                      style={{
+                        left: `calc(${peakProgress}% - 1px)`,
+                        background: c.text,
+                        boxShadow: `0 0 6px ${c.glow}`,
+                      }}
                     />
                   )}
                 </div>
@@ -194,6 +226,18 @@ export default function RankScale({ elo }) {
             );
           })}
         </div>
+        {peakSeason > elo && (
+          <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-2 rounded-sm" style={{ background: `linear-gradient(90deg, ${tierColors.from}, ${tierColors.to})` }} />
+              <span>Current {elo.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-2 rounded-sm border" style={{ background: `${tierColors.from}55`, borderColor: `${tierColors.to}80`, borderStyle: "dashed" }} />
+              <span>Season peak {peakSeason.toLocaleString()}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground text-center">

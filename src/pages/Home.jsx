@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { FileDown, FileText, Gauge, Settings as SettingsIcon, Users, Flag } from "lucide-react";
+import { FileDown, FileText, Gauge, Settings as SettingsIcon, Users, Flag, Sparkles } from "lucide-react";
 import InputForm from "@/components/InputForm";
 import ProfileBadge from "@/components/ProfileBadge";
 import SummaryCards from "@/components/SummaryCards";
@@ -57,7 +57,6 @@ import SeasonEndReport from "@/components/SeasonEndReport";
 import SeasonMomentumTracker from "@/components/SeasonMomentumTracker";
 import SafetyNetSimulator from "@/components/SafetyNetSimulator";
 import PromotionSeries from "@/components/PromotionSeries";
-import WhatYourRankShouldBe from "@/components/WhatYourRankShouldBe";
 import { useToast } from "@/components/ui/use-toast";
 import { broadcastBattle, onReceiveBattle, disconnect as disconnectP2P } from "@/lib/p2pSync";
 import { addRemoteBattle } from "@/lib/battleLog";
@@ -404,6 +403,14 @@ export default function Home() {
                 <Users className="w-4 h-4 mr-2" /> Squad
               </Button>
             </Link>
+            <Link to="/deserved-rank">
+              <Button
+                variant="outline"
+                className="border-border bg-card text-foreground hover:bg-muted rounded-xl"
+              >
+                <Sparkles className="w-4 h-4 mr-2" /> Assess Rank
+              </Button>
+            </Link>
             <Button
               variant="outline"
               onClick={() => setSeasonReportOpen(true)}
@@ -481,10 +488,6 @@ export default function Home() {
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.14 }}>
-          <WhatYourRankShouldBe player={player} battleLog={battleLog} />
-        </motion.div>
-
-        <motion.div {...fadeUp} transition={{ delay: 0.15 }}>
           <SummaryCards player={player} />
         </motion.div>
 
@@ -575,7 +578,7 @@ export default function Home() {
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.6 }}>
-          <RankScale elo={player.currentElo} />
+          <RankScale elo={player.currentElo} seasonHighest={player.currentSeasonHighest} />
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.65 }}>

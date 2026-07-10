@@ -133,96 +133,29 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Tier Aura Animations — smooth, premium 2s cycles.
-   All keyframes below are consumed by TierAuraOverlay.jsx.
-   Respect prefers-reduced-motion at the bottom.
+   Phase 3 signature tier animations — one per tier.
+   All consumed by TierAuraOverlay.jsx.
    ───────────────────────────────────────────────────────────── */
 
-/* Pro — prismatic sheen sweep + floating spark */
-@keyframes pro-sheen {
-  0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
-  30%  { opacity: 1; }
-  70%  { opacity: 1; }
-  100% { transform: translateX(120%)  skewX(-18deg); opacity: 0; }
-}
-@keyframes pro-float {
-  0%   { transform: translate(var(--x,0), 20px) scale(0.6); opacity: 0; }
-  20%  { opacity: 1; }
-  80%  { opacity: 0.9; }
-  100% { transform: translate(var(--x,0), -60px) scale(1); opacity: 0; }
+/* Bronze — diagonally rising bullets */
+@keyframes bronze-bullet {
+  0%   { transform: translate(0, 0) rotate(45deg); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translate(120px, -260px) rotate(45deg); opacity: 0; }
 }
 
-/* Masters — elegant gold/white radial pulse + slow debris orbit */
-@keyframes masters-pulse {
-  0%, 100% { transform: scale(0.85); opacity: 0.55; }
-  50%      { transform: scale(1.15); opacity: 1; }
+/* Silver — lightning bolt drop + flash pulse */
+@keyframes silver-bolt {
+  0%, 100% { opacity: 0; transform: translateY(-8px) scaleY(0.6); }
+  10%      { opacity: 1; transform: translateY(0) scaleY(1); }
+  25%      { opacity: 0.9; transform: translateY(0) scaleY(1); }
+  40%      { opacity: 0; }
 }
-@keyframes masters-orbit {
-  0%   { transform: rotate(0deg)   translateX(var(--r,44px)) rotate(0deg); opacity: 0.7; }
-  50%  { opacity: 1; }
-  100% { transform: rotate(360deg) translateX(var(--r,44px)) rotate(-360deg); opacity: 0.7; }
-}
-
-/* Legendary — smooth neon border pulse + orbiting embers */
-@keyframes legendary-border {
-  0%, 100% { box-shadow: inset 0 0 12px 2px rgba(249,115,22,0.55), inset 0 0 24px 4px rgba(220,38,38,0.35); }
-  50%      { box-shadow: inset 0 0 22px 6px rgba(254,215,170,0.85), inset 0 0 40px 10px rgba(249,115,22,0.55); }
-}
-@keyframes legendary-ember {
-  0%   { transform: translate(0, 20px) scale(0.5); opacity: 0; }
-  25%  { opacity: 1; }
-  100% { transform: translate(var(--dx,0), -80px) scale(1); opacity: 0; }
-}
-
-/* Mythic — slow cosmic nebula drift + soft violet particle float */
-@keyframes mythic-nebula {
-  0%   { transform: rotate(0deg)   scale(1); opacity: 0.65; }
-  50%  { transform: rotate(180deg) scale(1.08); opacity: 0.9; }
-  100% { transform: rotate(360deg) scale(1); opacity: 0.65; }
-}
-@keyframes mythic-particle {
-  0%   { transform: translate(0, 30px) scale(0.4); opacity: 0; }
-  30%  { opacity: 1; }
-  100% { transform: translate(var(--dx,0), -70px) scale(1); opacity: 0; }
-}
-
-/* Diamond — hyperborean shimmer + slow shard drift */
-@keyframes diamond-shimmer {
-  0%   { transform: translateX(-100%) skewX(-20deg); opacity: 0; }
-  30%  { opacity: 1; }
-  70%  { opacity: 1; }
-  100% { transform: translateX(100%)  skewX(-20deg); opacity: 0; }
-}
-@keyframes diamond-drift {
-  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-  20%  { opacity: 1; }
-  100% { transform: translate(var(--dx,0), var(--dy,-60px)) rotate(180deg); opacity: 0; }
-}
-
-/* Gold — solar tempest + sparks */
-@keyframes gold-tempest {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-@keyframes gold-spark {
-  0%   { transform: translate(0,0) scale(0.4); opacity: 0; }
-  20%  { opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
-}
-@keyframes gold-sunburst {
-  0%, 100% { opacity: 0.3; }
-  50%      { opacity: 1; }
-}
-
-/* Silver — chrome kinetic + upward sparks + whip sheen */
-@keyframes silver-kinetic {
-  0%, 100% { transform: translateY(0) scaleY(1); opacity: 0.5; }
-  50%      { transform: translateY(-6px) scaleY(1.1); opacity: 1; }
-}
-@keyframes silver-spark-up {
-  0%   { transform: translateY(0) scale(0.5); opacity: 0; }
-  20%  { opacity: 1; }
-  100% { transform: translateY(-140%) scale(1); opacity: 0; }
+@keyframes silver-flash {
+  0%, 100% { opacity: 0; }
+  8%, 12%  { opacity: 0.55; }
+  20%      { opacity: 0; }
 }
 @keyframes silver-sheen {
   0%   { transform: translateX(-120%) skewX(-25deg); opacity: 0; }
@@ -230,19 +163,66 @@
   100% { transform: translateX(120%)  skewX(-25deg); opacity: 0; }
 }
 
-/* Bronze — sandstorm + copper embers + friction flash */
-@keyframes bronze-sandstorm {
-  0%   { background-position: 0% 0%;   opacity: 0.55; }
-  100% { background-position: 200% 40%; opacity: 0.8; }
+/* Gold — star pop */
+@keyframes gold-star-pop {
+  0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  40%      { opacity: 1; transform: scale(1.15) rotate(35deg); }
+  70%      { opacity: 0.8; transform: scale(1) rotate(60deg); }
 }
-@keyframes bronze-ember {
-  0%   { transform: translate(0,0) scale(0.5); opacity: 0; }
+
+/* Diamond — horizontal whoosh sweep */
+@keyframes diamond-whoosh {
+  0%   { transform: translateX(-60%); opacity: 0; }
   20%  { opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) scale(1.1); opacity: 0; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(160%); opacity: 0; }
 }
-@keyframes bronze-friction {
-  0%, 100% { opacity: 0; transform: translateX(-50%); }
-  50%      { opacity: 0.9; transform: translateX(50%); }
+
+/* Mythic — bottom purple flame flicker */
+@keyframes mythic-fire {
+  0%, 100% { transform: translateY(20px) scale(0.8, 0.6); opacity: 0; }
+  25%      { transform: translateY(4px) scale(1.05, 1); opacity: 1; }
+  60%      { transform: translateY(-10px) scale(0.95, 1.15); opacity: 0.85; }
+  85%      { transform: translateY(-4px) scale(1, 0.9); opacity: 0.6; }
+}
+
+/* Legendary — orange fire whoosh + lightning */
+@keyframes legendary-fire {
+  0%, 100% { transform: translateY(30px) scale(0.8, 0.6); opacity: 0; }
+  20%      { transform: translateY(6px) scale(1.1, 1); opacity: 1; }
+  60%      { transform: translateY(-14px) scale(0.95, 1.2); opacity: 0.9; }
+  85%      { transform: translateY(-4px) scale(1, 0.9); opacity: 0.55; }
+}
+@keyframes legendary-bolt {
+  0%, 100% { opacity: 0; transform: translateY(-8px) scaleY(0.5); }
+  15%      { opacity: 1; transform: translateY(0) scaleY(1); }
+  30%      { opacity: 0; }
+}
+
+/* Masters — explosion flash + concrete debris */
+@keyframes masters-flash {
+  0%   { transform: scale(0.2); opacity: 0; }
+  15%  { transform: scale(1); opacity: 1; }
+  50%  { transform: scale(1.4); opacity: 0.4; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@keyframes masters-debris {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + 15px)) rotate(var(--rot)); opacity: 0; }
+}
+
+/* Pro — golden explosion + flying crowns */
+@keyframes pro-flash {
+  0%   { transform: scale(0.2); opacity: 0; }
+  12%  { transform: scale(1); opacity: 1; }
+  50%  { transform: scale(1.5); opacity: 0.4; }
+  100% { transform: scale(2); opacity: 0; }
+}
+@keyframes pro-crown {
+  0%   { transform: translate(0,0) rotate(0deg); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + 25px)) rotate(var(--rot)); opacity: 0; }
 }
 
 /* Aurora background for the whole app */
@@ -258,3 +238,4 @@
     animation-iteration-count: 1 !important;
   }
 }
+
