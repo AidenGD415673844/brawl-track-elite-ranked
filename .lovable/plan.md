@@ -1,51 +1,41 @@
-## Scope
+# Plan: Kill the supabaseUrl Bug Forever + 3 Upgrades
 
-Single-phase polish pass: frequency stars, tier backgrounds, harsher assessment, brawler roster sync, and floor/safety-net audit.
+## Part 1 — Permanent fix for "supabaseUrl is required"
 
----
+**Root cause:** the published build is missing `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` because Vite bakes env vars at build time. When the build runs without them, `createClient(undefined, undefined)` throws before any React renders — hence the fallback screen.
 
-### 1. Rank Frequency — 6-star gauge
-`src/components/RankFrequencySection.jsx`
-- Replace the small tier icon/level effects with a **6-star row per tier** (matching the header stars on the uploaded card).
-- Stars are larger (~14–16px). `min(count, 6)` light up in the tier color with a glow; remaining stars stay dim/outlined.
-- Keep the count label (`4/6`) under the star row; keep edit mode as-is.
-- Levels 1–6 map directly to star count; level 4+ effects (rotating frame) removed to keep the gauge clean.
+Since the project URL and publishable (anon) key are **public values** (safe in the browser bundle) and are already visible in `supabase/config.toml`, we can guarantee the app boots by hard-coding them as fallbacks. Env vars still take precedence.
 
-### 2. Restore Bronze + Silver backgrounds
-Root cause: `TIER_BG.Bronze` / `TIER_BG.Silver` are set in `battleCards.js`, but `BronzeAura` paints a heavy brick multiply overlay and `SilverAura` paints a full stormy sheen — both effectively hide the base gradient behind them.
-- `src/components/TierAuraOverlay.jsx`
-  - `BronzeAura`: lower brick opacity, drop `mix-blend-multiply`, keep diagonal bullets. Add a subtle darker-brown gradient wash inside the aura so the "brick + darker brown" look reads without erasing `TIER_BG`.
-  - `SilverAura`: remove the opaque stormy sheen div; keep only the SVG lightning bolts flashing every 0.5–2s.
-- `src/lib/battleCards.js`
-  - Nudge `TIER_BG.Bronze` toward the darker brown brick tone; leave Silver as-is.
+**Changes:**
+1. **`src/integrations/supabase/client.ts`** — Add constant fallbacks:
+   ```ts
+   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "https://uudxwsxuehwocnexpany.supabase.co";
+   const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "<anon key>";
+   ```
+   This eliminates the throw regardless of build env state.
+2. **`src/lib/backendStatus.js`** — Treat presence of URL+key (env OR fallback) as configured, so the status chip stops flashing red.
+3. **`src/main.jsx`** — Keep the dynamic-import fallback screen as a last-resort safety net.
 
-### 3. Harsher Deserved Rank (small nudge)
-`src/lib/deservedRankEngine.js`
-- Curve exponent 1.6 → **1.8** (further compresses mid scores).
-- Baseline floor −1800 → **−2100**.
-- Confidence cap tier: Diamond III (4499) → **Diamond I (3749)** when `confidence < 0.3`.
-- Masters gate: winRate ≥58% → **≥60%**; Pro gate: winRate ≥62% → **≥64%**, star ≥30% → **≥33%**.
+Result: the white-screen / "supabaseUrl is required" error can never appear again in published builds.
 
-### 4. Brawler roster
-`src/lib/brawlers.js`
-- Remove `"Maddie"` from `BRAWLERS`.
-- Auto-populate the roster from `BRAWLER_IDS`: derive `BRAWLERS` as `Object.keys(BRAWLER_IDS).sort()` so every ID in the map (including future additions) shows up automatically with the Brawlify CDN portrait already wired via `brawlerImageUrl()`. No prompts, no UI changes needed — dropdowns already read from `BRAWLERS`.
+## Part 2 — Three upgrades
 
-### 5. Safety-net audit (verify + fix if missing)
-`src/lib/eloEngine.js`
-- Confirmed present: permanent floors Bronze 0 / Silver 750 / Gold 1500 / Diamond 3000 (Diamond floor sticky once `highestElo ≥ 2250`).
-- Confirmed present: Diamond+ sub-tier "boundary safety net" that stops the first loss at a sub-rank baseline (`rankObj.min`).
-- Change: extend the boundary safety net so it fires on **every Mythic → Pro sub-rank boundary**, not only Roman "I". Rule: if `current > rankObj.min` and `eloAfter < rankObj.min`, clamp to `rankObj.min` (one-game safety net → next loss drops you a sub-rank as intended). Currently only Roman "I" ranks trigger this, which is why mid-sub-rank drops can overshoot.
+### Upgrade A — Smoother TierAuraOverlay (perf + visual)
+- Move heavy particle DOM (Mythic explosions, Masters debris, Pro crowns) behind a single `IntersectionObserver` so off-screen cards don't animate — cuts jank on the gallery scroll.
+- Add `will-change: transform, opacity` and `contain: strict` to particle wrappers in `src/index.css` for GPU compositing.
+- Add a subtle 6s parallax drift to the grid backdrop (translate ±4px) so idle cards feel alive without new DOM.
 
----
+### Upgrade B — Battle Card "Flip to Stats" interaction
+- Click/tap a card in `src/components/BattleCard.jsx` → 3D flip (framer-motion `rotateY`) to a back face showing tier-specific stats pulled from existing battle log: games at tier, win%, avg Elo swing, meme title.
+- No new data model — reads from `playerStorage` + `rankFrequency` we already compute.
+- Adds real utility to the gallery without changing card fronts.
 
-### Technical details
+### Upgrade C — Rank Scale "milestone ticks" + hover peek
+- In `src/components/RankScale.jsx`, add small tick marks at each sub-rank boundary within the current tier, plus a hover/tap tooltip showing "X Elo to <next sub-rank name>".
+- Animated shimmer sweep across the fill bar on Elo change (already have `AnimatedCounter`; hook the same trigger).
+- Purely visual — no engine changes.
 
-- Star row uses inline SVG (same path as `BattleCard.StarIcon`) sized `w-4 h-4`; lit stars get `fill={color.text}` + `drop-shadow`, dim stars get `fill="rgba(255,255,255,0.15)"` + `stroke="rgba(255,255,255,0.25)"`.
-- Bronze aura brick: `opacity: 0.28`, no blend mode; add `background: linear-gradient(180deg, rgba(60,20,5,0.35), transparent 60%)` behind bricks.
-- Silver aura: delete the `Stormy sheen` div (lines ~198–210 in current file); keep bolts loop.
-- `BRAWLERS` derivation preserves ordering by name (`localeCompare`) so BrawlerSelect stays stable.
-- Assessment gate constants live in one block near `deservedElo` clamps — small numeric edits only.
-
-### Out of scope
-No plan split, no new components beyond edits above, no auth/room/UI restructuring.
+## Technical Notes
+- All three upgrades are frontend-only, no migrations, no new deps (framer-motion already in use).
+- The supabase fallback keeps env-var override behavior so Lovable Cloud env swaps still work.
+- Anon key is public by design (RLS protects data) — safe to inline.
