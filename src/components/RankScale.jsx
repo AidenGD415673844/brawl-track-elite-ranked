@@ -134,17 +134,28 @@ export default function RankScale({ elo, seasonHighest }) {
               {Math.round(mastery * 100)}%
             </span>
           </div>
-          <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+          <div className="h-2.5 rounded-full bg-muted overflow-hidden relative">
+            {/* Sub-rank tick marks (Diamond I / II / III boundaries etc.) */}
+            {tierRanks.slice(1).map((_, i) => (
+              <div
+                key={i}
+                className="absolute top-0 bottom-0 w-px bg-white/20 z-[1]"
+                style={{ left: `${((i + 1) / tierRanks.length) * 100}%` }}
+              />
+            ))}
             <motion.div
-              className="h-full rounded-full relative"
+              className="h-full rounded-full relative overflow-hidden"
               initial={{ width: 0 }}
               animate={{ width: `${mastery * 100}%` }}
               transition={{ duration: 0.6 }}
               style={{ background: `linear-gradient(90deg, ${tierColors.from}, ${tierColors.to})` }}
             >
               <div className="absolute right-0 top-0 h-full w-1 bg-white/60 rounded-full" />
+              {/* Shimmer sweep */}
+              <div className="absolute inset-0 rank-shimmer" />
             </motion.div>
           </div>
+
         </div>
       )}
 
