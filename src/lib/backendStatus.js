@@ -1,20 +1,10 @@
 export function getBackendConfigStatus() {
-  const hasUrl = Boolean(import.meta.env.VITE_SUPABASE_URL);
-  const hasKey = Boolean(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
-
-  if (!hasUrl || !hasKey) {
-    return {
-      state: "missing-config",
-      label: "Backend config missing",
-      detail: "This deployed build is missing backend environment values.",
-      ready: false,
-    };
-  }
-
+  // The Supabase client now has permanent inline fallbacks for URL + anon key,
+  // so config is always present. Env vars still override at build time.
   return {
     state: "configured",
     label: "Backend configured",
-    detail: "Backend environment values are present in this build.",
+    detail: "Backend client is initialised.",
     ready: true,
   };
 }
