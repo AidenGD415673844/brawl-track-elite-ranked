@@ -16,7 +16,9 @@ export default function BattleCardGallery({ player, onEquip }) {
   const [equipAnim, setEquipAnim] = useState(null);
   const [animNonce, setAnimNonce] = useState(0);
   const [frequency, setFrequency] = useState(() => getRankFrequency());
+  const [filter, setFilter] = useState("all"); // all | unlocked | locked
   const timeoutRef = useRef(null);
+
 
   useEffect(() => {
     const refresh = () => setFrequency(getRankFrequency());
@@ -64,12 +66,37 @@ export default function BattleCardGallery({ player, onEquip }) {
           {unlockedCount}/{BATTLE_CARDS.length}
         </span>
       </div>
-      <p className="text-xs text-muted-foreground mb-4">
+      <p className="text-xs text-muted-foreground mb-3">
         Equip a card to represent your journey. Unlock cards by reaching each rank tier.
       </p>
 
+      {/* Filter tabs */}
+      <div className="flex gap-1 mb-3 p-1 bg-muted rounded-lg w-fit">
+        {[
+          { id: "all", label: "All" },
+          { id: "unlocked", label: `Unlocked (${unlockedCount})` },
+          { id: "locked", label: `Locked (${BATTLE_CARDS.length - unlockedCount})` },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setFilter(tab.id)}
+            className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wide rounded-md transition ${
+              filter === tab.id
+                ? "bg-cyan-500 text-white shadow"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {BATTLE_CARDS.map((card) => (
+        {BATTLE_CARDS.filter((card) => {
+          if (filter === "unlocked") return isCardUnlocked(card, player);
+          if (filter === "locked") return !isCardUnlocked(card, player);
+          return true;
+        }).map((card) => (
           <BattleCard
             key={card.tier}
             card={card}
@@ -80,6 +107,7 @@ export default function BattleCardGallery({ player, onEquip }) {
           />
         ))}
       </div>
+
 
       {/* Featured profile battle card — shows all-time peak rank, below the grid */}
       <div className="mt-4 flex justify-center">

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { MAJOR_RANKS, RANKS, getRank, TIER_COLORS, tierProgress } from "@/lib/ranks";
@@ -6,6 +6,7 @@ import RankBadge from "@/components/RankBadge";
 import { RankClickSplash } from "@/components/RankUpAnimation";
 import { playScaleSFX } from "@/lib/sfx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
 
 export default function RankScale({ elo, seasonHighest }) {
   const peakSeason = Math.max(Number(seasonHighest) || 0, Number(elo) || 0);
@@ -20,6 +21,19 @@ export default function RankScale({ elo, seasonHighest }) {
     const next = Math.max(0, Math.min(MAJOR_RANKS.length - 1, viewIdx + dir));
     setViewIdx(next);
   };
+
+  // Keyboard nav — ← / → arrows scrub through major ranks (ignored in inputs)
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || document.activeElement?.isContentEditable) return;
+      if (e.key === "ArrowLeft") { e.preventDefault(); navigate(-1); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); navigate(1); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewIdx]);
+
 
   const handleDragEnd = (e, info) => {
     if (info.offset.x < -50) navigate(1);
