@@ -2,8 +2,16 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Public project URL + anon key. Safe to inline (RLS protects data).
+// Fallbacks guarantee the app boots even if the published build is missing
+// VITE_SUPABASE_* env vars — this eliminates the "supabaseUrl is required" crash.
+const FALLBACK_SUPABASE_URL = "https://uudxwsxuehwocnexpany.supabase.co";
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1ZHh3c3h1ZWh3b2NuZXhwYW55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NzQ3OTgsImV4cCI6MjA5OTE1MDc5OH0.owXj5n0JgOMlpjM12Bm6pPsNyrHE2mKE82EnjpySd2E";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 
 
 function isNewSupabaseApiKey(value: string): boolean {
