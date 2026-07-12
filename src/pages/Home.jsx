@@ -504,7 +504,7 @@ export default function Home() {
                 <SettingsIcon className="w-4 h-4 mr-2" /> Settings
               </Button>
             </Link>
-            <BackendStatusChip compact />
+            
           </div>
         </motion.header>
 

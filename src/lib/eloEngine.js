@@ -286,18 +286,22 @@ export function calculateElo(playerElo, opts = {}) {
   let eloAfter = current + delta;
 
   // --- Floor protection ---
+  // A floor only prevents a *drop* through the floor. If the player is
+  // already below the floor for any reason (imported data, manual edit,
+  // legacy accounts), we must NOT teleport them UP to the floor — that
+  // was the source of the "+873 on a defeat" bug.
   if (!isWin) {
     const floor = getFloorForElo(current, highestElo);
-    if (floor > 0 && eloAfter < floor) eloAfter = floor;
+    if (floor > 0 && current >= floor && eloAfter < floor) eloAfter = floor;
 
     // Mythic+ one-game safety net: only the MAJOR rank baseline catches a loss.
-    // Example: 6030 Legendary I -> 6000, then the next loss can drop to Mythic III.
-    // Sub-rank baselines such as Mythic II/III or Legendary II/III are not protected.
     if (["Mythic", "Legendary", "Masters", "Pro"].includes(tier)) {
       const majorBaseline = getMajorTierMin(tier);
       if (current > majorBaseline && eloAfter < majorBaseline) eloAfter = majorBaseline;
     }
 
+    // Final defeat safeguard: a loss can never produce a positive delta.
+    if (eloAfter > current) eloAfter = current;
   }
 
   eloAfter = Math.max(0, Math.round(eloAfter));
