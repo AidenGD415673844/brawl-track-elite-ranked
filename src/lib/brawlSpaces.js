@@ -19,6 +19,37 @@ export function getSpaces() {
   }
 }
 
+// Guarantees at least one Space always exists so the multi-account UI is
+// never empty on a fresh install. If no spaces exist, snapshot the current
+// standard-key data into a "Main Account" space and mark it active.
+export function ensureDefaultSpace() {
+  const spaces = getSpaces();
+  if (spaces.length > 0) {
+    if (!getActiveSpaceId()) {
+      localStorage.setItem(ACTIVE_KEY, spaces[0].id);
+    }
+    return spaces[0];
+  }
+  let playerData = null;
+  let battleLog = [];
+  let snapshots = [];
+  try { playerData = JSON.parse(localStorage.getItem(PLAYER_KEY) || "null"); } catch { /* ignore */ }
+  try { battleLog = JSON.parse(localStorage.getItem(BATTLE_LOG_KEY) || "[]"); } catch { /* ignore */ }
+  try { snapshots = JSON.parse(localStorage.getItem(SNAPSHOTS_KEY) || "[]"); } catch { /* ignore */ }
+  const seed = {
+    id: Date.now().toString(),
+    name: "Main Account",
+    username: "",
+    createdAt: new Date().toISOString(),
+    playerData,
+    battleLog,
+    snapshots,
+  };
+  saveSpaces([seed]);
+  localStorage.setItem(ACTIVE_KEY, seed.id);
+  return seed;
+}
+
 function saveSpaces(spaces) {
   localStorage.setItem(SPACES_KEY, JSON.stringify(spaces));
 }
