@@ -103,6 +103,8 @@ export default function BattleLogInput({
   const [showPerformance, setShowPerformance] = useState(false);
   const [performance, setPerformance] = useState({});
   const [showRestrictions, setShowRestrictions] = useState(false);
+  const [manualDeltaOn, setManualDeltaOn] = useState(false);
+  const [manualDeltaStr, setManualDeltaStr] = useState("");
 
   useEffect(() => {
     if (teamElos && teamElos.length >= 2 && !editingEntry) {
@@ -220,6 +222,10 @@ export default function BattleLogInput({
       );
       if (!ok) return;
     }
+    const manualDeltaVal =
+      manualDeltaOn && manualDeltaStr !== "" && !isNaN(Number(manualDeltaStr))
+        ? Number(manualDeltaStr)
+        : undefined;
     onLog({
       mode,
       result,
@@ -232,6 +238,7 @@ export default function BattleLogInput({
       seasonRefreshed,
       queueType,
       performance: Object.keys(performance).length > 0 ? performance : null,
+      ...(manualDeltaVal !== undefined ? { manualDelta: manualDeltaVal } : {}),
     });
     if (!editingEntry) {
       // Update teammate Elos to post-battle values, preserve profiles (highestElo, etc.)
