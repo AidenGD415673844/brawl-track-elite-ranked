@@ -80,9 +80,24 @@ const GRID_GLOW = {
 
 // Old-school grid backdrop, now with a soft neon glow behind every line
 // so it reads through any TIER_BG gradient.
-function GridBackdrop({ tier }) {
+// `variant` lets the battle-card selector strip or transform the grid so
+// the higher-tier cards feel less busy — per user direction:
+//   • Legendary / Masters / Pro: no grid at all in the selector
+//   • Diamond / Mythic: rotated + low-opacity grid in the selector
+function GridBackdrop({ tier, variant }) {
   const line = GRID_TINT[tier] || "rgba(255,255,255,0.25)";
   const glow = GRID_GLOW[tier] || "rgba(255,255,255,0.3)";
+
+  const isSelector = variant === "selector";
+  if (isSelector && (tier === "Legendary" || tier === "Masters" || tier === "Pro")) {
+    return null;
+  }
+
+  let opacity = tier === "Bronze" ? 0.72 : 0.82;
+  let transform = "none";
+  if (isSelector && tier === "Diamond") { opacity = 0.32; transform = "rotate(12deg) scale(1.15)"; }
+  if (isSelector && tier === "Mythic")  { opacity = 0.28; transform = "rotate(-14deg) scale(1.18)"; }
+
   return (
     <div
       className="absolute inset-0 pointer-events-none rounded-[inherit]"
@@ -93,7 +108,9 @@ function GridBackdrop({ tier }) {
         `,
         backgroundSize: "24px 24px, 24px 24px",
         backgroundPosition: "0 0, 0 0",
-        opacity: tier === "Bronze" ? 0.72 : 0.82,
+        opacity,
+        transform,
+        transformOrigin: "center",
         filter: `drop-shadow(0 0 2px ${glow})`,
         mixBlendMode: tier === "Bronze" ? "multiply" : "screen",
       }}
@@ -638,14 +655,14 @@ function TierExtras({ tier }) {
   }
 }
 
-export default function TierAuraOverlay({ tier, active = true }) {
+export default function TierAuraOverlay({ tier, active = true, variant }) {
   const lowPower = useLowPowerMode();
   const { enabled: particlesEnabled, intensity } = useAnimPrefs();
   if (!active) return null;
   const Aura = TIER_COMPONENTS[tier];
   if (!Aura) return null;
-  if (lowPower) return (<><LowPowerAura tier={tier} /><GridBackdrop tier={tier} /><Vignette /></>);
-  if (!particlesEnabled) return (<><LowPowerAura tier={tier} /><GridBackdrop tier={tier} /><Vignette /></>);
+  if (lowPower) return (<><LowPowerAura tier={tier} /><GridBackdrop tier={tier} variant={variant} /><Vignette /></>);
+  if (!particlesEnabled) return (<><LowPowerAura tier={tier} /><GridBackdrop tier={tier} variant={variant} /><Vignette /></>);
   const auraStyle =
     intensity === "low"
       ? { opacity: 0.55 }
@@ -658,7 +675,7 @@ export default function TierAuraOverlay({ tier, active = true }) {
         <Aura />
         <TierExtras tier={tier} />
       </div>
-      <GridBackdrop tier={tier} />
+      <GridBackdrop tier={tier} variant={variant} />
       <Vignette />
     </>
   );

@@ -103,6 +103,8 @@ export default function BattleLogInput({
   const [showPerformance, setShowPerformance] = useState(false);
   const [performance, setPerformance] = useState({});
   const [showRestrictions, setShowRestrictions] = useState(false);
+  const [manualDeltaOn, setManualDeltaOn] = useState(false);
+  const [manualDeltaStr, setManualDeltaStr] = useState("");
 
   useEffect(() => {
     if (teamElos && teamElos.length >= 2 && !editingEntry) {
@@ -220,6 +222,10 @@ export default function BattleLogInput({
       );
       if (!ok) return;
     }
+    const manualDeltaVal =
+      manualDeltaOn && manualDeltaStr !== "" && !isNaN(Number(manualDeltaStr))
+        ? Number(manualDeltaStr)
+        : undefined;
     onLog({
       mode,
       result,
@@ -232,6 +238,7 @@ export default function BattleLogInput({
       seasonRefreshed,
       queueType,
       performance: Object.keys(performance).length > 0 ? performance : null,
+      ...(manualDeltaVal !== undefined ? { manualDelta: manualDeltaVal } : {}),
     });
     if (!editingEntry) {
       // Update teammate Elos to post-battle values, preserve profiles (highestElo, etc.)
@@ -254,6 +261,7 @@ export default function BattleLogInput({
       setResult("victory");
       setDuration("");
       setPerformance({});
+      setManualDeltaStr("");
     }
   };
 
@@ -514,7 +522,7 @@ export default function BattleLogInput({
           Stats
           {hasPerfData && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-cyan-400" />}
         </Button>
-        {previewDelta !== null && (
+        {previewDelta !== null && !manualDeltaOn && (
           <motion.div
             key={`${result}-${queueType}-${starPlayer}-${teammateElos.join(",")}-${enemyElos.join(",")}`}
             initial={{ scale: 0.8, opacity: 0 }}
@@ -526,6 +534,30 @@ export default function BattleLogInput({
             {previewDelta > 0 ? "+" : ""}{previewDelta}
           </motion.div>
         )}
+        <div className="ml-auto flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setManualDeltaOn((v) => !v)}
+            className={`text-[10px] font-bold uppercase px-2 h-7 rounded border transition ${
+              manualDeltaOn
+                ? "bg-cyan-500 text-white border-cyan-500"
+                : "bg-transparent text-muted-foreground border-border hover:text-foreground"
+            }`}
+            title="Manually override the auto-calculated Elo change"
+          >
+            Manual Δ
+          </button>
+          {manualDeltaOn && (
+            <input
+              type="number"
+              inputMode="numeric"
+              value={manualDeltaStr}
+              onChange={(e) => setManualDeltaStr(e.target.value)}
+              placeholder="±Elo"
+              className="w-20 h-7 text-xs font-bold text-center rounded border border-cyan-500/50 bg-background text-foreground"
+            />
+          )}
+        </div>
       </div>
 
       {/* Performance heatmap fields */}

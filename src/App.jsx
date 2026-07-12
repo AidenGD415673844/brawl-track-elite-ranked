@@ -14,6 +14,11 @@ import SquadDashboard from './pages/SquadDashboard';
 import BrawlSpaces from './pages/BrawlSpaces';
 import DeservedRank from './pages/DeservedRank';
 import Auth from './pages/Auth';
+import { ensureDefaultSpace } from '@/lib/brawlSpaces';
+
+// Guarantee a default BrawlSpace exists before any page renders so the
+// multi-account UI is never empty on a brand-new install.
+try { ensureDefaultSpace(); } catch { /* localStorage may be unavailable */ }
 
 const AuthenticatedApp = () => {
   return (
