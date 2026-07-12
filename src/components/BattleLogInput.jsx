@@ -261,6 +261,7 @@ export default function BattleLogInput({
       setResult("victory");
       setDuration("");
       setPerformance({});
+      setManualDeltaStr("");
     }
   };
 
