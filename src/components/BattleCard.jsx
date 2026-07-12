@@ -85,7 +85,7 @@ export default function BattleCard({ card, unlocked, equipped, onClick, frequenc
           >
             {unlocked && <CardParticleBg tier={card.tier} color={c} />}
             <HolographicOverlay color={c} active={unlocked} />
-            {unlocked && <TierAuraOverlay tier={card.tier} />}
+            {unlocked && <TierAuraOverlay tier={card.tier} variant="selector" />}
 
             <div className="absolute top-1.5 left-0 right-0 flex items-center justify-center gap-1 z-20">
               {Array.from({ length: 6 }).map((_, i) => (
