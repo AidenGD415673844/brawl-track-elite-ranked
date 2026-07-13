@@ -180,9 +180,20 @@ export default function BattleLogInput({
   const selectedBrawlers = Object.values(brawlers).filter(Boolean);
   const hasDuplicates = isMythicPlus && new Set(selectedBrawlers).size !== selectedBrawlers.length;
 
-  const canSubmit = allFilled && lobbyCheck.valid && queueCheck.canQueue && !hasDuplicates;
+  const manualDeltaNum =
+    manualDeltaOn && manualDeltaStr !== "" && !isNaN(Number(manualDeltaStr))
+      ? Number(manualDeltaStr)
+      : null;
 
-  const previewDelta = allFilled && lobbyCheck.valid
+  // Manual Δ mode: bypass lobby/queue validation and required Elo inputs
+  // so the user can log a match with just their manually-entered delta.
+  const canSubmit = manualDeltaOn
+    ? manualDeltaNum !== null && !hasDuplicates
+    : allFilled && lobbyCheck.valid && queueCheck.canQueue && !hasDuplicates;
+
+  const previewDelta = manualDeltaOn
+    ? manualDeltaNum
+    : allFilled && lobbyCheck.valid
     ? calculateDelta(playerElo, teammateElos.map(Number), enemyElos.map(Number), result, seasonRefreshed, queueType, highestElo || playerElo, starPlayer, teammateProfiles)
     : null;
 
@@ -222,10 +233,7 @@ export default function BattleLogInput({
       );
       if (!ok) return;
     }
-    const manualDeltaVal =
-      manualDeltaOn && manualDeltaStr !== "" && !isNaN(Number(manualDeltaStr))
-        ? Number(manualDeltaStr)
-        : undefined;
+    const manualDeltaVal = manualDeltaNum !== null ? manualDeltaNum : undefined;
     onLog({
       mode,
       result,
@@ -522,16 +530,19 @@ export default function BattleLogInput({
           Stats
           {hasPerfData && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-cyan-400" />}
         </Button>
-        {previewDelta !== null && !manualDeltaOn && (
+        {previewDelta !== null && (
           <motion.div
-            key={`${result}-${queueType}-${starPlayer}-${teammateElos.join(",")}-${enemyElos.join(",")}`}
+            key={`${result}-${queueType}-${starPlayer}-${teammateElos.join(",")}-${enemyElos.join(",")}-${manualDeltaOn}-${previewDelta}`}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className={`ml-auto font-display text-lg font-bold ${
+            className={`ml-auto font-display text-lg font-bold flex items-baseline gap-1.5 ${
               previewDelta > 0 ? "text-emerald-500" : previewDelta < 0 ? "text-red-500" : "text-yellow-500"
             }`}
           >
-            {previewDelta > 0 ? "+" : ""}{previewDelta}
+            <span>{previewDelta > 0 ? "+" : ""}{previewDelta}</span>
+            <span className="text-[10px] font-normal text-muted-foreground">
+              → {(Number(playerElo) + previewDelta).toLocaleString()}
+            </span>
           </motion.div>
         )}
         <div className="ml-auto flex items-center gap-1.5">

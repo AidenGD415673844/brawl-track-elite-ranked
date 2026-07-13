@@ -17,7 +17,7 @@ export const BRAWLER_IDS = {
   "Bull": 16000002,
   "Buster": 16000062,
   "Buzz": 16000049,
-  "Buzz Lightyear": 16000088,
+  
   "Byron": 16000042,
   "Carl": 16000025,
   "Charlie": 16000074,

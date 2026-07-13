@@ -184,9 +184,9 @@ export function computeDeservedRank(player, responses, battleLog = []) {
   let rawBase = 0;
   const catBreakdown = CATEGORIES.map((cat) => {
     const score = categoryScore(responses, cat.id);
-    // Nonlinear curve (1.8): 50 → 28%, 70 → 53%, 90 → 82%, 100 → 100%.
-    const curved = Math.pow(score / 100, 1.8) * 100;
-    const contribution = Math.round(curved * cat.weight * 0.75); // 25% haircut
+    // Softened curve (1.55): 50 → 34%, 70 → 58%, 90 → 85%, 100 → 100%.
+    const curved = Math.pow(score / 100, 1.55) * 100;
+    const contribution = Math.round(curved * cat.weight * 0.82); // lighter haircut
     rawBase += contribution;
     return {
       id: cat.id,
@@ -195,27 +195,27 @@ export function computeDeservedRank(player, responses, battleLog = []) {
       color: cat.color,
       score: Math.round(score),
       contribution,
-      max: Math.round(cat.weight * 100 * 0.75),
+      max: Math.round(cat.weight * 100 * 0.82),
     };
   });
-  const baseElo = Math.max(0, rawBase - 2100);
+  const baseElo = Math.max(0, rawBase - 1650);
 
 
-  // ─── Data-driven adjustments (also stricter) ────────────
+  // ─── Data-driven adjustments ────────────
   const winRate = Number(player?.winRate) || 50;
-  const wrAdj = Math.round(((winRate - 55) / 45) * 700); // 50% wr = -78, 60% = +78
+  const wrAdj = Math.round(((winRate - 53) / 45) * 750);
 
   const starCount = real.filter((e) => e.starPlayer === "self").length;
   const starRate = real.length > 0 ? starCount / real.length : 0;
-  const impactAdj = Math.max(-500, Math.min(400, Math.round((starRate - 0.25) * 2000)));
+  const impactAdj = Math.max(-450, Math.min(450, Math.round((starRate - 0.22) * 2000)));
 
   const stability = streakStability(real);
-  const stabilityAdj = Math.round(((stability - 60) / 40) * 350);
+  const stabilityAdj = Math.round(((stability - 55) / 40) * 350);
 
   const best = bestStreak(real);
-  const streakBonus = best >= 12 ? 200 : best >= 8 ? 100 : best >= 5 ? 40 : 0;
+  const streakBonus = best >= 12 ? 220 : best >= 8 ? 120 : best >= 5 ? 55 : 0;
 
-  const confidence = Math.min(1, real.length / 30);
+  const confidence = Math.min(1, real.length / 25);
 
   const adjustments = [
     { label: `Base (self-assessment)`,           value: baseElo,      good: true },
@@ -228,16 +228,16 @@ export function computeDeservedRank(player, responses, battleLog = []) {
   const totalAdjust = wrAdj + impactCapped(impactAdj) + stabilityAdj + streakBonus;
   let deservedElo = Math.max(0, baseElo + totalAdjust);
 
-  // ─── Evidence gates: high tiers require real proof ─────
-  if (deservedElo >= 8250 && !(real.length >= 20 && winRate >= 60)) {
-    deservedElo = Math.min(deservedElo, 8000);
+  // ─── Evidence gates (softened) ─────
+  if (deservedElo >= 8500 && !(real.length >= 15 && winRate >= 57)) {
+    deservedElo = Math.min(deservedElo, 8300);
   }
-  if (deservedElo >= 11250 && !(real.length >= 40 && winRate >= 64 && starRate >= 0.33)) {
-    deservedElo = Math.min(deservedElo, 10500);
+  if (deservedElo >= 11250 && !(real.length >= 30 && winRate >= 62 && starRate >= 0.28)) {
+    deservedElo = Math.min(deservedElo, 10800);
   }
-  // Low-confidence samples get capped at Diamond I until they prove themselves.
-  if (confidence < 0.3 && deservedElo > 3749) {
-    deservedElo = 3749;
+  // Low-confidence samples capped at Mythic I until they prove themselves.
+  if (confidence < 0.25 && deservedElo > 4500) {
+    deservedElo = 4500;
   }
 
   deservedElo = Math.min(RANKS[RANKS.length - 1].min + 2000, deservedElo);

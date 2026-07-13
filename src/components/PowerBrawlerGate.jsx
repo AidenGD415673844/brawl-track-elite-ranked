@@ -247,36 +247,6 @@ export default function PowerBrawlerGate({
             </div>
           </div>
 
-          {/* Teammate inputs */}
-          {[0, 1].map((idx) => (
-            <div key={idx} className="rounded-xl bg-background/40 border border-border/30 p-3 space-y-2">
-              <p className="text-[10px] font-display font-bold text-foreground/60 uppercase">Teammate {idx + 1}</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Power 9</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={localMateP9[idx] || ""}
-                    onChange={(e) => setLocalMateP9((prev) => prev.map((v, i) => (i === idx ? e.target.value : v)))}
-                    placeholder="0"
-                    className="bg-muted border-border text-foreground text-sm h-9"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Power 11</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={localMateP11[idx] || ""}
-                    onChange={(e) => setLocalMateP11((prev) => prev.map((v, i) => (i === idx ? e.target.value : v)))}
-                    placeholder="0"
-                    className="bg-muted border-border text-foreground text-sm h-9"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
 
           <button
             onClick={handleSave}

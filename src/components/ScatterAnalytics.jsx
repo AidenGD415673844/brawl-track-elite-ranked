@@ -133,27 +133,7 @@ export default function ScatterAnalytics({ player, boost }) {
   }, [player, boost]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <Panel
-        title="Trophies vs Elo"
-        xKey="trophies"
-        yKey="elo"
-        xLabel="Trophies"
-        yLabel="Elo"
-        cloud={cloud}
-        player={me}
-        dark={dark}
-      />
-      <Panel
-        title="Win Rate vs Climb Score"
-        xKey="winRate"
-        yKey="climb"
-        xLabel="Win Rate %"
-        yLabel="Climb"
-        cloud={cloud}
-        player={me}
-        dark={dark}
-      />
+    <div className="grid grid-cols-1 gap-4">
       <Panel
         title="Skill vs Risk"
         xKey="skill"
