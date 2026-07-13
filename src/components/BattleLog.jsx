@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { AnimatePresence } from "framer-motion";
-import { Swords, Trash2 } from "lucide-react";
+import { Swords, Trash2, Undo2 } from "lucide-react";
 import {
   loadBattleLog,
   clearBattleLog,
@@ -84,9 +84,22 @@ export default function BattleLog({ currentElo, highestElo, battleLog: externalL
           <span className="text-xs text-muted-foreground">({log.length})</span>
         </div>
         {log.length > 0 && (
-          <button onClick={handleClear} className="text-muted-foreground hover:text-red-500 transition">
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                const ok = typeof window !== "undefined" && window.confirm("Undo the most recent battle? This removes the last logged entry and reverts your Elo.");
+                if (!ok) return;
+                handleDelete(log[0].id);
+              }}
+              title="Undo last logged battle"
+              className="text-muted-foreground hover:text-cyan-500 transition p-1 rounded-md"
+            >
+              <Undo2 className="w-4 h-4" />
+            </button>
+            <button onClick={handleClear} title="Clear entire battle log" className="text-muted-foreground hover:text-red-500 transition p-1 rounded-md">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
 
