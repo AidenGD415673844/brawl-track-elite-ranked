@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Map, ChevronDown, ChevronUp, Flag as FlagIcon } from "lucide-react";
 import { buildJourney, BIOMES } from "@/lib/journeyMap";
 import { getRank, TIER_COLORS } from "@/lib/ranks";
-import { getIntensity } from "@/lib/animPrefs";
+import { getParticleIntensity, getParticlesEnabled } from "@/lib/animPrefs";
 
 // Terrain patterns (per biome motif) — layered SVG shapes.
 function BiomeLayer({ biome, x0, x1, height, animated }) {
@@ -116,8 +116,9 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
   const [viewX, setViewX] = useState(0);
   const [viewW, setViewW] = useState(0);
 
-  const intensity = getIntensity ? getIntensity() : "medium";
-  const animated = intensity !== "off" && intensity !== "low";
+  const enabled = getParticlesEnabled ? getParticlesEnabled() : true;
+  const intensity = getParticleIntensity ? getParticleIntensity() : "medium";
+  const animated = enabled && intensity !== "low";
 
   const j = useMemo(() => buildJourney(battleLog, currentElo || 0), [battleLog, currentElo]);
 
