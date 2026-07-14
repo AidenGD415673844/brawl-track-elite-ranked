@@ -66,6 +66,10 @@ import BackendStatusChip from "@/components/BackendStatusChip";
 import RankUpChecklist from "@/components/RankUpChecklist";
 import RankUpSimulator from "@/components/RankUpSimulator";
 import RankTitleBadge from "@/components/RankTitleBadge";
+import EloJourneyMap from "@/components/EloJourneyMap";
+import ClutchIndexCard from "@/components/ClutchIndexCard";
+import ThreatRadar from "@/components/ThreatRadar";
+import RankTerritoryMap from "@/components/RankTerritoryMap";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -559,6 +563,19 @@ export default function Home() {
         <motion.div {...fadeUp} transition={{ delay: 0.22 }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <SeasonMomentumTracker battleLog={battleLog} seasonStartDate={player.seasonStartDate} />
           <SafetyNetSimulator currentElo={player.currentElo} battleLog={battleLog} />
+        </motion.div>
+
+        <motion.div {...fadeUp} transition={{ delay: 0.23 }}>
+          <RankTerritoryMap currentElo={player.currentElo} battleLog={battleLog} />
+        </motion.div>
+
+        <motion.div {...fadeUp} transition={{ delay: 0.24 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ThreatRadar battleLog={battleLog} currentElo={player.currentElo} />
+          <ClutchIndexCard battleLog={battleLog} />
+        </motion.div>
+
+        <motion.div {...fadeUp} transition={{ delay: 0.245 }}>
+          <EloJourneyMap battleLog={battleLog} currentElo={player.currentElo} />
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.25 }}>
