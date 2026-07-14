@@ -7,6 +7,8 @@ import RankBadge from "@/components/RankBadge";
 import BrawlerPortrait from "@/components/BrawlerPortrait";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import { Clock, Sliders, Trash2, Star, Pencil, FlaskConical, BarChart3, Trophy, Gauge, Swords, Shield, Flame } from "lucide-react";
+import ClutchBadge from "@/components/ClutchBadge";
+import { clutchBadgeKind } from "@/lib/clutchIndex";
 
 function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -106,7 +108,7 @@ function TeamMember({ label, elo, beforeElo, afterElo, brawler, isStar, isYou, p
   );
 }
 
-export default function BattleLogCard({ entry, onDelete, onEdit, streakCount = 0 }) {
+export default function BattleLogCard({ entry, onDelete, onEdit, streakCount = 0, pressure = null }) {
   const [showWhatIf, setShowWhatIf] = useState(false);
 
   // Manual adjustment entry
@@ -200,6 +202,7 @@ export default function BattleLogCard({ entry, onDelete, onEdit, streakCount = 0
           <span className="text-[8px] px-1.5 py-0.5 rounded bg-foreground/10 text-foreground/60 font-display font-bold">
             RANKED
           </span>
+          <ClutchBadge kind={clutchBadgeKind(pressure, entry.result)} pressure={pressure?.score} />
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
