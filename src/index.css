@@ -364,3 +364,36 @@
 .tier-masters-shockwave {
   contain: layout paint;
 }
+
+/* ---- Rank Territory & Threat Radar animations ---- */
+@keyframes territory-danger-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.85; }
+}
+.territory-pulse-danger {
+  background: radial-gradient(circle at 30% 50%, rgba(239,68,68,0.55), transparent 70%);
+  animation: territory-danger-pulse 1.4s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+@keyframes territory-promo-shimmer {
+  0%   { transform: translateX(-30%); opacity: 0.2; }
+  50%  { opacity: 0.85; }
+  100% { transform: translateX(120%); opacity: 0.2; }
+}
+.territory-shimmer-promo {
+  background: linear-gradient(90deg, transparent, rgba(253,224,71,0.7), transparent);
+  animation: territory-promo-shimmer 2.4s ease-in-out infinite;
+}
+@keyframes radar-sweep {
+  0%   { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -300; }
+}
+.radar-sweep-ring {
+  stroke-dasharray: 4 8;
+  animation: radar-sweep 8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .territory-pulse-danger,
+  .territory-shimmer-promo,
+  .radar-sweep-ring { animation: none !important; }
+}
