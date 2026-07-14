@@ -13,6 +13,7 @@ import {
 } from "@/lib/battleLog";
 import BattleLogInput from "@/components/BattleLogInput";
 import BattleLogCard from "@/components/BattleLogCard";
+import { computePressure } from "@/lib/clutchIndex";
 import ManualEloAdjust from "@/components/ManualEloAdjust";
 import PowerBrawlerGate, { getGateStatus } from "@/components/PowerBrawlerGate";
 
@@ -165,13 +166,14 @@ export default function BattleLog({ currentElo, highestElo, battleLog: externalL
       {log.length > 0 ? (
         <div className="space-y-3 mt-4 max-h-[28rem] overflow-y-auto pr-1">
           <AnimatePresence>
-            {log.map((entry) => (
+            {log.map((entry, idx) => (
               <BattleLogCard
                 key={entry.id}
                 entry={entry}
                 onDelete={() => handleDelete(entry.id)}
                 onEdit={handleEdit}
                 streakCount={streakById[entry.id] || 0}
+                pressure={entry.manual ? null : computePressure(entry, log, idx)}
               />
             ))}
           </AnimatePresence>
