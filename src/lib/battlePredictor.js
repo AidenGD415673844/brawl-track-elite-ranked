@@ -1,107 +1,94 @@
-// Battle predictor — mathematical forecast of next battles based on
-// win rate, team type, and enemy average rank.
-import { calculateElo } from "@/lib/eloEngine";
-import { getRank, getRankIndex, RANKS } from "@/lib/ranks";
+// Battle predictor — forecast next 5 battles using real avg win/loss
+// deltas from your battle log (fallback 90 / -50) and an optional
+// Deserved Rank assessment boost (skill signal outside recent form).
+import { getRank, getRankIndex } from "@/lib/ranks";
+import { getAvgDeltas, getRecentWinRate } from "@/lib/battleStats";
 
+// deservedElo (optional) — pulls win probability slightly toward the
+// verdict that a Deserved Rank assessment produced. Weight is small so
+// it never dominates raw match data.
 export function predictBattles(
   playerElo,
   winRate,
   queueType,
   teammateElos = [],
   enemyElos = [],
-  highestElo = playerElo
+  highestElo = playerElo,
+  battleLog = [],
+  deservedElo = null
 ) {
+  const enemies = enemyElos.filter((e) => Number(e) > 0);
   const enemyAvg =
-    enemyElos.filter((e) => Number(e) > 0).reduce((a, b) => a + Number(b), 0) /
-      Math.max(1, enemyElos.filter((e) => Number(e) > 0).length) || 0;
+    enemies.length ? enemies.reduce((a, b) => a + Number(b), 0) / enemies.length : 0;
 
-  // Win probability adjusted by Elo differential
+  // Prefer real recent WR when we have any log data, otherwise use the
+  // provided (profile-level) rate.
+  const recentWR = getRecentWinRate(battleLog, 20, Number(winRate) || 50);
+  const baseProb = recentWR / 100;
+
   const eloDiff = enemyAvg > 0 ? playerElo - enemyAvg : 0;
-  const baseProb = winRate / 100;
   const eloAdjust = eloDiff !== 0 ? Math.min(0.2, Math.max(-0.2, eloDiff / 2000)) : 0;
-  const winProb = Math.min(0.95, Math.max(0.05, baseProb + eloAdjust));
 
-  // Best case: all wins
-  let bestElo = playerElo;
-  const bestPath = [];
-  for (let i = 0; i < 5; i++) {
-    const calc = calculateElo(bestElo, {
-      result: "victory",
-      teammateElos,
-      enemyElos,
-      queueType,
-      highestElo,
-    });
-    bestElo = calc.eloAfter;
-    bestPath.push({
-      battle: i + 1,
-      result: "victory",
-      delta: calc.delta,
-      eloAfter: calc.eloAfter,
-      rank: getRank(calc.eloAfter).name,
-    });
+  // Deserved Rank pull: if the assessment says you belong 300 Elo higher,
+  // nudge win prob +3%. Capped at ±8%.
+  let deservedAdjust = 0;
+  if (Number.isFinite(deservedElo) && deservedElo > 0) {
+    const gap = deservedElo - playerElo;
+    deservedAdjust = Math.max(-0.08, Math.min(0.08, gap / 3000));
   }
 
-  // Worst case: all losses
-  let worstElo = playerElo;
-  const worstPath = [];
-  for (let i = 0; i < 5; i++) {
-    const calc = calculateElo(worstElo, {
-      result: "defeat",
-      teammateElos,
-      enemyElos,
-      queueType,
-      highestElo,
-    });
-    worstElo = calc.eloAfter;
-    worstPath.push({
-      battle: i + 1,
-      result: "defeat",
-      delta: calc.delta,
-      eloAfter: calc.eloAfter,
-      rank: getRank(calc.eloAfter).name,
-    });
-  }
+  const winProb = Math.min(0.95, Math.max(0.05, baseProb + eloAdjust + deservedAdjust));
 
-  // Expected (average) path
-  let expectedElo = playerElo;
+  const { avgWin, avgLoss } = getAvgDeltas(battleLog);
+
+  const buildPath = (result) => {
+    const delta = result === "victory" ? avgWin : avgLoss;
+    let elo = playerElo;
+    const path = [];
+    for (let i = 0; i < 5; i++) {
+      elo = Math.max(playerElo >= 3000 ? 3000 : 0, elo + delta);
+      path.push({
+        battle: i + 1,
+        result,
+        delta,
+        eloAfter: elo,
+        rank: getRank(elo).name,
+      });
+    }
+    return { finalElo: elo, finalRank: getRank(elo).name, path };
+  };
+
+  const bestCase = buildPath("victory");
+  const worstCase = buildPath("defeat");
+
+  // Expected path: apply EV per battle
+  let expElo = playerElo;
   const expectedPath = [];
   for (let i = 0; i < 5; i++) {
-    const winCalc = calculateElo(expectedElo, {
-      result: "victory",
-      teammateElos,
-      enemyElos,
-      queueType,
-      highestElo,
-    });
-    const lossCalc = calculateElo(expectedElo, {
-      result: "defeat",
-      teammateElos,
-      enemyElos,
-      queueType,
-      highestElo,
-    });
-    const evDelta = winCalc.delta * winProb + lossCalc.delta * (1 - winProb);
-    expectedElo = Math.round(expectedElo + evDelta);
+    const ev = winProb * avgWin + (1 - winProb) * avgLoss;
+    expElo = Math.max(playerElo >= 3000 ? 3000 : 0, Math.round(expElo + ev));
     expectedPath.push({
       battle: i + 1,
       result: "projected",
-      delta: Math.round(evDelta),
-      eloAfter: expectedElo,
-      rank: getRank(expectedElo).name,
+      delta: Math.round(ev),
+      eloAfter: expElo,
+      rank: getRank(expElo).name,
     });
   }
 
   const currentRankIdx = getRankIndex(playerElo);
-  const projectedRankIdx = getRankIndex(expectedElo);
-  const rankChange = projectedRankIdx - currentRankIdx;
+  const projectedRankIdx = getRankIndex(expElo);
 
   return {
     winProb: Math.round(winProb * 100),
-    bestCase: { finalElo: bestElo, finalRank: getRank(bestElo).name, path: bestPath },
-    worstCase: { finalElo: worstElo, finalRank: getRank(worstElo).name, path: worstPath },
-    expected: { finalElo: expectedElo, finalRank: getRank(expectedElo).name, path: expectedPath },
-    rankChange,
+    avgWin,
+    avgLoss,
+    recentWR,
+    bestCase,
+    worstCase,
+    expected: { finalElo: expElo, finalRank: getRank(expElo).name, path: expectedPath },
+    rankChange: projectedRankIdx - currentRankIdx,
     enemyAvg: Math.round(enemyAvg),
+    deservedAdjust: Math.round(deservedAdjust * 100),
   };
 }

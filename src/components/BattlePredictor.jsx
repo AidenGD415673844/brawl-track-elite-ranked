@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
+import { TrendingUp, ChevronDown, ChevronUp, Database } from "lucide-react";
 import { predictBattles } from "@/lib/battlePredictor";
 import { getRank, TIER_COLORS } from "@/lib/ranks";
 import RankBadge from "@/components/RankBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedCounter from "@/components/AnimatedCounter";
+import { loadHistory } from "@/lib/assessmentHistory";
 
 export default function BattlePredictor({
   playerElo,
@@ -15,24 +15,34 @@ export default function BattlePredictor({
   teammateElos,
   enemyElos,
   highestElo,
+  battleLog = [],
 }) {
   const [expanded, setExpanded] = useState(true);
 
-  const prediction = predictBattles(
-    playerElo,
-    winRate,
-    queueType,
-    teammateElos,
-    enemyElos,
-    highestElo || playerElo
+  // Latest Deserved Rank assessment (if any) — pulls prediction slightly.
+  const deservedElo = useMemo(() => {
+    try {
+      const h = loadHistory();
+      return h?.[0]?.deservedElo ?? null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const prediction = useMemo(
+    () => predictBattles(
+      playerElo, winRate, queueType, teammateElos, enemyElos,
+      highestElo || playerElo, battleLog, deservedElo,
+    ),
+    [playerElo, winRate, queueType, teammateElos, enemyElos, highestElo, battleLog, deservedElo]
   );
 
   const currentRank = getRank(playerElo);
   const c = TIER_COLORS[currentRank.tier];
 
-  // Single-game projected Elo swing (first step of each path)
-  const winSwing = prediction.bestCase.path[0]?.delta ?? 0;
-  const lossSwing = prediction.worstCase.path[0]?.delta ?? 0;
+  const winSwing = prediction.avgWin;
+  const lossSwing = prediction.avgLoss;
+  const dataSample = (battleLog || []).filter((e) => !e.manual).length;
 
   return (
     <Card className="bg-card border-border p-4 rounded-2xl">
@@ -46,8 +56,16 @@ export default function BattlePredictor({
           </div>
           <div className="text-left">
             <h3 className="text-sm font-display font-semibold text-foreground">Battle Predictor</h3>
-            <p className="text-[10px] text-muted-foreground">
-              {prediction.winProb}% win prob · Enemy avg: {prediction.enemyAvg}
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+              {prediction.winProb}% win prob · Enemy avg {prediction.enemyAvg || "—"}
+              {dataSample > 0 && (
+                <span className="inline-flex items-center gap-0.5 text-cyan-400/80">
+                  · <Database className="w-2.5 h-2.5" /> {dataSample} logged
+                </span>
+              )}
+              {prediction.deservedAdjust !== 0 && (
+                <span className="text-fuchsia-400/80">· DR {prediction.deservedAdjust > 0 ? "+" : ""}{prediction.deservedAdjust}%</span>
+              )}
             </p>
           </div>
         </div>
