@@ -164,18 +164,15 @@ export default function RankTerritoryMap({ currentElo, battleLog }) {
           >
             <div className="mt-2 grid grid-cols-3 gap-2">
               {[
-                { key: "all",   label: "5W-0L", data: scenarios.all,   tone: "emerald" },
-                { key: "split", label: "3W-2L", data: scenarios.split, tone: "cyan" },
-                { key: "none",  label: "0W-5L", data: scenarios.none,  tone: "rose" },
-              ].map(({ key, label, data, tone }) => {
+                { key: "all",   label: "5W-0L", data: scenarios.all,   frame: "bg-emerald-500/5 border-emerald-500/30", accent: "text-emerald-400" },
+                { key: "split", label: "3W-2L", data: scenarios.split, frame: "bg-cyan-500/5 border-cyan-500/30",       accent: "text-cyan-400" },
+                { key: "none",  label: "0W-5L", data: scenarios.none,  frame: "bg-rose-500/5 border-rose-500/30",       accent: "text-rose-400" },
+              ].map(({ key, label, data, frame, accent }) => {
                 const sf = THREAT_STYLES[data.threat];
                 const tierC = TIER_COLORS[data.rank.tier];
                 return (
-                  <div
-                    key={key}
-                    className={`rounded-xl border p-2 bg-${tone}-500/5 border-${tone}-500/30`}
-                  >
-                    <div className={`text-[9px] font-display font-black uppercase text-${tone}-400`}>{label}</div>
+                  <div key={key} className={`rounded-xl border p-2 ${frame}`}>
+                    <div className={`text-[9px] font-display font-black uppercase ${accent}`}>{label}</div>
                     <div className="text-sm font-display font-black" style={{ color: tierC.text }}>
                       {data.projected.toLocaleString()}
                     </div>
@@ -183,7 +180,7 @@ export default function RankTerritoryMap({ currentElo, battleLog }) {
                       {data.deltaElo >= 0 ? "+" : ""}{data.deltaElo} Elo
                     </div>
                     <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground">
-                      <span>Control</span>
+                      <span>Ctrl</span>
                       <span className="font-bold" style={{ color: tierC.text }}>{data.control}%</span>
                     </div>
                     <div
