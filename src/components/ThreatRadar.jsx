@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Radar } from "lucide-react";
 import { liveRadarFactors } from "@/lib/clutchIndex";
 import { getRank, TIER_COLORS } from "@/lib/ranks";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AXES = [
   { key: "streak",    label: "Streak" },
