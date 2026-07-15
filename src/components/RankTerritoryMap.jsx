@@ -22,6 +22,29 @@ export default function RankTerritoryMap({ currentElo, battleLog }) {
   const TrendIcon = TREND_ICONS[t.trendVector];
   const trendColor = TREND_COLOR[t.trendVector];
   const posPct = t.position * 100;
+  const [showForecast, setShowForecast] = useState(false);
+
+  // Build 5-battle scenarios using shared avg deltas (log-driven, fallback 90/-50).
+  const scenarios = useMemo(() => {
+    const { avgWin, avgLoss } = getAvgDeltas(battleLog || []);
+    const base = currentElo || 0;
+    const clamp = (v) => Math.max(base >= 3000 ? 3000 : 0, Math.round(v));
+    const build = (wins) => {
+      const losses = 5 - wins;
+      const projected = clamp(base + wins * avgWin + losses * avgLoss);
+      const ter = computeTerritory(projected, battleLog || []);
+      return {
+        wins, losses, projected,
+        deltaElo: projected - base,
+        control: ter.control,
+        threat: ter.threat,
+        rank: ter.rank,
+      };
+    };
+    return { all: build(5), split: build(3), none: build(0), avgWin, avgLoss };
+  }, [battleLog, currentElo]);
+
+
 
   return (
     <Card
