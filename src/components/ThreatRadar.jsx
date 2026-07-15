@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Radar } from "lucide-react";
 import { liveRadarFactors } from "@/lib/clutchIndex";
 import { getRank, TIER_COLORS } from "@/lib/ranks";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AXES = [
   { key: "streak",    label: "Streak" },
@@ -16,10 +17,11 @@ export default function ThreatRadar({ battleLog, currentElo }) {
   const factors = useMemo(() => liveRadarFactors(battleLog || [], currentElo || 0), [battleLog, currentElo]);
   const tier = getRank(currentElo || 0).tier;
   const c = TIER_COLORS[tier];
+  const isMobile = useIsMobile();
 
-  const size = 200;
+  const size = isMobile ? 168 : 200;
   const cx = size / 2, cy = size / 2;
-  const R = 78;
+  const R = isMobile ? 64 : 78;
 
   const angleFor = (i) => (-Math.PI / 2) + (i * 2 * Math.PI) / AXES.length;
   const pt = (i, r) => {
@@ -78,22 +80,24 @@ export default function ThreatRadar({ battleLog, currentElo }) {
               </g>
             );
           })}
-          {/* Sweep */}
-          <circle
-            cx={cx} cy={cy} r={R}
-            fill="none" stroke="url(#radar-stroke)" strokeWidth="0.8" strokeOpacity="0.4"
-            className="radar-sweep-ring"
-          />
+          {/* Sweep — desktop only to reduce mobile jank */}
+          {!isMobile && (
+            <circle
+              cx={cx} cy={cy} r={R}
+              fill="none" stroke="url(#radar-stroke)" strokeWidth="0.8" strokeOpacity="0.4"
+              className="radar-sweep-ring"
+            />
+          )}
           {/* Data polygon */}
           <motion.polygon
             points={dPolygon}
             fill="url(#radar-fill)"
             stroke="url(#radar-stroke)"
             strokeWidth="2"
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            style={{ transformOrigin: `${cx}px ${cy}px`, filter: `drop-shadow(0 0 12px ${c.glow})` }}
+            initial={isMobile ? false : { opacity: 0, scale: 0.6 }}
+            animate={isMobile ? undefined : { opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            style={{ transformOrigin: `${cx}px ${cy}px`, filter: isMobile ? undefined : `drop-shadow(0 0 12px ${c.glow})` }}
           />
           {/* Dots at each axis value */}
           {polygonPts.map((p, i) => (

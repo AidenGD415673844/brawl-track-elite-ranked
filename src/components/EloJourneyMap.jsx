@@ -5,6 +5,7 @@ import { Map, ChevronDown, ChevronUp, Flag as FlagIcon } from "lucide-react";
 import { buildJourney, BIOMES } from "@/lib/journeyMap";
 import { getRank, TIER_COLORS } from "@/lib/ranks";
 import { getParticleIntensity, getParticlesEnabled } from "@/lib/animPrefs";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Terrain patterns (per biome motif) — layered SVG shapes.
 function BiomeLayer({ biome, x0, x1, height, animated }) {
@@ -115,41 +116,72 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
   const scrollRef = useRef(null);
   const [viewX, setViewX] = useState(0);
   const [viewW, setViewW] = useState(0);
+  const isMobile = useIsMobile();
 
   const enabled = getParticlesEnabled ? getParticlesEnabled() : true;
   const intensity = getParticleIntensity ? getParticleIntensity() : "medium";
-  const animated = enabled && intensity !== "low";
+  // Never animate biome sub-layers on mobile — pure static paint = smooth scroll.
+  const animated = enabled && intensity !== "low" && !isMobile;
 
-  const j = useMemo(() => buildJourney(battleLog, currentElo || 0), [battleLog, currentElo]);
+  const j = useMemo(
+    () => buildJourney(battleLog, currentElo || 0, {
+      pxPerStep: isMobile ? 34 : 42,
+      height: isMobile ? 200 : 260,
+      padY: isMobile ? 22 : 30,
+    }),
+    [battleLog, currentElo, isMobile]
+  );
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    let rafId = 0;
     const update = () => {
+      rafId = 0;
       setViewX(el.scrollLeft);
       setViewW(el.clientWidth);
     };
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(update);
+    };
     update();
-    el.addEventListener("scroll", update, { passive: true });
+    el.addEventListener("scroll", onScroll, { passive: true });
     const ro = new ResizeObserver(update);
     ro.observe(el);
     // Auto-scroll to end (most recent)
     el.scrollLeft = el.scrollWidth;
-    return () => { el.removeEventListener("scroll", update); ro.disconnect(); };
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      ro.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, [j.width]);
 
-  // Wheel horizontal
+  // Wheel → horizontal (desktop only; mobile uses native touch scroll)
   const onWheel = (e) => {
+    if (isMobile) return;
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
       scrollRef.current.scrollLeft += e.deltaY;
     }
   };
 
   return (
-    <Card className="bg-card border-border p-4 sm:p-5 rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between mb-2">
+    <Card className="relative bg-card border-border p-4 sm:p-5 rounded-2xl overflow-hidden">
+      {/* Beautiful ambient backdrop */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-70"
+        style={{
+          background:
+            "radial-gradient(circle at 20% 0%, rgba(34,211,238,0.12), transparent 55%), radial-gradient(circle at 90% 100%, rgba(232,121,249,0.10), transparent 60%)",
+        }}
+      />
+      <div className="relative flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Map className="w-4 h-4 text-cyan-400" />
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-fuchsia-500 flex items-center justify-center shadow-[0_0_18px_rgba(34,211,238,0.35)]">
+            <Map className="w-3.5 h-3.5 text-white" />
+          </div>
           <h3 className="text-sm font-display font-semibold text-foreground">Elo Journey Map</h3>
         </div>
         <button
@@ -160,12 +192,12 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
           {collapsed ? "Show" : "Hide"}
         </button>
       </div>
-      <p className="text-xs text-muted-foreground mb-3">
+      <p className="relative text-xs text-muted-foreground mb-3">
         Scroll horizontally through your season. Each biome is a tier · flags mark rank-ups · dips are losing ravines.
       </p>
 
       {collapsed ? null : j.empty ? (
-        <div className="py-10 text-center text-xs text-muted-foreground">
+        <div className="relative py-10 text-center text-xs text-muted-foreground">
           Log at least 2 battles to reveal your journey through the ranked realms.
         </div>
       ) : (
@@ -173,10 +205,16 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
           <div
             ref={scrollRef}
             onWheel={onWheel}
-            className="overflow-x-auto overflow-y-hidden rounded-xl border border-border bg-black/40 select-none"
-            style={{ WebkitOverflowScrolling: "touch" }}
+            className="relative overflow-x-auto overflow-y-hidden rounded-xl border border-cyan-500/30 select-none shadow-[0_0_24px_rgba(34,211,238,0.15)_inset]"
+            style={{
+              WebkitOverflowScrolling: "touch",
+              background:
+                "linear-gradient(180deg, #030712 0%, #0b0f1c 60%, #050510 100%)",
+              overscrollBehaviorX: "contain",
+              contain: "content",
+            }}
           >
-            <svg width={j.width} height={j.height} className="block">
+            <svg width={j.width} height={j.height} className="block" style={{ willChange: "transform" }}>
               {/* Biome bands */}
               {j.biomes.map((b, i) => (
                 <BiomeLayer key={i} biome={b} x0={b.xStart} x1={b.xEnd} height={j.height} animated={animated} />

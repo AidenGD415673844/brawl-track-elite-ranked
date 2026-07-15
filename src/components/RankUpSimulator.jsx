@@ -92,7 +92,7 @@ function SimulatorInner({ player, battleLog }) {
           </div>
           <Slider
             min={1}
-            max={20}
+            max={30}
             step={1}
             value={[total]}
             onValueChange={(v) => {

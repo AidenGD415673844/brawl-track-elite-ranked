@@ -1,9 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { motion } from "framer-motion";
-import { Shield, AlertTriangle, TrendingUp, TrendingDown, Minus, MapPin } from "lucide-react";
-import { TIER_COLORS } from "@/lib/ranks";
+import { motion, AnimatePresence } from "framer-motion";
+import { Shield, AlertTriangle, TrendingUp, TrendingDown, Minus, MapPin, Telescope, ChevronDown, ChevronUp } from "lucide-react";
+import { TIER_COLORS, getRank } from "@/lib/ranks";
 import { computeTerritory } from "@/lib/rankTerritory";
+import { getAvgDeltas } from "@/lib/battleStats";
 
 const THREAT_STYLES = {
   Safe:     { color: "#10b981", bg: "bg-emerald-500/15", border: "border-emerald-500/40", Icon: Shield },
@@ -21,6 +22,29 @@ export default function RankTerritoryMap({ currentElo, battleLog }) {
   const TrendIcon = TREND_ICONS[t.trendVector];
   const trendColor = TREND_COLOR[t.trendVector];
   const posPct = t.position * 100;
+  const [showForecast, setShowForecast] = useState(false);
+
+  // Build 5-battle scenarios using shared avg deltas (log-driven, fallback 90/-50).
+  const scenarios = useMemo(() => {
+    const { avgWin, avgLoss } = getAvgDeltas(battleLog || []);
+    const base = currentElo || 0;
+    const clamp = (v) => Math.max(base >= 3000 ? 3000 : 0, Math.round(v));
+    const build = (wins) => {
+      const losses = 5 - wins;
+      const projected = clamp(base + wins * avgWin + losses * avgLoss);
+      const ter = computeTerritory(projected, battleLog || []);
+      return {
+        wins, losses, projected,
+        deltaElo: projected - base,
+        control: ter.control,
+        threat: ter.threat,
+        rank: ter.rank,
+      };
+    };
+    return { all: build(5), split: build(3), none: build(0), avgWin, avgLoss };
+  }, [battleLog, currentElo]);
+
+
 
   return (
     <Card
@@ -118,6 +142,63 @@ export default function RankTerritoryMap({ currentElo, battleLog }) {
           </div>
         </div>
       </div>
+
+      {/* Next 5 games forecast toggle */}
+      <button
+        onClick={() => setShowForecast((v) => !v)}
+        className="mt-4 w-full flex items-center justify-between rounded-xl border border-border bg-muted/30 hover:bg-muted/50 px-3 py-2 transition-colors"
+      >
+        <span className="flex items-center gap-2 text-xs font-display font-bold uppercase tracking-wider text-foreground">
+          <Telescope className="w-3.5 h-3.5" style={{ color: c.text }} />
+          Next 5 Games Forecast
+        </span>
+        {showForecast ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+      </button>
+      <AnimatePresence initial={false}>
+        {showForecast && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {[
+                { key: "all",   label: "5W-0L", data: scenarios.all,   frame: "bg-emerald-500/5 border-emerald-500/30", accent: "text-emerald-400" },
+                { key: "split", label: "3W-2L", data: scenarios.split, frame: "bg-cyan-500/5 border-cyan-500/30",       accent: "text-cyan-400" },
+                { key: "none",  label: "0W-5L", data: scenarios.none,  frame: "bg-rose-500/5 border-rose-500/30",       accent: "text-rose-400" },
+              ].map(({ key, label, data, frame, accent }) => {
+                const sf = THREAT_STYLES[data.threat];
+                const tierC = TIER_COLORS[data.rank.tier];
+                return (
+                  <div key={key} className={`rounded-xl border p-2 ${frame}`}>
+                    <div className={`text-[9px] font-display font-black uppercase ${accent}`}>{label}</div>
+                    <div className="text-sm font-display font-black" style={{ color: tierC.text }}>
+                      {data.projected.toLocaleString()}
+                    </div>
+                    <div className={`text-[9px] font-bold ${data.deltaElo >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                      {data.deltaElo >= 0 ? "+" : ""}{data.deltaElo} Elo
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground">
+                      <span>Ctrl</span>
+                      <span className="font-bold" style={{ color: tierC.text }}>{data.control}%</span>
+                    </div>
+                    <div
+                      className={`mt-1 inline-flex items-center gap-1 text-[9px] font-display font-bold uppercase px-1.5 py-0.5 rounded-full border ${sf.bg} ${sf.border}`}
+                      style={{ color: sf.color }}
+                    >
+                      <sf.Icon className="w-2.5 h-2.5" /> {data.threat}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[9px] text-muted-foreground text-center">
+              Projected using your avg +{scenarios.avgWin} per win · {scenarios.avgLoss} per loss
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Card>
   );
 }

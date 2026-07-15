@@ -452,6 +452,7 @@ export default function BattleLogInput({
               teammateElos={teammateElos.map(Number)}
               enemyElos={enemyElos.map(Number)}
               highestElo={highestElo || playerElo}
+              battleLog={battleLog}
             />
           </motion.div>
         )}
