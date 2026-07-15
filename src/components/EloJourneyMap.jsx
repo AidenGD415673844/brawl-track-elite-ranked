@@ -5,6 +5,7 @@ import { Map, ChevronDown, ChevronUp, Flag as FlagIcon } from "lucide-react";
 import { buildJourney, BIOMES } from "@/lib/journeyMap";
 import { getRank, TIER_COLORS } from "@/lib/ranks";
 import { getParticleIntensity, getParticlesEnabled } from "@/lib/animPrefs";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Terrain patterns (per biome motif) — layered SVG shapes.
 function BiomeLayer({ biome, x0, x1, height, animated }) {
@@ -115,12 +116,21 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
   const scrollRef = useRef(null);
   const [viewX, setViewX] = useState(0);
   const [viewW, setViewW] = useState(0);
+  const isMobile = useIsMobile();
 
   const enabled = getParticlesEnabled ? getParticlesEnabled() : true;
   const intensity = getParticleIntensity ? getParticleIntensity() : "medium";
-  const animated = enabled && intensity !== "low";
+  // Never animate biome sub-layers on mobile — pure static paint = smooth scroll.
+  const animated = enabled && intensity !== "low" && !isMobile;
 
-  const j = useMemo(() => buildJourney(battleLog, currentElo || 0), [battleLog, currentElo]);
+  const j = useMemo(
+    () => buildJourney(battleLog, currentElo || 0, {
+      pxPerStep: isMobile ? 34 : 42,
+      height: isMobile ? 200 : 260,
+      padY: isMobile ? 22 : 30,
+    }),
+    [battleLog, currentElo, isMobile]
+  );
 
   useEffect(() => {
     const el = scrollRef.current;
