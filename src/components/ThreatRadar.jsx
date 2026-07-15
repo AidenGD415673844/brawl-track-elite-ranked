@@ -17,10 +17,11 @@ export default function ThreatRadar({ battleLog, currentElo }) {
   const factors = useMemo(() => liveRadarFactors(battleLog || [], currentElo || 0), [battleLog, currentElo]);
   const tier = getRank(currentElo || 0).tier;
   const c = TIER_COLORS[tier];
+  const isMobile = useIsMobile();
 
-  const size = 200;
+  const size = isMobile ? 168 : 200;
   const cx = size / 2, cy = size / 2;
-  const R = 78;
+  const R = isMobile ? 64 : 78;
 
   const angleFor = (i) => (-Math.PI / 2) + (i * 2 * Math.PI) / AXES.length;
   const pt = (i, r) => {
