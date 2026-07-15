@@ -1,9 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { motion } from "framer-motion";
-import { Shield, AlertTriangle, TrendingUp, TrendingDown, Minus, MapPin } from "lucide-react";
-import { TIER_COLORS } from "@/lib/ranks";
+import { motion, AnimatePresence } from "framer-motion";
+import { Shield, AlertTriangle, TrendingUp, TrendingDown, Minus, MapPin, Telescope, ChevronDown, ChevronUp } from "lucide-react";
+import { TIER_COLORS, getRank } from "@/lib/ranks";
 import { computeTerritory } from "@/lib/rankTerritory";
+import { getAvgDeltas } from "@/lib/battleStats";
 
 const THREAT_STYLES = {
   Safe:     { color: "#10b981", bg: "bg-emerald-500/15", border: "border-emerald-500/40", Icon: Shield },
