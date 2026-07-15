@@ -2,8 +2,8 @@
 // All deterministic and side-effect free (except the tiny localStorage helpers
 // at the bottom, which power the anti-tilt lock user setting).
 import { getRank, getRankIndex, RANKS } from "@/lib/ranks";
-import { predictBattles } from "@/lib/battlePredictor";
 import { getWinStreak, getLossStreak, getBestWinStreak } from "@/lib/battleLog";
+import { getAvgDeltas } from "@/lib/battleStats";
 
 // ---------- helpers ----------
 
@@ -190,15 +190,10 @@ export function simulateWinShare(player, wins, total, battleLog) {
     Number(safePlayer.highestElo) || 0,
   );
 
-  let avgWinDelta = 30;
-  let avgLossDelta = -30;
-  try {
-    const preview = predictBattles(currentElo, winRate, "solo", teammateElos, [], highestElo);
-    avgWinDelta = Number(preview?.bestCase?.path?.[0]?.delta);
-    avgLossDelta = Number(preview?.worstCase?.path?.[0]?.delta);
-    if (!Number.isFinite(avgWinDelta)) avgWinDelta = 30;
-    if (!Number.isFinite(avgLossDelta)) avgLossDelta = -30;
-  } catch { /* keep defaults */ }
+  // Average win/loss from actual battle log (fallback 90 / -50).
+  const { avgWin, avgLoss } = getAvgDeltas(battleLog);
+  const avgWinDelta = avgWin;
+  const avgLossDelta = avgLoss;
 
   const projectedEloRaw = currentElo + w * avgWinDelta + losses * avgLossDelta;
   const projectedElo = Math.max(
