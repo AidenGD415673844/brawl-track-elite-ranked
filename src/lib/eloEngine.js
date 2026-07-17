@@ -283,6 +283,25 @@ export function calculateElo(playerElo, opts = {}) {
     delta = -mag;
   }
 
+  // --- Optional rule: rank-gap floor (soften smurf-lobby swings) ---
+  if (isRuleOn("rankGapFloor") && enemyAvg > 0 && current - enemyAvg >= 500) {
+    if (isWin && delta < 8) delta = 8;
+    if (!isWin && delta < -45) delta = -45;
+  }
+
+  // --- Optional rule: duration sanity ---
+  if (isRuleOn("durationSanity") && typeof opts.duration === "number" && opts.duration > 0) {
+    if (isWin && opts.duration < 45) delta = Math.round(delta * 0.7);
+    else if (opts.duration > 480) delta = Math.round(delta * 1.1);
+  }
+
+  // --- Optional rule: anti-farm on repeat enemy trios ---
+  if (isRuleOn("antiFarm") && Array.isArray(opts.battleLog) && Array.isArray(opts.enemyElos)) {
+    if (isFarmedTrio(opts.battleLog, opts.enemyElos)) {
+      delta = Math.round(delta * 0.6);
+    }
+  }
+
   delta = Math.round(delta);
   let eloAfter = current + delta;
 
