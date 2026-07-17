@@ -70,6 +70,9 @@ import EloJourneyMap from "@/components/EloJourneyMap";
 import ClutchIndexCard from "@/components/ClutchIndexCard";
 import ThreatRadar from "@/components/ThreatRadar";
 import RankTerritoryMap from "@/components/RankTerritoryMap";
+import MatchupIntelCard from "@/components/MatchupIntelCard";
+import EloVelocityCard from "@/components/EloVelocityCard";
+import TiltAlertLive from "@/components/TiltAlertLive";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -572,6 +575,15 @@ export default function Home() {
         <motion.div {...fadeUp} transition={{ delay: 0.24 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <ThreatRadar battleLog={battleLog} currentElo={player.currentElo} />
           <ClutchIndexCard battleLog={battleLog} />
+        </motion.div>
+
+        <motion.div {...fadeUp} transition={{ delay: 0.243 }}>
+          <TiltAlertLive battleLog={battleLog} />
+        </motion.div>
+
+        <motion.div {...fadeUp} transition={{ delay: 0.244 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <MatchupIntelCard battleLog={battleLog} />
+          <EloVelocityCard battleLog={battleLog} />
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ delay: 0.245 }}>

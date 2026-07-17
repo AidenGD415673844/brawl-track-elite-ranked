@@ -187,11 +187,14 @@ export function addBattle(playerElo, {
   brawler, brawlers, starPlayer, seasonRefreshed, manualDelta, queueType, highestElo, duration, performance,
   teammateProfiles, manualTeammateDeltas, manualEnemyDeltas,
 }) {
+  const priorLog = loadBattleLog();
   const isStarSelf = starPlayer === "self" || starPlayer === true;
   const calc = calculateElo(playerElo, {
     result, teammateElos, enemyElos, seasonRefreshed, manualDelta, queueType, highestElo,
     starPlayer: isStarSelf,
     teammateProfiles,
+    duration,
+    battleLog: priorLog,
   });
   const rankUp = checkRankUp(playerElo, calc.eloAfter);
   const entry = {
@@ -218,8 +221,7 @@ export function addBattle(playerElo, {
     manual: false,
     timestamp: new Date().toISOString(),
   };
-  const log = loadBattleLog();
-  const newLog = [entry, ...log];
+  const newLog = [entry, ...priorLog];
   saveBattleLog(newLog);
   return { entry, log: newLog };
 }

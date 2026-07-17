@@ -18,6 +18,7 @@ import {
   getParticlesEnabled, setParticlesEnabled,
   getParticleIntensity, setParticleIntensity,
 } from "@/lib/animPrefs";
+import { getRules, setRule } from "@/lib/battleLogRules";
 
 
 export default function Settings() {
@@ -29,6 +30,11 @@ export default function Settings() {
   const [haptics, setHaptics] = React.useState(areHapticsEnabled());
   const [particlesOn, setParticlesOn] = React.useState(getParticlesEnabled());
   const [particleIntensity, setParticleIntensityState] = React.useState(getParticleIntensity());
+  const [rules, setRulesState] = React.useState(getRules());
+  const updateRule = (name, value) => {
+    setRule(name, value);
+    setRulesState(getRules());
+  };
 
   const [perfMode, setPerfMode] = React.useState(() => {
     try { return localStorage.getItem("tierAnimPerf") || "auto"; } catch { return "auto"; }
@@ -222,6 +228,33 @@ export default function Settings() {
               }}
             />
           </div>
+        </Card>
+
+        <Card className="bg-card border-border p-5 rounded-2xl space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
+              <ShieldAlert className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-foreground">Battle Log Rules</h3>
+              <p className="text-xs text-muted-foreground">Fairness & sanity checks for logged battles.</p>
+            </div>
+          </div>
+          {[
+            { key: "antiFarm",        label: "Anti-farm cap",      desc: "60% Elo on 3rd+ battle vs same enemy trio in 20 min." },
+            { key: "durationSanity",  label: "Duration sanity",    desc: "Sub-45s wins pay 70%; 8min+ matches +10%." },
+            { key: "rankGapFloor",    label: "Rank-gap floor",     desc: "Softens losses & floors gains vs 500+ lower Elo lobbies." },
+            { key: "manualValidation",label: "Manual Δ validation",desc: "Confirm before saving deltas outside [-150, +200]." },
+            { key: "duplicateGuard",  label: "Duplicate guard",    desc: "Warn on identical brawler+result within 30s." },
+          ].map((r) => (
+            <div key={r.key} className="flex items-center justify-between gap-3 border-t border-border/60 pt-2 first:border-0 first:pt-0">
+              <div className="flex-1">
+                <p className="text-xs font-bold text-foreground">{r.label}</p>
+                <p className="text-[10px] text-muted-foreground">{r.desc}</p>
+              </div>
+              <Switch checked={!!rules[r.key]} onCheckedChange={(v) => updateRule(r.key, v)} />
+            </div>
+          ))}
         </Card>
       </div>
     </div>

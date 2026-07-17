@@ -213,6 +213,7 @@ function SilverAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
+      <span aria-hidden className="fx-silver-thunderring" />
       {bolts.map((b, i) => (
         <div
           key={i}
@@ -264,6 +265,7 @@ function GoldAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
+      <span aria-hidden className="fx-gold-sun" />
       <div
         className="absolute inset-0"
         style={{
@@ -311,6 +313,7 @@ function DiamondAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
+      <span aria-hidden className="fx-diamond-prism" />
       <div
         className="absolute inset-0"
         style={{
@@ -360,6 +363,7 @@ function MythicAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
+      <span aria-hidden className="fx-mythic-nebula" />
       <div
         className="absolute inset-x-0 bottom-0 h-3/5"
         style={{
@@ -417,6 +421,7 @@ function LegendaryAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
+      <span aria-hidden className="fx-legendary-heat" />
       <div
         className="absolute inset-x-0 bottom-0 h-3/5"
         style={{
@@ -485,6 +490,7 @@ function MastersAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
+      <span aria-hidden className="fx-masters-shockwave-ring" />
       <div
         className="absolute inset-x-0 bottom-0 h-2/5"
         style={{
@@ -572,6 +578,7 @@ function ProAura() {
   );
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit]">
+      <span aria-hidden className="fx-pro-godray" />
       {/* Warm golden glow at bottom */}
       <div
         className="absolute inset-0"

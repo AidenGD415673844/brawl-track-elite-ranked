@@ -9,6 +9,7 @@
 //    floor protection, Diamond+ boundary protection) preserved but the tier
 //    absolute bounds are re-applied as the final clamp.
 import { getRank, getRankIndex, RANKS } from "@/lib/ranks";
+import { isRuleOn, isFarmedTrio } from "@/lib/battleLogRules";
 
 // ── Tier bounds table ────────────────────────────────────────
 // equalWin / equalLoss = range for equal-sub-rank matches.
@@ -280,6 +281,25 @@ export function calculateElo(playerElo, opts = {}) {
     // delta is negative; magnitude must stay within absLoss bounds
     const mag = Math.max(bounds.absLoss[0], Math.min(bounds.absLoss[1], -delta));
     delta = -mag;
+  }
+
+  // --- Optional rule: rank-gap floor (soften smurf-lobby swings) ---
+  if (isRuleOn("rankGapFloor") && enemyAvg > 0 && current - enemyAvg >= 500) {
+    if (isWin && delta < 8) delta = 8;
+    if (!isWin && delta < -45) delta = -45;
+  }
+
+  // --- Optional rule: duration sanity ---
+  if (isRuleOn("durationSanity") && typeof opts.duration === "number" && opts.duration > 0) {
+    if (isWin && opts.duration < 45) delta = Math.round(delta * 0.7);
+    else if (opts.duration > 480) delta = Math.round(delta * 1.1);
+  }
+
+  // --- Optional rule: anti-farm on repeat enemy trios ---
+  if (isRuleOn("antiFarm") && Array.isArray(opts.battleLog) && Array.isArray(opts.enemyElos)) {
+    if (isFarmedTrio(opts.battleLog, opts.enemyElos)) {
+      delta = Math.round(delta * 0.6);
+    }
   }
 
   delta = Math.round(delta);
