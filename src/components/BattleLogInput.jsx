@@ -105,6 +105,8 @@ export default function BattleLogInput({
   const [showRestrictions, setShowRestrictions] = useState(false);
   const [manualDeltaOn, setManualDeltaOn] = useState(false);
   const [manualDeltaStr, setManualDeltaStr] = useState("");
+  const [manualMateDeltas, setManualMateDeltas] = useState(["", "", ""]);
+  const [manualEnemyDeltas, setManualEnemyDeltas] = useState(["", "", ""]);
 
   useEffect(() => {
     if (teamElos && teamElos.length >= 2 && !editingEntry) {
