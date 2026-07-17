@@ -137,12 +137,18 @@ export function computeParticipantTransitions(entry) {
     playerElo, teammateElos = [], enemyElos = [],
     result, seasonRefreshed, queueType, starPlayer,
     eloAfter,
+    manualTeammateDeltas = [], manualEnemyDeltas = [],
   } = entry;
 
   const self = { before: playerElo, after: eloAfter };
   const enemyResult = result === "victory" ? "defeat" : result === "defeat" ? "victory" : "draw";
 
   const mates = teammateElos.map((elo, i) => {
+    const override = manualTeammateDeltas[i];
+    if (override !== undefined && override !== null && override !== "" && !isNaN(Number(override))) {
+      const d = Number(override);
+      return { before: elo, after: Math.max(0, Number(elo) + d), delta: d, manual: true };
+    }
     const otherMates = [playerElo, ...teammateElos.filter((_, j) => j !== i)];
     const calc = calculateElo(elo, {
       result,
@@ -152,10 +158,15 @@ export function computeParticipantTransitions(entry) {
       queueType: entry.queueType || "team",
       starPlayer: starPlayer === `mate${i + 1}`,
     });
-    return { before: elo, after: calc.eloAfter };
+    return { before: elo, after: calc.eloAfter, delta: calc.delta };
   });
 
   const enemies = enemyElos.map((elo, i) => {
+    const override = manualEnemyDeltas[i];
+    if (override !== undefined && override !== null && override !== "" && !isNaN(Number(override))) {
+      const d = Number(override);
+      return { before: elo, after: Math.max(0, Number(elo) + d), delta: d, manual: true };
+    }
     const otherEnemies = enemyElos.filter((_, j) => j !== i);
     const calc = calculateElo(elo, {
       result: enemyResult,
@@ -165,7 +176,7 @@ export function computeParticipantTransitions(entry) {
       queueType,
       starPlayer: starPlayer === `enemy${i + 1}`,
     });
-    return { before: elo, after: calc.eloAfter };
+    return { before: elo, after: calc.eloAfter, delta: calc.delta };
   });
 
   return { self, mates, enemies };
@@ -174,7 +185,7 @@ export function computeParticipantTransitions(entry) {
 export function addBattle(playerElo, {
   mode, result, teammateElos, enemyElos,
   brawler, brawlers, starPlayer, seasonRefreshed, manualDelta, queueType, highestElo, duration, performance,
-  teammateProfiles,
+  teammateProfiles, manualTeammateDeltas, manualEnemyDeltas,
 }) {
   const isStarSelf = starPlayer === "self" || starPlayer === true;
   const calc = calculateElo(playerElo, {
@@ -197,6 +208,8 @@ export function addBattle(playerElo, {
     teammateElos: teammateElos || [],
     teammateProfiles: teammateProfiles || [],
     enemyElos: enemyElos || [],
+    manualTeammateDeltas: manualTeammateDeltas || [],
+    manualEnemyDeltas: manualEnemyDeltas || [],
     playerElo,
     delta: calc.delta,
     eloAfter: calc.eloAfter,
