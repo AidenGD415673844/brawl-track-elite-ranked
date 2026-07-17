@@ -577,6 +577,15 @@ export default function Home() {
           <ClutchIndexCard battleLog={battleLog} />
         </motion.div>
 
+        <motion.div {...fadeUp} transition={{ delay: 0.243 }}>
+          <TiltAlertLive battleLog={battleLog} />
+        </motion.div>
+
+        <motion.div {...fadeUp} transition={{ delay: 0.244 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <MatchupIntelCard battleLog={battleLog} />
+          <EloVelocityCard battleLog={battleLog} />
+        </motion.div>
+
         <motion.div {...fadeUp} transition={{ delay: 0.245 }}>
           <EloJourneyMap battleLog={battleLog} currentElo={player.currentElo} />
         </motion.div>
