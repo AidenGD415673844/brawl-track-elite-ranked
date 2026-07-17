@@ -53,6 +53,180 @@ function buildBands(points) {
   return bands;
 }
 
+// ── Biome scenery — inline SVG per tier, sized to frame the path ──
+function Scenery({ tier }) {
+  const common = "absolute inset-0 pointer-events-none";
+  switch (tier) {
+    case "Bronze":
+      return (
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+          {/* mesa silhouette */}
+          <path d="M0 160 L60 130 L100 145 L160 110 L220 130 L280 100 L340 120 L400 105 L400 200 L0 200 Z" fill="#3a1608" opacity="0.55" />
+          {/* cacti */}
+          {[40, 130, 240, 320].map((x, i) => (
+            <g key={i} transform={`translate(${x} 155)`} opacity="0.75">
+              <rect x="-3" y="-24" width="6" height="26" rx="2" fill="#166534" />
+              <rect x="-10" y="-16" width="6" height="12" rx="2" fill="#166534" />
+              <rect x="4" y="-20" width="6" height="14" rx="2" fill="#166534" />
+            </g>
+          ))}
+          {/* dust motes */}
+          {[70, 180, 300].map((x, i) => (
+            <circle key={i} cx={x} cy={175} r="2" fill="#fcd34d" opacity="0.35">
+              <animate attributeName="cx" values={`${x};${x + 30};${x}`} dur="6s" repeatCount="indefinite" />
+            </circle>
+          ))}
+        </svg>
+      );
+    case "Silver":
+      return (
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+          {/* pines */}
+          {[50, 120, 200, 280, 350].map((x, i) => (
+            <g key={i} transform={`translate(${x} 155)`} opacity="0.75">
+              <polygon points="0,-30 -12,0 12,0" fill="#0f172a" />
+              <polygon points="0,-30 -10,-10 10,-10" fill="#e2e8f0" opacity="0.9" />
+              <rect x="-2" y="0" width="4" height="6" fill="#3b2312" />
+            </g>
+          ))}
+          {/* aurora ribbon */}
+          <path d="M0 30 Q100 10 200 40 T400 25" fill="none" stroke="#94a3b8" strokeWidth="12" opacity="0.25" />
+          {/* snowflakes */}
+          {[30, 110, 190, 270, 340].map((x, i) => (
+            <circle key={i} cx={x} cy={40 + i * 12} r="1.5" fill="#f8fafc" opacity="0.85">
+              <animate attributeName="cy" values={`0;200`} dur={`${6 + i}s`} repeatCount="indefinite" />
+            </circle>
+          ))}
+        </svg>
+      );
+    case "Gold":
+      return (
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+          {/* sun rays */}
+          <defs>
+            <radialGradient id="goldSun" cx="50%" cy="0%" r="80%">
+              <stop offset="0%" stopColor="#fef3c7" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="#fef3c7" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="400" height="200" fill="url(#goldSun)" />
+          {/* acacia trees */}
+          {[60, 200, 320].map((x, i) => (
+            <g key={i} transform={`translate(${x} 155)`} opacity="0.8">
+              <rect x="-2" y="-30" width="4" height="30" fill="#78350f" />
+              <ellipse cx="0" cy="-32" rx="22" ry="8" fill="#166534" />
+            </g>
+          ))}
+          {/* tall grass */}
+          {Array.from({ length: 20 }).map((_, i) => (
+            <line key={i} x1={i * 20} y1="180" x2={i * 20 + 3} y2="165" stroke="#ca8a04" strokeWidth="1.5" opacity="0.6" />
+          ))}
+        </svg>
+      );
+    case "Diamond":
+      return (
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+          {[40, 150, 260, 350].map((x, i) => (
+            <polygon key={i} points={`${x},155 ${x - 14},${180} ${x + 14},${180}`} fill="#7dd3fc" opacity="0.5" />
+          ))}
+          <path d="M0 25 Q120 5 220 35 T400 20" fill="none" stroke="#a5f3fc" strokeWidth="10" opacity="0.35" />
+          {/* floating shards */}
+          {[70, 180, 300].map((x, i) => (
+            <polygon key={i} points={`${x},60 ${x - 5},80 ${x + 5},80`} fill="#e0f2fe" opacity="0.6">
+              <animate attributeName="cy" values="0;20;0" dur="4s" repeatCount="indefinite" />
+            </polygon>
+          ))}
+        </svg>
+      );
+    case "Mythic":
+      return (
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+          <defs>
+            <radialGradient id="mythNeb" cx="50%" cy="50%" r="60%">
+              <stop offset="0%" stopColor="#e879f9" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <ellipse cx="100" cy="80" rx="120" ry="60" fill="url(#mythNeb)" />
+          <ellipse cx="320" cy="120" rx="100" ry="50" fill="url(#mythNeb)" />
+          {/* stars */}
+          {Array.from({ length: 24 }).map((_, i) => (
+            <circle key={i} cx={(i * 37) % 400} cy={(i * 23) % 200} r={i % 3 === 0 ? 1.5 : 0.8} fill="#f5d0fe" opacity="0.85" />
+          ))}
+          {/* asteroids */}
+          {[80, 240].map((x, i) => (
+            <circle key={i} cx={x} cy={140 + i * 10} r="6" fill="#4c1d95" opacity="0.7" />
+          ))}
+        </svg>
+      );
+    case "Legendary":
+      return (
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+          {/* lava rivers */}
+          <path d="M0 180 Q100 170 200 180 T400 180 L400 200 L0 200 Z" fill="#f97316" opacity="0.55">
+            <animate attributeName="d" values="M0 180 Q100 170 200 180 T400 180 L400 200 L0 200 Z;M0 180 Q100 185 200 178 T400 180 L400 200 L0 200 Z;M0 180 Q100 170 200 180 T400 180 L400 200 L0 200 Z" dur="3s" repeatCount="indefinite" />
+          </path>
+          {/* ash palms */}
+          {[70, 190, 310].map((x, i) => (
+            <g key={i} transform={`translate(${x} 155)`} opacity="0.6">
+              <rect x="-2" y="-28" width="4" height="28" fill="#1c1917" />
+              <path d={`M0 -28 Q-15 -34 -22 -25`} stroke="#292524" strokeWidth="3" fill="none" />
+              <path d={`M0 -28 Q15 -34 22 -25`} stroke="#292524" strokeWidth="3" fill="none" />
+            </g>
+          ))}
+          {/* embers */}
+          {[50, 160, 280, 360].map((x, i) => (
+            <circle key={i} cx={x} cy={170} r="2" fill="#fbbf24" opacity="0.9">
+              <animate attributeName="cy" values="180;40" dur={`${3 + i * 0.5}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="1;0" dur={`${3 + i * 0.5}s`} repeatCount="indefinite" />
+            </circle>
+          ))}
+        </svg>
+      );
+    case "Masters":
+      return (
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+          {/* cracked obsidian */}
+          <path d="M0 170 L400 170 L400 200 L0 200 Z" fill="#1c1917" opacity="0.7" />
+          <path d="M50 170 L60 200 M150 170 L140 200 M250 170 L265 200 M350 170 L345 200" stroke="#f97316" strokeWidth="1.5" opacity="0.85" />
+          {/* lava fissures glow */}
+          <ellipse cx="200" cy="185" rx="180" ry="10" fill="#f97316" opacity="0.35" />
+          {/* ruins pillars */}
+          {[80, 220, 340].map((x, i) => (
+            <rect key={i} x={x - 6} y={130} width="12" height="40" fill="#292524" opacity="0.85" />
+          ))}
+        </svg>
+      );
+    case "Pro":
+      return (
+        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+          <defs>
+            <radialGradient id="proHalo" cx="50%" cy="50%" r="70%">
+              <stop offset="0%" stopColor="#fef9c3" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#fef9c3" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="400" height="200" fill="url(#proHalo)" />
+          {/* cloud sea */}
+          <path d="M0 165 Q80 145 160 165 T320 165 T480 165 L480 200 L0 200 Z" fill="#fef3c7" opacity="0.55" />
+          {/* floating crowns */}
+          {[70, 200, 330].map((x, i) => (
+            <g key={i} transform={`translate(${x} ${60 + i * 15})`} opacity="0.9">
+              <path d="M-10 0 L-6 -8 L-2 -3 L2 -10 L6 -3 L10 -8 L10 4 L-10 4 Z" fill="#fde047" stroke="#ca8a04" strokeWidth="0.5" />
+              <animateTransform attributeName="transform" type="translate" values={`${x} ${60 + i * 15};${x} ${50 + i * 15};${x} ${60 + i * 15}`} dur={`${3 + i}s`} repeatCount="indefinite" />
+            </g>
+          ))}
+          {/* god rays */}
+          {[100, 200, 300].map((x, i) => (
+            <line key={i} x1={x} y1="0" x2={x + 20} y2="200" stroke="#fef9c3" strokeWidth="1" opacity="0.3" />
+          ))}
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 // A single 3D circular checkpoint node.
 function Node({ elo, isMajor, isCurrent, isReached, size }) {
   const rank = getRank(elo);
