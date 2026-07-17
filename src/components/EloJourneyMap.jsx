@@ -520,8 +520,9 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
               return (
                 <div
                   key={bi}
-                  className="relative flex items-center py-8 px-4"
+                  className="relative flex items-center py-14 px-4"
                   style={{
+                    minHeight: 280,
                     background: band.theme.bg,
                     borderRight: bi < bands.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none",
                   }}
@@ -532,11 +533,11 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
                     className="absolute inset-0 pointer-events-none"
                     style={{
                       background: `repeating-linear-gradient(45deg, ${band.theme.stripe} 0 2px, transparent 2px 18px)`,
-                      opacity: 0.7,
+                      opacity: 0.45,
                     }}
                   />
                   {/* biome scenery — inline SVG layered behind the trail */}
-                  <div aria-hidden className="absolute inset-0 pointer-events-none opacity-80">
+                  <div aria-hidden className="absolute inset-0 pointer-events-none">
                     <Scenery tier={band.tier} />
                   </div>
                   {/* tier label banner */}
