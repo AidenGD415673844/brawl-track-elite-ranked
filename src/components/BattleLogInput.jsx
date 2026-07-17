@@ -584,6 +584,72 @@ export default function BattleLogInput({
         </div>
       </div>
 
+      {/* Per-participant manual Elo override — appears when Manual Δ is on */}
+      <AnimatePresence>
+        {manualDeltaOn && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-lg bg-cyan-500/5 border border-cyan-500/30 p-2.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold uppercase text-cyan-400 tracking-wider">
+                  Manual Elo Adjustments
+                </p>
+                <p className="text-[9px] text-muted-foreground italic">
+                  Blank = auto-calculated
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                <div>
+                  <p className="text-[9px] uppercase text-muted-foreground mb-1">Teammates</p>
+                  <div className="space-y-1">
+                    {teammateElos.map((_, i) => (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-muted-foreground w-10 shrink-0">Mate {i + 1}</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={manualMateDeltas[i] ?? ""}
+                          onChange={(e) =>
+                            setManualMateDeltas((prev) => prev.map((x, idx) => (idx === i ? e.target.value : x)))
+                          }
+                          placeholder="±Elo"
+                          className="flex-1 h-7 text-xs font-bold text-center rounded border border-border bg-background text-foreground"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[9px] uppercase text-muted-foreground mb-1">Enemies</p>
+                  <div className="space-y-1">
+                    {enemyElos.map((_, i) => (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-muted-foreground w-12 shrink-0">Enemy {i + 1}</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={manualEnemyDeltas[i] ?? ""}
+                          onChange={(e) =>
+                            setManualEnemyDeltas((prev) => prev.map((x, idx) => (idx === i ? e.target.value : x)))
+                          }
+                          placeholder="±Elo"
+                          className="flex-1 h-7 text-xs font-bold text-center rounded border border-border bg-background text-foreground"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+
       {/* Performance heatmap fields */}
       <AnimatePresence>
         {showPerformance && perfField && (
