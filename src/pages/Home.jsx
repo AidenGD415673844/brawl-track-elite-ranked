@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { FileDown, FileText, Gauge, Settings as SettingsIcon, Users, Flag, Sparkles, Undo2 } from "lucide-react";
+import { FileDown, FileText, Gauge, Settings as SettingsIcon, Users, Flag, Sparkles, Undo2, FlaskConical, Archive } from "lucide-react";
 import InputForm from "@/components/InputForm";
 import ProfileBadge from "@/components/ProfileBadge";
 import SummaryCards from "@/components/SummaryCards";
@@ -201,6 +201,11 @@ export default function Home() {
     const peakElo = player.currentSeasonHighest || player.highestElo || player.currentElo;
     const result = computeSeasonReset(peakElo);
 
+    // Archive current season into the Vault before resetting.
+    try {
+      import("@/lib/seasonVault").then((m) => m.saveSeasonSnapshot(player, loadBattleLog())).catch(() => {});
+    } catch { /* noop */ }
+
     setPlayer((p) => ({
       ...p,
       lastSeasonElo: peakElo,
@@ -213,7 +218,7 @@ export default function Home() {
 
     toast({
       title: "Season Reset Complete",
-      description: `${result.oldRankName} → ${result.resetLabel} (${result.newElo.toLocaleString()} Elo)`,
+      description: `${result.oldRankName} → ${result.resetLabel} (${result.newElo.toLocaleString()} Elo) · archived to Vault`,
     });
   };
 
@@ -434,6 +439,16 @@ export default function Home() {
                 className="border-border bg-card text-foreground hover:bg-muted rounded-xl"
               >
                 <Users className="w-4 h-4 mr-2" /> Squad
+              </Button>
+            </Link>
+            <Link to="/brawler-lab">
+              <Button variant="outline" className="border-border bg-card text-foreground hover:bg-muted rounded-xl">
+                <FlaskConical className="w-4 h-4 mr-2" /> Brawler Lab
+              </Button>
+            </Link>
+            <Link to="/vault">
+              <Button variant="outline" className="border-border bg-card text-foreground hover:bg-muted rounded-xl">
+                <Archive className="w-4 h-4 mr-2" /> Vault
               </Button>
             </Link>
             <Link to="/deserved-rank">
