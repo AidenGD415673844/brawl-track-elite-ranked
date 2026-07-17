@@ -280,6 +280,8 @@ export default function BattleLogInput({
       setDuration("");
       setPerformance({});
       setManualDeltaStr("");
+      setManualMateDeltas(["", "", ""]);
+      setManualEnemyDeltas(["", "", ""]);
     }
   };
 
