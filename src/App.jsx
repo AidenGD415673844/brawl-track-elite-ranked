@@ -13,6 +13,8 @@ import Settings from './pages/Settings';
 import SquadDashboard from './pages/SquadDashboard';
 import BrawlSpaces from './pages/BrawlSpaces';
 import DeservedRank from './pages/DeservedRank';
+import BrawlerLab from './pages/BrawlerLab';
+import SeasonVault from './pages/SeasonVault';
 import Auth from './pages/Auth';
 import { ensureDefaultSpace } from '@/lib/brawlSpaces';
 
@@ -28,6 +30,8 @@ const AuthenticatedApp = () => {
       <Route path="/brawlspaces" element={<BrawlSpaces />} />
       <Route path="/squad" element={<SquadDashboard />} />
       <Route path="/deserved-rank" element={<DeservedRank />} />
+      <Route path="/brawler-lab" element={<BrawlerLab />} />
+      <Route path="/vault" element={<SeasonVault />} />
       <Route path="/settings" element={<Settings />} />
 
       <Route path="*" element={<PageNotFound />} />
