@@ -113,7 +113,34 @@ export default function RankScale({ elo, seasonHighest }) {
               transition={{ duration: 0.3 }}
               style={{ filter: isCenter ? `drop-shadow(0 0 20px ${c.glow})` : "none" }}
             >
-              <RankBadge elo={displayElo} size={isCenter ? 80 : 56} />
+              <div className="relative">
+                {isCenter && (
+                  <>
+                    {/* Rotating conic aura ring */}
+                    <div
+                      aria-hidden
+                      className="absolute -inset-3 rounded-full pointer-events-none"
+                      style={{
+                        background: `conic-gradient(from 0deg, ${c.from}, ${c.to}, ${c.glow}, ${c.from})`,
+                        opacity: 0.35,
+                        filter: "blur(6px)",
+                        animation: "spin 8s linear infinite",
+                      }}
+                    />
+                    {/* Pulsing halo */}
+                    <div
+                      aria-hidden
+                      className="absolute -inset-1 rounded-full pointer-events-none"
+                      style={{
+                        border: `1.5px solid ${c.text}`,
+                        opacity: 0.5,
+                        animation: "pulse 2.4s ease-in-out infinite",
+                      }}
+                    />
+                  </>
+                )}
+                <RankBadge elo={displayElo} size={isCenter ? 80 : 56} />
+              </div>
               {isCenter && (
                 <>
                   <p
@@ -172,6 +199,30 @@ export default function RankScale({ elo, seasonHighest }) {
 
         </div>
       )}
+
+      {/* Next Rank preview — shows next major tier + Elo needed */}
+      {(() => {
+        const nextIdx = MAJOR_RANKS.findIndex((r) => r.min > elo);
+        if (nextIdx <= 0) return null;
+        const next = MAJOR_RANKS[nextIdx];
+        const nc = TIER_COLORS[next.tier];
+        const gap = next.min - elo;
+        return (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
+            <RankBadge elo={next.min} size={28} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] uppercase text-muted-foreground font-display tracking-wider">Next Major Rank</p>
+              <p className="text-xs font-bold truncate" style={{ color: nc.text }}>{next.tier}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] text-muted-foreground">Elo to climb</p>
+              <p className="text-xs font-bold" style={{ color: nc.text }}>+{gap.toLocaleString()}</p>
+            </div>
+          </div>
+        );
+      })()}
+
+
 
       {/* Segmented progress bar for current tier's sub-ranks */}
       <div className="mt-4">

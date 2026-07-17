@@ -54,171 +54,314 @@ function buildBands(points) {
 }
 
 // ── Biome scenery — inline SVG per tier, sized to frame the path ──
+// Densely packed: sky layer + midground silhouettes + ground props + animated
+// particles + foreground horizon. All layered so the path threads through.
 function Scenery({ tier }) {
   const common = "absolute inset-0 pointer-events-none";
   switch (tier) {
     case "Bronze":
       return (
-        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
-          {/* mesa silhouette */}
-          <path d="M0 160 L60 130 L100 145 L160 110 L220 130 L280 100 L340 120 L400 105 L400 200 L0 200 Z" fill="#3a1608" opacity="0.55" />
-          {/* cacti */}
-          {[40, 130, 240, 320].map((x, i) => (
-            <g key={i} transform={`translate(${x} 155)`} opacity="0.75">
-              <rect x="-3" y="-24" width="6" height="26" rx="2" fill="#166534" />
-              <rect x="-10" y="-16" width="6" height="12" rx="2" fill="#166534" />
-              <rect x="4" y="-20" width="6" height="14" rx="2" fill="#166534" />
+        <svg viewBox="0 0 400 220" preserveAspectRatio="none" className={common}>
+          <defs>
+            <linearGradient id="bzSky" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor="#fbbf24" stopOpacity="0.25" />
+              <stop offset="1" stopColor="#7c2d12" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <rect width="400" height="90" fill="url(#bzSky)" />
+          {/* far mesas */}
+          <path d="M0 140 L50 115 L90 130 L140 105 L200 120 L250 100 L310 115 L360 95 L400 110 L400 220 L0 220 Z" fill="#3a1608" opacity="0.55" />
+          <path d="M0 165 L70 148 L130 158 L200 140 L280 155 L340 145 L400 155 L400 220 L0 220 Z" fill="#2a1004" opacity="0.75" />
+          {/* cacti — more, varied sizes */}
+          {[25,70,110,155,205,245,290,335,375].map((x,i) => (
+            <g key={i} transform={`translate(${x} ${185 - (i%3)*3}) scale(${0.7 + (i%4)*0.15})`} opacity="0.85">
+              <rect x="-3" y="-28" width="6" height="30" rx="2" fill="#166534" />
+              <rect x="-11" y="-18" width="6" height="14" rx="2" fill="#166534" />
+              <rect x="5" y="-22" width="6" height="16" rx="2" fill="#166534" />
+              <circle cx="0" cy="-30" r="1.5" fill="#fbbf24" />
             </g>
           ))}
+          {/* tumbleweed */}
+          <g opacity="0.7">
+            <circle cx="80" cy="200" r="7" fill="none" stroke="#78350f" strokeWidth="1.5" strokeDasharray="3 2">
+              <animate attributeName="cx" values="-10;410" dur="14s" repeatCount="indefinite" />
+              <animateTransform attributeName="transform" type="rotate" from="0 80 200" to="360 80 200" dur="4s" repeatCount="indefinite" additive="sum" />
+            </circle>
+          </g>
+          {/* bullet casings */}
+          {[60,150,230,300,360].map((x,i) => (
+            <rect key={i} x={x} y={207} width="5" height="2" rx="1" fill="#fbbf24" opacity="0.7" transform={`rotate(${i*20} ${x+2} 208)`} />
+          ))}
           {/* dust motes */}
-          {[70, 180, 300].map((x, i) => (
-            <circle key={i} cx={x} cy={175} r="2" fill="#fcd34d" opacity="0.35">
-              <animate attributeName="cx" values={`${x};${x + 30};${x}`} dur="6s" repeatCount="indefinite" />
+          {[70,180,300,50,240,340].map((x,i) => (
+            <circle key={i} cx={x} cy={180+i*3} r="1.5" fill="#fcd34d" opacity="0.4">
+              <animate attributeName="cx" values={`${x};${x+40};${x}`} dur={`${5+i}s`} repeatCount="indefinite" />
             </circle>
           ))}
+          {/* sun */}
+          <circle cx="340" cy="35" r="18" fill="#fbbf24" opacity="0.55" />
         </svg>
       );
     case "Silver":
       return (
-        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
-          {/* pines */}
-          {[50, 120, 200, 280, 350].map((x, i) => (
-            <g key={i} transform={`translate(${x} 155)`} opacity="0.75">
-              <polygon points="0,-30 -12,0 12,0" fill="#0f172a" />
-              <polygon points="0,-30 -10,-10 10,-10" fill="#e2e8f0" opacity="0.9" />
+        <svg viewBox="0 0 400 220" preserveAspectRatio="none" className={common}>
+          <defs>
+            <linearGradient id="svSky" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor="#94a3b8" stopOpacity="0.2" />
+              <stop offset="1" stopColor="#0c1a24" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <rect width="400" height="100" fill="url(#svSky)" />
+          {/* aurora ribbons */}
+          <path d="M0 30 Q100 8 200 40 T400 25" fill="none" stroke="#7dd3fc" strokeWidth="14" opacity="0.28">
+            <animate attributeName="d" values="M0 30 Q100 8 200 40 T400 25;M0 32 Q100 14 200 34 T400 22;M0 30 Q100 8 200 40 T400 25" dur="8s" repeatCount="indefinite" />
+          </path>
+          <path d="M0 55 Q120 40 240 60 T400 50" fill="none" stroke="#c4b5fd" strokeWidth="8" opacity="0.22" />
+          {/* mountains */}
+          <path d="M0 155 L60 105 L110 135 L170 90 L230 130 L290 100 L350 130 L400 115 L400 220 L0 220 Z" fill="#1e293b" opacity="0.8" />
+          {/* pines — many */}
+          {[20,55,90,130,170,210,250,290,325,365].map((x,i) => (
+            <g key={i} transform={`translate(${x} ${180 - (i%3)*2}) scale(${0.8 + (i%3)*0.2})`} opacity="0.9">
+              <polygon points="0,-32 -13,0 13,0" fill="#0f172a" />
+              <polygon points="0,-32 -11,-12 11,-12" fill="#e2e8f0" opacity="0.95" />
+              <polygon points="0,-22 -7,-6 7,-6" fill="#e2e8f0" opacity="0.9" />
               <rect x="-2" y="0" width="4" height="6" fill="#3b2312" />
             </g>
           ))}
-          {/* aurora ribbon */}
-          <path d="M0 30 Q100 10 200 40 T400 25" fill="none" stroke="#94a3b8" strokeWidth="12" opacity="0.25" />
+          {/* snow ground patches */}
+          <ellipse cx="80" cy="205" rx="60" ry="6" fill="#f8fafc" opacity="0.3" />
+          <ellipse cx="260" cy="208" rx="80" ry="7" fill="#f8fafc" opacity="0.3" />
           {/* snowflakes */}
-          {[30, 110, 190, 270, 340].map((x, i) => (
-            <circle key={i} cx={x} cy={40 + i * 12} r="1.5" fill="#f8fafc" opacity="0.85">
-              <animate attributeName="cy" values={`0;200`} dur={`${6 + i}s`} repeatCount="indefinite" />
+          {Array.from({length:14}).map((_,i)=>(
+            <circle key={i} cx={(i*29)%400} cy={i*8} r={i%3?1.2:1.8} fill="#f8fafc" opacity="0.85">
+              <animate attributeName="cy" values={`-10;220`} dur={`${5+(i%4)}s`} begin={`${i*0.4}s`} repeatCount="indefinite" />
             </circle>
           ))}
         </svg>
       );
     case "Gold":
       return (
-        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
-          {/* sun rays */}
+        <svg viewBox="0 0 400 220" preserveAspectRatio="none" className={common}>
           <defs>
             <radialGradient id="goldSun" cx="50%" cy="0%" r="80%">
-              <stop offset="0%" stopColor="#fef3c7" stopOpacity="0.6" />
+              <stop offset="0%" stopColor="#fef3c7" stopOpacity="0.7" />
               <stop offset="100%" stopColor="#fef3c7" stopOpacity="0" />
             </radialGradient>
           </defs>
-          <rect x="0" y="0" width="400" height="200" fill="url(#goldSun)" />
+          <rect width="400" height="220" fill="url(#goldSun)" />
+          {/* sun rays */}
+          {[80,150,220,290].map((x,i)=>(
+            <polygon key={i} points={`${x},0 ${x-40},220 ${x+40},220`} fill="#fef3c7" opacity="0.1" />
+          ))}
+          {/* distant hills */}
+          <path d="M0 170 Q80 140 160 170 T320 170 T480 170 L480 220 L0 220 Z" fill="#78350f" opacity="0.55" />
           {/* acacia trees */}
-          {[60, 200, 320].map((x, i) => (
-            <g key={i} transform={`translate(${x} 155)`} opacity="0.8">
-              <rect x="-2" y="-30" width="4" height="30" fill="#78350f" />
-              <ellipse cx="0" cy="-32" rx="22" ry="8" fill="#166534" />
+          {[35,110,180,255,325,385].map((x,i) => (
+            <g key={i} transform={`translate(${x} ${180 - (i%2)*4}) scale(${0.9 + (i%3)*0.15})`} opacity="0.9">
+              <rect x="-2" y="-32" width="4" height="32" fill="#78350f" />
+              <ellipse cx="0" cy="-34" rx="24" ry="9" fill="#166534" />
+              <ellipse cx="-6" cy="-38" rx="10" ry="4" fill="#14532d" opacity="0.7" />
             </g>
           ))}
-          {/* tall grass */}
-          {Array.from({ length: 20 }).map((_, i) => (
-            <line key={i} x1={i * 20} y1="180" x2={i * 20 + 3} y2="165" stroke="#ca8a04" strokeWidth="1.5" opacity="0.6" />
+          {/* tall grass — dense */}
+          {Array.from({length:40}).map((_,i)=>(
+            <line key={i} x1={i*10} y1="210" x2={i*10+3} y2="192" stroke="#ca8a04" strokeWidth="1.5" opacity="0.7" />
+          ))}
+          {/* coin piles */}
+          {[130,290].map((x,i)=>(
+            <g key={i} transform={`translate(${x} 200)`}>
+              <ellipse cx="0" cy="6" rx="14" ry="3" fill="#000" opacity="0.3" />
+              <circle cx="-4" cy="0" r="4" fill="#fde047" stroke="#ca8a04" />
+              <circle cx="4" cy="-1" r="4" fill="#fde047" stroke="#ca8a04" />
+              <circle cx="0" cy="-6" r="4" fill="#fef08a" stroke="#ca8a04" />
+            </g>
           ))}
         </svg>
       );
     case "Diamond":
       return (
-        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
-          {[40, 150, 260, 350].map((x, i) => (
-            <polygon key={i} points={`${x},155 ${x - 14},${180} ${x + 14},${180}`} fill="#7dd3fc" opacity="0.5" />
+        <svg viewBox="0 0 400 220" preserveAspectRatio="none" className={common}>
+          <defs>
+            <linearGradient id="dmSky" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor="#7dd3fc" stopOpacity="0.35" />
+              <stop offset="1" stopColor="#082f49" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <rect width="400" height="120" fill="url(#dmSky)" />
+          {/* aurora */}
+          <path d="M0 30 Q120 5 220 35 T400 20" fill="none" stroke="#a5f3fc" strokeWidth="12" opacity="0.4" />
+          <path d="M0 55 Q140 30 260 60 T400 45" fill="none" stroke="#67e8f9" strokeWidth="6" opacity="0.3" />
+          {/* crystal spires — many */}
+          {[30,80,140,200,250,310,370].map((x,i)=>(
+            <g key={i}>
+              <polygon points={`${x},${170-(i%3)*10} ${x-16},210 ${x+16},210`} fill="#7dd3fc" opacity="0.65" />
+              <polygon points={`${x},${170-(i%3)*10} ${x-16},210 ${x},210`} fill="#38bdf8" opacity="0.4" />
+            </g>
           ))}
-          <path d="M0 25 Q120 5 220 35 T400 20" fill="none" stroke="#a5f3fc" strokeWidth="10" opacity="0.35" />
+          {/* ice ground */}
+          <path d="M0 205 L400 205 L400 220 L0 220 Z" fill="#e0f2fe" opacity="0.35" />
           {/* floating shards */}
-          {[70, 180, 300].map((x, i) => (
-            <polygon key={i} points={`${x},60 ${x - 5},80 ${x + 5},80`} fill="#e0f2fe" opacity="0.6">
-              <animate attributeName="cy" values="0;20;0" dur="4s" repeatCount="indefinite" />
+          {[50,130,230,330].map((x,i)=>(
+            <polygon key={i} points={`${x},50 ${x-6},72 ${x+6},72`} fill="#e0f2fe" opacity="0.7">
+              <animateTransform attributeName="transform" type="translate" values="0 0;0 15;0 0" dur={`${4+i}s`} repeatCount="indefinite" />
             </polygon>
+          ))}
+          {/* shimmer stars */}
+          {Array.from({length:12}).map((_,i)=>(
+            <circle key={i} cx={(i*37)%400} cy={(i*17)%80} r="1" fill="#f0f9ff" opacity="0.9" />
           ))}
         </svg>
       );
     case "Mythic":
       return (
-        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+        <svg viewBox="0 0 400 220" preserveAspectRatio="none" className={common}>
           <defs>
             <radialGradient id="mythNeb" cx="50%" cy="50%" r="60%">
-              <stop offset="0%" stopColor="#e879f9" stopOpacity="0.35" />
+              <stop offset="0%" stopColor="#e879f9" stopOpacity="0.45" />
               <stop offset="100%" stopColor="#e879f9" stopOpacity="0" />
             </radialGradient>
+            <radialGradient id="mythNeb2" cx="50%" cy="50%" r="60%">
+              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+            </radialGradient>
           </defs>
-          <ellipse cx="100" cy="80" rx="120" ry="60" fill="url(#mythNeb)" />
-          <ellipse cx="320" cy="120" rx="100" ry="50" fill="url(#mythNeb)" />
-          {/* stars */}
-          {Array.from({ length: 24 }).map((_, i) => (
-            <circle key={i} cx={(i * 37) % 400} cy={(i * 23) % 200} r={i % 3 === 0 ? 1.5 : 0.8} fill="#f5d0fe" opacity="0.85" />
+          <ellipse cx="90" cy="70" rx="140" ry="70" fill="url(#mythNeb)" />
+          <ellipse cx="330" cy="120" rx="120" ry="60" fill="url(#mythNeb2)" />
+          <ellipse cx="200" cy="180" rx="180" ry="50" fill="url(#mythNeb)" opacity="0.6" />
+          {/* dense stars */}
+          {Array.from({length:60}).map((_,i)=>(
+            <circle key={i} cx={(i*37)%400} cy={(i*23)%220} r={i%5===0 ? 2 : i%3===0 ? 1.2 : 0.7} fill={i%4===0 ? "#f5d0fe" : "#fff"} opacity={0.5 + (i%5)*0.1}>
+              {i%7===0 && <animate attributeName="opacity" values="0.3;1;0.3" dur={`${2+(i%3)}s`} repeatCount="indefinite" />}
+            </circle>
           ))}
           {/* asteroids */}
-          {[80, 240].map((x, i) => (
-            <circle key={i} cx={x} cy={140 + i * 10} r="6" fill="#4c1d95" opacity="0.7" />
+          {[80,180,300,360].map((x,i)=>(
+            <g key={i} transform={`translate(${x} ${130+i*8})`}>
+              <circle r="7" fill="#4c1d95" opacity="0.8" />
+              <circle cx="-2" cy="-2" r="2" fill="#7c3aed" opacity="0.6" />
+            </g>
           ))}
+          {/* portal ring */}
+          <circle cx="200" cy="110" r="35" fill="none" stroke="#e879f9" strokeWidth="2" opacity="0.4" strokeDasharray="4 6">
+            <animateTransform attributeName="transform" type="rotate" from="0 200 110" to="360 200 110" dur="20s" repeatCount="indefinite" />
+          </circle>
         </svg>
       );
     case "Legendary":
       return (
-        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+        <svg viewBox="0 0 400 220" preserveAspectRatio="none" className={common}>
+          <defs>
+            <linearGradient id="lgSky" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor="#450a0a" stopOpacity="0.8" />
+              <stop offset="1" stopColor="#f97316" stopOpacity="0.15" />
+            </linearGradient>
+          </defs>
+          <rect width="400" height="130" fill="url(#lgSky)" />
+          {/* volcano silhouettes */}
+          <path d="M0 170 L80 100 L140 170 Z" fill="#1c1917" opacity="0.85" />
+          <path d="M220 180 L310 90 L400 180 Z" fill="#1c1917" opacity="0.85" />
+          <path d="M80 100 L90 90 L100 105" stroke="#f97316" strokeWidth="3" fill="none" opacity="0.9" />
+          <path d="M310 90 L320 78 L332 95" stroke="#fbbf24" strokeWidth="3" fill="none" opacity="0.9" />
           {/* lava rivers */}
-          <path d="M0 180 Q100 170 200 180 T400 180 L400 200 L0 200 Z" fill="#f97316" opacity="0.55">
-            <animate attributeName="d" values="M0 180 Q100 170 200 180 T400 180 L400 200 L0 200 Z;M0 180 Q100 185 200 178 T400 180 L400 200 L0 200 Z;M0 180 Q100 170 200 180 T400 180 L400 200 L0 200 Z" dur="3s" repeatCount="indefinite" />
+          <path d="M0 190 Q100 180 200 190 T400 190 L400 220 L0 220 Z" fill="#f97316" opacity="0.65">
+            <animate attributeName="d" values="M0 190 Q100 180 200 190 T400 190 L400 220 L0 220 Z;M0 190 Q100 195 200 188 T400 190 L400 220 L0 220 Z;M0 190 Q100 180 200 190 T400 190 L400 220 L0 220 Z" dur="3s" repeatCount="indefinite" />
           </path>
+          <path d="M0 200 Q120 195 240 202 T400 200 L400 220 L0 220 Z" fill="#dc2626" opacity="0.55" />
           {/* ash palms */}
-          {[70, 190, 310].map((x, i) => (
-            <g key={i} transform={`translate(${x} 155)`} opacity="0.6">
-              <rect x="-2" y="-28" width="4" height="28" fill="#1c1917" />
-              <path d={`M0 -28 Q-15 -34 -22 -25`} stroke="#292524" strokeWidth="3" fill="none" />
-              <path d={`M0 -28 Q15 -34 22 -25`} stroke="#292524" strokeWidth="3" fill="none" />
+          {[40,120,240,340].map((x,i) => (
+            <g key={i} transform={`translate(${x} 180)`} opacity="0.75">
+              <rect x="-2" y="-32" width="4" height="32" fill="#0c0a09" />
+              <path d={`M0 -32 Q-18 -40 -28 -28`} stroke="#292524" strokeWidth="3" fill="none" />
+              <path d={`M0 -32 Q18 -40 28 -28`} stroke="#292524" strokeWidth="3" fill="none" />
+              <path d={`M0 -32 Q-8 -46 -14 -42`} stroke="#292524" strokeWidth="2.5" fill="none" />
             </g>
           ))}
-          {/* embers */}
-          {[50, 160, 280, 360].map((x, i) => (
-            <circle key={i} cx={x} cy={170} r="2" fill="#fbbf24" opacity="0.9">
-              <animate attributeName="cy" values="180;40" dur={`${3 + i * 0.5}s`} repeatCount="indefinite" />
-              <animate attributeName="opacity" values="1;0" dur={`${3 + i * 0.5}s`} repeatCount="indefinite" />
+          {/* embers rising */}
+          {[40,90,160,220,280,340,380].map((x,i) => (
+            <circle key={i} cx={x} cy={190} r={1.5+i%2} fill={i%2?"#fbbf24":"#f97316"} opacity="0.95">
+              <animate attributeName="cy" values="200;20" dur={`${2.5+i*0.3}s`} begin={`${i*0.3}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="1;0" dur={`${2.5+i*0.3}s`} begin={`${i*0.3}s`} repeatCount="indefinite" />
             </circle>
           ))}
+          {/* lightning bolt */}
+          <path d="M180 20 L175 55 L185 55 L172 90" stroke="#fef08a" strokeWidth="2" fill="none" opacity="0.8">
+            <animate attributeName="opacity" values="0;1;0;0;0" dur="4s" repeatCount="indefinite" />
+          </path>
         </svg>
       );
     case "Masters":
       return (
-        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
-          {/* cracked obsidian */}
-          <path d="M0 170 L400 170 L400 200 L0 200 Z" fill="#1c1917" opacity="0.7" />
-          <path d="M50 170 L60 200 M150 170 L140 200 M250 170 L265 200 M350 170 L345 200" stroke="#f97316" strokeWidth="1.5" opacity="0.85" />
-          {/* lava fissures glow */}
-          <ellipse cx="200" cy="185" rx="180" ry="10" fill="#f97316" opacity="0.35" />
+        <svg viewBox="0 0 400 220" preserveAspectRatio="none" className={common}>
+          {/* obsidian ground */}
+          <path d="M0 165 L400 165 L400 220 L0 220 Z" fill="#0c0a09" opacity="0.85" />
+          {/* fissure glow */}
+          <ellipse cx="200" cy="190" rx="220" ry="14" fill="#f97316" opacity="0.5" />
+          <ellipse cx="200" cy="192" rx="180" ry="6" fill="#fbbf24" opacity="0.6" />
+          {/* fissure cracks */}
+          {[40,110,180,255,330,375].map((x,i)=>(
+            <path key={i} d={`M${x} 165 L${x+(i%2?5:-5)} 220`} stroke="#f97316" strokeWidth="2" opacity="0.9">
+              <animate attributeName="opacity" values="0.4;1;0.4" dur={`${1.5+i*0.2}s`} repeatCount="indefinite" />
+            </path>
+          ))}
           {/* ruins pillars */}
-          {[80, 220, 340].map((x, i) => (
-            <rect key={i} x={x - 6} y={130} width="12" height="40" fill="#292524" opacity="0.85" />
+          {[50,130,220,310,375].map((x,i) => (
+            <g key={i}>
+              <rect x={x-8} y={120-(i%2)*15} width="16" height={45+(i%2)*15} fill="#292524" opacity="0.9" />
+              <rect x={x-10} y={118-(i%2)*15} width="20" height="4" fill="#44403c" opacity="0.9" />
+              <rect x={x-3} y={135-(i%2)*15} width="6" height="6" fill="#f97316" opacity="0.7" />
+            </g>
+          ))}
+          {/* floating debris */}
+          {[60,180,300].map((x,i)=>(
+            <rect key={i} x={x} y={40+i*20} width="6" height="6" fill="#78716c" opacity="0.7" transform={`rotate(${i*30} ${x+3} ${43+i*20})`}>
+              <animateTransform attributeName="transform" type="rotate" from={`0 ${x+3} ${43+i*20}`} to={`360 ${x+3} ${43+i*20}`} dur={`${4+i}s`} repeatCount="indefinite" />
+            </rect>
+          ))}
+          {/* sparks */}
+          {Array.from({length:8}).map((_,i)=>(
+            <circle key={i} cx={40+i*45} cy={190} r="1.5" fill="#fbbf24" opacity="0.9">
+              <animate attributeName="cy" values="190;100" dur={`${2+i*0.3}s`} begin={`${i*0.4}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="1;0" dur={`${2+i*0.3}s`} begin={`${i*0.4}s`} repeatCount="indefinite" />
+            </circle>
           ))}
         </svg>
       );
     case "Pro":
       return (
-        <svg viewBox="0 0 400 200" preserveAspectRatio="none" className={common}>
+        <svg viewBox="0 0 400 220" preserveAspectRatio="none" className={common}>
           <defs>
             <radialGradient id="proHalo" cx="50%" cy="50%" r="70%">
-              <stop offset="0%" stopColor="#fef9c3" stopOpacity="0.8" />
+              <stop offset="0%" stopColor="#fef9c3" stopOpacity="0.85" />
               <stop offset="100%" stopColor="#fef9c3" stopOpacity="0" />
             </radialGradient>
           </defs>
-          <rect x="0" y="0" width="400" height="200" fill="url(#proHalo)" />
+          <rect width="400" height="220" fill="url(#proHalo)" />
+          {/* god rays */}
+          {[60,140,220,300,360].map((x,i)=>(
+            <polygon key={i} points={`${x},0 ${x-25},220 ${x+25},220`} fill="#fef9c3" opacity="0.18" />
+          ))}
           {/* cloud sea */}
-          <path d="M0 165 Q80 145 160 165 T320 165 T480 165 L480 200 L0 200 Z" fill="#fef3c7" opacity="0.55" />
-          {/* floating crowns */}
-          {[70, 200, 330].map((x, i) => (
-            <g key={i} transform={`translate(${x} ${60 + i * 15})`} opacity="0.9">
-              <path d="M-10 0 L-6 -8 L-2 -3 L2 -10 L6 -3 L10 -8 L10 4 L-10 4 Z" fill="#fde047" stroke="#ca8a04" strokeWidth="0.5" />
-              <animateTransform attributeName="transform" type="translate" values={`${x} ${60 + i * 15};${x} ${50 + i * 15};${x} ${60 + i * 15}`} dur={`${3 + i}s`} repeatCount="indefinite" />
+          <path d="M0 170 Q60 155 120 170 T240 170 T360 170 T480 170 L480 220 L0 220 Z" fill="#fef3c7" opacity="0.65" />
+          <path d="M0 185 Q80 175 160 188 T320 185 T480 185 L480 220 L0 220 Z" fill="#fde68a" opacity="0.55" />
+          {/* floating crowns — many */}
+          {[40,110,180,250,320,380].map((x,i) => (
+            <g key={i} transform={`translate(${x} ${50+(i%3)*25})`} opacity="0.95">
+              <path d="M-12 4 L-10 -8 L-4 -2 L0 -12 L4 -2 L10 -8 L12 4 Z" fill="#fde047" stroke="#ca8a04" strokeWidth="0.8" />
+              <circle cx="-10" cy="-8" r="1.5" fill="#fef08a" />
+              <circle cx="0" cy="-12" r="1.5" fill="#fef08a" />
+              <circle cx="10" cy="-8" r="1.5" fill="#fef08a" />
+              <animateTransform attributeName="transform" type="translate" values={`${x} ${50+(i%3)*25};${x} ${40+(i%3)*25};${x} ${50+(i%3)*25}`} dur={`${3+i*0.4}s`} repeatCount="indefinite" />
             </g>
           ))}
-          {/* god rays */}
-          {[100, 200, 300].map((x, i) => (
-            <line key={i} x1={x} y1="0" x2={x + 20} y2="200" stroke="#fef9c3" strokeWidth="1" opacity="0.3" />
+          {/* halo rings */}
+          {[100,300].map((x,i)=>(
+            <ellipse key={i} cx={x} cy={130} rx="30" ry="8" fill="none" stroke="#fde047" strokeWidth="1.5" opacity="0.6" />
+          ))}
+          {/* golden sparkles */}
+          {Array.from({length:20}).map((_,i)=>(
+            <circle key={i} cx={(i*29)%400} cy={(i*19)%180} r="1" fill="#fef9c3" opacity="0.9">
+              <animate attributeName="opacity" values="0.3;1;0.3" dur={`${1.5+(i%3)}s`} repeatCount="indefinite" />
+            </circle>
           ))}
         </svg>
       );
@@ -377,8 +520,9 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
               return (
                 <div
                   key={bi}
-                  className="relative flex items-center py-8 px-4"
+                  className="relative flex items-center py-14 px-4"
                   style={{
+                    minHeight: 280,
                     background: band.theme.bg,
                     borderRight: bi < bands.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none",
                   }}
@@ -389,11 +533,11 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
                     className="absolute inset-0 pointer-events-none"
                     style={{
                       background: `repeating-linear-gradient(45deg, ${band.theme.stripe} 0 2px, transparent 2px 18px)`,
-                      opacity: 0.7,
+                      opacity: 0.45,
                     }}
                   />
                   {/* biome scenery — inline SVG layered behind the trail */}
-                  <div aria-hidden className="absolute inset-0 pointer-events-none opacity-80">
+                  <div aria-hidden className="absolute inset-0 pointer-events-none">
                     <Scenery tier={band.tier} />
                   </div>
                   {/* tier label banner */}
