@@ -30,6 +30,11 @@ export default function Settings() {
   const [haptics, setHaptics] = React.useState(areHapticsEnabled());
   const [particlesOn, setParticlesOn] = React.useState(getParticlesEnabled());
   const [particleIntensity, setParticleIntensityState] = React.useState(getParticleIntensity());
+  const [rules, setRulesState] = React.useState(getRules());
+  const updateRule = (name, value) => {
+    setRule(name, value);
+    setRulesState(getRules());
+  };
 
   const [perfMode, setPerfMode] = React.useState(() => {
     try { return localStorage.getItem("tierAnimPerf") || "auto"; } catch { return "auto"; }
