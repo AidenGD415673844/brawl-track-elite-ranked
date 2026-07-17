@@ -18,6 +18,7 @@ import {
   getParticlesEnabled, setParticlesEnabled,
   getParticleIntensity, setParticleIntensity,
 } from "@/lib/animPrefs";
+import { getRules, setRule } from "@/lib/battleLogRules";
 
 
 export default function Settings() {
