@@ -221,8 +221,7 @@ export function addBattle(playerElo, {
     manual: false,
     timestamp: new Date().toISOString(),
   };
-  const log = loadBattleLog();
-  const newLog = [entry, ...log];
+  const newLog = [entry, ...priorLog];
   saveBattleLog(newLog);
   return { entry, log: newLog };
 }
