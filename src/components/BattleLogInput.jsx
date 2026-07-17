@@ -237,6 +237,22 @@ export default function BattleLogInput({
       if (!ok) return;
     }
     const manualDeltaVal = manualDeltaNum !== null ? manualDeltaNum : undefined;
+    // Manual Δ validation — refuse absurd values without confirmation
+    if (isRuleOn("manualValidation") && manualDeltaVal !== undefined) {
+      if (manualDeltaVal > 200 || manualDeltaVal < -150) {
+        const ok = typeof window !== "undefined" && window.confirm(
+          `Manual Δ of ${manualDeltaVal > 0 ? "+" : ""}${manualDeltaVal} is way outside normal range.\n\nAre you sure?`
+        );
+        if (!ok) return;
+      }
+    }
+    // Duplicate guard
+    if (isRuleOn("duplicateGuard") && !editingEntry && isLikelyDuplicate(battleLog, { brawler: brawlers.self, result })) {
+      const ok = typeof window !== "undefined" && window.confirm(
+        "Looks like a duplicate of your last battle (same brawler & result within 30s). Add anyway?"
+      );
+      if (!ok) return;
+    }
     const cleanMateDeltas = manualDeltaOn
       ? manualMateDeltas.slice(0, teammateElos.length).map((v) => (v === "" || isNaN(Number(v)) ? null : Number(v)))
       : [];
