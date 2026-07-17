@@ -113,7 +113,34 @@ export default function RankScale({ elo, seasonHighest }) {
               transition={{ duration: 0.3 }}
               style={{ filter: isCenter ? `drop-shadow(0 0 20px ${c.glow})` : "none" }}
             >
-              <RankBadge elo={displayElo} size={isCenter ? 80 : 56} />
+              <div className="relative">
+                {isCenter && (
+                  <>
+                    {/* Rotating conic aura ring */}
+                    <div
+                      aria-hidden
+                      className="absolute -inset-3 rounded-full pointer-events-none"
+                      style={{
+                        background: `conic-gradient(from 0deg, ${c.from}, ${c.to}, ${c.glow}, ${c.from})`,
+                        opacity: 0.35,
+                        filter: "blur(6px)",
+                        animation: "spin 8s linear infinite",
+                      }}
+                    />
+                    {/* Pulsing halo */}
+                    <div
+                      aria-hidden
+                      className="absolute -inset-1 rounded-full pointer-events-none"
+                      style={{
+                        border: `1.5px solid ${c.text}`,
+                        opacity: 0.5,
+                        animation: "pulse 2.4s ease-in-out infinite",
+                      }}
+                    />
+                  </>
+                )}
+                <RankBadge elo={displayElo} size={isCenter ? 80 : 56} />
+              </div>
               {isCenter && (
                 <>
                   <p
