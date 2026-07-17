@@ -9,6 +9,7 @@
 //    floor protection, Diamond+ boundary protection) preserved but the tier
 //    absolute bounds are re-applied as the final clamp.
 import { getRank, getRankIndex, RANKS } from "@/lib/ranks";
+import { isRuleOn, isFarmedTrio } from "@/lib/battleLogRules";
 
 // ── Tier bounds table ────────────────────────────────────────
 // equalWin / equalLoss = range for equal-sub-rank matches.
