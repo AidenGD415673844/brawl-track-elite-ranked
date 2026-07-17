@@ -297,6 +297,7 @@ export function editBattle(id, updatedData) {
         highestElo: log[i].highestElo,
         starPlayer: log[i].starPlayer === "self" || log[i].starPlayer === true,
         teammateProfiles: log[i].teammateProfiles,
+        battleLog: log.slice(i + 1),
       });
       log[i].delta = recalc.delta;
       log[i].eloAfter = recalc.eloAfter;
