@@ -200,6 +200,30 @@ export default function RankScale({ elo, seasonHighest }) {
         </div>
       )}
 
+      {/* Next Rank preview — shows next major tier + Elo needed */}
+      {(() => {
+        const nextIdx = MAJOR_RANKS.findIndex((r) => r.min > elo);
+        if (nextIdx <= 0) return null;
+        const next = MAJOR_RANKS[nextIdx];
+        const nc = TIER_COLORS[next.tier];
+        const gap = next.min - elo;
+        return (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
+            <RankBadge elo={next.min} size={28} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] uppercase text-muted-foreground font-display tracking-wider">Next Major Rank</p>
+              <p className="text-xs font-bold truncate" style={{ color: nc.text }}>{next.tier}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] text-muted-foreground">Elo to climb</p>
+              <p className="text-xs font-bold" style={{ color: nc.text }}>+{gap.toLocaleString()}</p>
+            </div>
+          </div>
+        );
+      })()}
+
+
+
       {/* Segmented progress bar for current tier's sub-ranks */}
       <div className="mt-4">
         <div className="flex items-center justify-between mb-2">
