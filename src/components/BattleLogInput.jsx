@@ -236,6 +236,12 @@ export default function BattleLogInput({
       if (!ok) return;
     }
     const manualDeltaVal = manualDeltaNum !== null ? manualDeltaNum : undefined;
+    const cleanMateDeltas = manualDeltaOn
+      ? manualMateDeltas.slice(0, teammateElos.length).map((v) => (v === "" || isNaN(Number(v)) ? null : Number(v)))
+      : [];
+    const cleanEnemyDeltas = manualDeltaOn
+      ? manualEnemyDeltas.slice(0, enemyElos.length).map((v) => (v === "" || isNaN(Number(v)) ? null : Number(v)))
+      : [];
     onLog({
       mode,
       result,
@@ -248,6 +254,8 @@ export default function BattleLogInput({
       seasonRefreshed,
       queueType,
       performance: Object.keys(performance).length > 0 ? performance : null,
+      manualTeammateDeltas: cleanMateDeltas,
+      manualEnemyDeltas: cleanEnemyDeltas,
       ...(manualDeltaVal !== undefined ? { manualDelta: manualDeltaVal } : {}),
     });
     if (!editingEntry) {
