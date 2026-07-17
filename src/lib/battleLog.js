@@ -185,7 +185,7 @@ export function computeParticipantTransitions(entry) {
 export function addBattle(playerElo, {
   mode, result, teammateElos, enemyElos,
   brawler, brawlers, starPlayer, seasonRefreshed, manualDelta, queueType, highestElo, duration, performance,
-  teammateProfiles,
+  teammateProfiles, manualTeammateDeltas, manualEnemyDeltas,
 }) {
   const isStarSelf = starPlayer === "self" || starPlayer === true;
   const calc = calculateElo(playerElo, {
@@ -208,6 +208,8 @@ export function addBattle(playerElo, {
     teammateElos: teammateElos || [],
     teammateProfiles: teammateProfiles || [],
     enemyElos: enemyElos || [],
+    manualTeammateDeltas: manualTeammateDeltas || [],
+    manualEnemyDeltas: manualEnemyDeltas || [],
     playerElo,
     delta: calc.delta,
     eloAfter: calc.eloAfter,
