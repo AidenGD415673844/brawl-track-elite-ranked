@@ -187,11 +187,14 @@ export function addBattle(playerElo, {
   brawler, brawlers, starPlayer, seasonRefreshed, manualDelta, queueType, highestElo, duration, performance,
   teammateProfiles, manualTeammateDeltas, manualEnemyDeltas,
 }) {
+  const priorLog = loadBattleLog();
   const isStarSelf = starPlayer === "self" || starPlayer === true;
   const calc = calculateElo(playerElo, {
     result, teammateElos, enemyElos, seasonRefreshed, manualDelta, queueType, highestElo,
     starPlayer: isStarSelf,
     teammateProfiles,
+    duration,
+    battleLog: priorLog,
   });
   const rankUp = checkRankUp(playerElo, calc.eloAfter);
   const entry = {
