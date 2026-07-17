@@ -392,6 +392,10 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
                       opacity: 0.7,
                     }}
                   />
+                  {/* biome scenery — inline SVG layered behind the trail */}
+                  <div aria-hidden className="absolute inset-0 pointer-events-none opacity-80">
+                    <Scenery tier={band.tier} />
+                  </div>
                   {/* tier label banner */}
                   <div
                     className="absolute top-2 left-3 text-[9px] font-display font-black uppercase tracking-widest"
