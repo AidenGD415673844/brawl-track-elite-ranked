@@ -70,6 +70,9 @@ import EloJourneyMap from "@/components/EloJourneyMap";
 import ClutchIndexCard from "@/components/ClutchIndexCard";
 import ThreatRadar from "@/components/ThreatRadar";
 import RankTerritoryMap from "@/components/RankTerritoryMap";
+import MatchupIntelCard from "@/components/MatchupIntelCard";
+import EloVelocityCard from "@/components/EloVelocityCard";
+import TiltAlertLive from "@/components/TiltAlertLive";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
