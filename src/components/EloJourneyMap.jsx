@@ -370,67 +370,107 @@ function Scenery({ tier }) {
   }
 }
 
+// ── Layout: serpentine node placement per tier band ──
+const BAND_H = 300;
+const CY = 152;
+
+function layoutBand(band) {
+  const pts = [];
+  let x = 34;
+  for (let i = band.startIdx; i <= band.endIdx; i++) {
+    const elo = ELO_POINTS[i];
+    const rank = getRank(elo);
+    const isMajor = rank.min === elo;
+    const size = isMajor ? 78 : 44;
+    x += size / 2 + (i === band.startIdx ? 0 : 20);
+    pts.push({ elo, isMajor, size, x, y: CY + Math.sin(i * 0.85) * 27, idx: i });
+    x += size / 2;
+  }
+  return { pts, width: Math.round(x + 34) };
+}
+
+// Smooth path through points (midpoint quadratics).
+function trailPath(pts) {
+  if (pts.length < 2) return "";
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    const mx = (a.x + b.x) / 2;
+    d += ` C ${mx} ${a.y}, ${mx} ${b.y}, ${b.x} ${b.y}`;
+  }
+  return d;
+}
+
 // A single 3D circular checkpoint node.
-function Node({ elo, isMajor, isCurrent, isReached, size }) {
+function Node({ elo, isMajor, isCurrent, isReached, size, motion }) {
   const rank = getRank(elo);
   const c = TIER_COLORS[rank.tier];
   const bright = eloBrightness(elo);
-  const glow = isCurrent ? `0 0 24px ${c.glow}, 0 0 8px #fff` : `0 0 14px ${c.glow}`;
+  const glow = isCurrent ? `0 0 26px ${c.glow}, 0 0 10px #fff` : `0 0 14px ${c.glow}`;
   return (
-    <div
-      className="flex flex-col items-center gap-1.5"
-      style={{ width: size + 24 }}
-    >
-      <div
-        className="relative rounded-full flex items-center justify-center shrink-0"
-        style={{
-          width: size,
-          height: size,
-          background: `radial-gradient(circle at 30% 25%, #fff5 0%, transparent 40%),
-                       radial-gradient(circle at 65% 75%, #0006 0%, transparent 55%),
-                       linear-gradient(145deg, ${c.from}, ${c.to})`,
-          boxShadow: `inset 0 -${Math.round(size * 0.12)}px ${Math.round(size * 0.18)}px #0009,
-                      inset 0 ${Math.round(size * 0.08)}px ${Math.round(size * 0.14)}px #fff4,
-                      ${glow}`,
-          opacity: isReached ? 1 : 0.55,
-          filter: `saturate(${bright}) brightness(${Math.min(1.3, bright)})`,
-        }}
-      >
-        {isMajor && (
-          <img
-            src={rank.image}
-            alt={rank.name}
+    <div className="flex flex-col items-center gap-1.5" style={{ width: size + 30 }}>
+      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        {/* rotating aura ring on major ranks */}
+        {isMajor && isReached && (
+          <div
+            aria-hidden
+            className="absolute rounded-full pointer-events-none"
             style={{
-              width: size * 0.72,
-              height: size * 0.72,
-              objectFit: "contain",
-              filter: `drop-shadow(0 2px 4px #000a)`,
+              inset: -9,
+              background: `conic-gradient(from 0deg, transparent 0deg, ${c.glow} 90deg, transparent 190deg, ${c.glow} 300deg, transparent 360deg)`,
+              opacity: 0.55,
+              filter: "blur(3px)",
+              animation: motion ? "ptp-spin 7s linear infinite" : "none",
             }}
           />
         )}
-        {!isMajor && (
-          <div
-            className="font-display font-black"
-            style={{
-              fontSize: size * 0.32,
-              color: "#fff",
-              textShadow: "0 2px 4px #0009",
-              opacity: 0.85,
-            }}
-          >
-            {Math.round(elo / 100)}
-          </div>
-        )}
-        {isCurrent && (
-          <div
-            className="absolute inset-0 rounded-full pointer-events-none"
-            style={{
-              border: "2px solid #fff",
-              animation: "fade-in 0.6s ease-out",
-              boxShadow: `0 0 16px #fff, 0 0 24px ${c.glow}`,
-            }}
-          />
-        )}
+        <div
+          className="relative rounded-full flex items-center justify-center shrink-0"
+          style={{
+            width: size,
+            height: size,
+            background: `radial-gradient(circle at 30% 25%, #fff5 0%, transparent 40%),
+                         radial-gradient(circle at 65% 75%, #0006 0%, transparent 55%),
+                         linear-gradient(145deg, ${c.from}, ${c.to})`,
+            boxShadow: `inset 0 -${Math.round(size * 0.12)}px ${Math.round(size * 0.18)}px #0009,
+                        inset 0 ${Math.round(size * 0.08)}px ${Math.round(size * 0.14)}px #fff4,
+                        ${glow}`,
+            opacity: isReached ? 1 : 0.5,
+            filter: `saturate(${bright}) brightness(${Math.min(1.3, bright)})`,
+          }}
+        >
+          {isMajor ? (
+            <img
+              src={rank.image}
+              alt={rank.name}
+              style={{ width: size * 0.72, height: size * 0.72, objectFit: "contain", filter: "drop-shadow(0 2px 4px #000a)" }}
+            />
+          ) : (
+            <div
+              className="font-display font-black"
+              style={{ fontSize: size * 0.3, color: "#fff", textShadow: "0 2px 4px #0009", opacity: 0.85 }}
+            >
+              {Math.round(elo / 100)}
+            </div>
+          )}
+          {isCurrent && (
+            <div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{ border: "2px solid #fff", boxShadow: `0 0 16px #fff, 0 0 26px ${c.glow}` }}
+            />
+          )}
+        </div>
+        {/* pedestal shadow */}
+        <div
+          aria-hidden
+          className="absolute pointer-events-none rounded-[50%]"
+          style={{
+            width: size * 0.9,
+            height: size * 0.2,
+            bottom: -size * 0.16,
+            background: "radial-gradient(ellipse at center, rgba(0,0,0,0.55), transparent 70%)",
+          }}
+        />
       </div>
       <div className="text-center leading-tight">
         {isMajor && (
@@ -438,7 +478,7 @@ function Node({ elo, isMajor, isCurrent, isReached, size }) {
             {rank.name}
           </p>
         )}
-        <p className={`text-[10px] font-bold ${isReached ? "text-foreground" : "text-muted-foreground"}`}>
+        <p className={`text-[9px] font-bold ${isReached ? "text-foreground" : "text-muted-foreground"} ${isMajor || isCurrent ? "" : "opacity-0 group-hover/node:opacity-100 transition-opacity"}`}>
           {elo.toLocaleString()} Elo
         </p>
       </div>
@@ -448,11 +488,20 @@ function Node({ elo, isMajor, isCurrent, isReached, size }) {
 
 export default function EloJourneyMap({ battleLog, currentElo }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [scrollX, setScrollX] = useState(0);
   const scrollRef = useRef(null);
   const currentRef = useRef(null);
+  const prefs = useAnimPrefs();
+  const reduced =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const motion = prefs.enabled && !reduced;
+  const parallax = motion && prefs.intensity !== "low";
   const safeElo = Number.isFinite(Number(currentElo)) ? Number(currentElo) : 0;
 
   const bands = useMemo(() => buildBands(ELO_POINTS), []);
+  const layouts = useMemo(() => bands.map((b) => layoutBand(b)), [bands]);
 
   // Auto-scroll to current position on mount / when Elo changes.
   useEffect(() => {
@@ -468,8 +517,32 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
     return () => clearTimeout(t);
   }, [safeElo, collapsed]);
 
+  // Parallax driver — rAF-throttled scroll position.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || collapsed || !parallax) return;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        setScrollX(el.scrollLeft);
+      });
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [collapsed, parallax]);
+
   const currentRank = getRank(safeElo);
   const currentTierColor = TIER_COLORS[currentRank.tier];
+  const cleared = ELO_POINTS.filter((e) => safeElo >= e).length;
+  const nextMajor = RANKS.find((r) => r.min > safeElo);
+  const majorPct = nextMajor
+    ? Math.max(0, Math.min(100, Math.round(((safeElo - currentRank.min) / (nextMajor.min - currentRank.min)) * 100)))
+    : 100;
 
   return (
     <Card className="relative bg-card border-border p-4 sm:p-5 rounded-2xl overflow-hidden">
@@ -486,10 +559,8 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-fuchsia-500 flex items-center justify-center shadow-[0_0_18px_rgba(34,211,238,0.35)]">
             <Map className="w-3.5 h-3.5 text-white" />
           </div>
-          <h3 className="text-sm font-display font-semibold text-foreground">
-            Path to Pro
-          </h3>
-          <span className="text-[10px] text-muted-foreground">· 0 → 15,000 Elo</span>
+          <h3 className="text-sm font-display font-semibold text-foreground">Path to Pro</h3>
+          <span className="text-[10px] text-muted-foreground hidden sm:inline">· 0 → 15,000 Elo</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-bold" style={{ color: currentTierColor.text }}>
@@ -506,98 +577,195 @@ export default function EloJourneyMap({ battleLog, currentElo }) {
       </div>
 
       {collapsed ? null : (
-        <div
-          ref={scrollRef}
-          className="relative overflow-x-auto overflow-y-hidden rounded-xl border border-cyan-500/25 shadow-[0_0_24px_rgba(34,211,238,0.12)_inset]"
-          style={{
-            WebkitOverflowScrolling: "touch",
-            overscrollBehaviorX: "contain",
-          }}
-        >
-          <div className="flex items-stretch min-w-max">
-            {bands.map((band, bi) => {
-              const bandPoints = ELO_POINTS.slice(band.startIdx, band.endIdx + 1);
-              return (
-                <div
-                  key={bi}
-                  className="relative flex items-center py-14 px-4"
-                  style={{
-                    minHeight: 280,
-                    background: band.theme.bg,
-                    borderRight: bi < bands.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none",
-                  }}
-                >
-                  {/* diagonal stripe overlay for texture */}
+        <div className="relative">
+          {/* Progress HUD */}
+          <div
+            className="absolute z-30 top-2 left-2 rounded-lg px-2.5 py-1.5 backdrop-blur-md border pointer-events-none"
+            style={{
+              background: "rgba(0,0,0,0.5)",
+              borderColor: `${currentTierColor.glow}`,
+              boxShadow: `0 0 14px ${currentTierColor.glow}`,
+            }}
+          >
+            <p className="text-[10px] font-display font-black uppercase tracking-wider" style={{ color: currentTierColor.text }}>
+              {currentRank.name}
+            </p>
+            <p className="text-[9px] text-white/80 font-semibold">
+              {cleared} / {ELO_POINTS.length} checkpoints · {majorPct}% to {nextMajor ? nextMajor.name : "Max"}
+            </p>
+          </div>
+
+          <div
+            ref={scrollRef}
+            className="relative overflow-x-auto overflow-y-hidden rounded-xl border border-cyan-500/25 shadow-[0_0_24px_rgba(34,211,238,0.12)_inset]"
+            style={{ WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}
+          >
+            <div className="flex items-stretch min-w-max">
+              {bands.map((band, bi) => {
+                const lay = layouts[bi];
+                const tc = TIER_COLORS[band.tier];
+                const reachedPts = lay.pts.filter((p) => safeElo >= p.elo);
+                const bandOffset = layouts.slice(0, bi).reduce((a, l) => a + l.width, 0);
+                const rel = parallax ? scrollX - bandOffset : 0;
+                return (
                   <div
-                    aria-hidden
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background: `repeating-linear-gradient(45deg, ${band.theme.stripe} 0 2px, transparent 2px 18px)`,
-                      opacity: 0.45,
-                    }}
-                  />
-                  {/* biome scenery — inline SVG layered behind the trail */}
-                  <div aria-hidden className="absolute inset-0 pointer-events-none">
-                    <Scenery tier={band.tier} />
-                  </div>
-                  {/* tier label banner */}
-                  <div
-                    className="absolute top-2 left-3 text-[9px] font-display font-black uppercase tracking-widest"
-                    style={{ color: TIER_COLORS[band.tier].text, textShadow: "0 1px 3px #000a" }}
+                    key={bi}
+                    className="relative"
+                    style={{ width: lay.width, height: BAND_H, background: band.theme.bg }}
                   >
-                    {band.tier}
-                  </div>
+                    {/* diagonal stripe overlay for texture */}
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: `repeating-linear-gradient(45deg, ${band.theme.stripe} 0 2px, transparent 2px 18px)`,
+                        opacity: 0.45,
+                      }}
+                    />
+                    {/* biome scenery — parallax layers */}
+                    <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
+                      <div
+                        className="absolute inset-0"
+                        style={{ transform: `translate3d(${rel * 0.12}px,0,0)`, opacity: 0.75, filter: "blur(1.2px)" }}
+                      >
+                        <Scenery tier={band.tier} />
+                      </div>
+                      <div
+                        className="absolute inset-0"
+                        style={{ transform: `translate3d(${rel * -0.06}px,0,0) scale(1.05)` }}
+                      >
+                        <Scenery tier={band.tier} />
+                      </div>
+                    </div>
+                    {/* ground haze / foreground */}
+                    <div
+                      aria-hidden
+                      className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"
+                      style={{ background: `linear-gradient(to top, ${tc.glow}, transparent)`, opacity: 0.25 }}
+                    />
+                    {/* biome seam cross-fade */}
+                    {bi < bands.length - 1 && (
+                      <div
+                        aria-hidden
+                        className="absolute top-0 bottom-0 right-0 w-10 pointer-events-none"
+                        style={{ background: `linear-gradient(90deg, transparent, ${TIER_THEME[bands[bi + 1].tier].stripe})` }}
+                      />
+                    )}
 
-                  {/* connecting trail line */}
-                  <div
-                    aria-hidden
-                    className="absolute left-0 right-0 h-1 top-1/2 -translate-y-1/2"
-                    style={{
-                      background: `linear-gradient(90deg, ${TIER_COLORS[band.tier].from}88, ${TIER_COLORS[band.tier].to}88)`,
-                      boxShadow: `0 0 12px ${TIER_COLORS[band.tier].glow}`,
-                    }}
-                  />
+                    {/* milestone flag */}
+                    <div className="absolute top-0 left-3 z-20 flex items-start pointer-events-none">
+                      <div className="w-[2px] h-12" style={{ background: tc.to, boxShadow: `0 0 8px ${tc.glow}` }} />
+                      <div
+                        className="mt-1 px-2 py-0.5 text-[9px] font-display font-black uppercase tracking-widest"
+                        style={{
+                          background: `linear-gradient(90deg, ${tc.from}, ${tc.to})`,
+                          color: "#fff",
+                          textShadow: "0 1px 3px #000a",
+                          clipPath: "polygon(0 0, 100% 0, 88% 50%, 100% 100%, 0 100%)",
+                          animation: motion ? "ptp-flag 4s ease-in-out infinite" : "none",
+                          transformOrigin: "left center",
+                        }}
+                      >
+                        {band.tier}
+                      </div>
+                    </div>
 
-                  <div className="relative flex items-center gap-4">
-                    {bandPoints.map((elo, i) => {
-                      const rank = getRank(elo);
-                      const isMajor = rank.min === elo;
-                      const size = isMajor ? 68 : 42;
-                      const isReached = safeElo >= elo;
-                      // Determine if this is the "current" node = highest reached checkpoint.
-                      const nextInBand = bandPoints[i + 1];
+                    {/* serpentine trail */}
+                    <svg
+                      aria-hidden
+                      className="absolute inset-0 pointer-events-none"
+                      width={lay.width}
+                      height={BAND_H}
+                      viewBox={`0 0 ${lay.width} ${BAND_H}`}
+                    >
+                      <path
+                        d={trailPath(lay.pts)}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.28)"
+                        strokeWidth="4"
+                        strokeDasharray="9 11"
+                        strokeLinecap="round"
+                      />
+                      {reachedPts.length > 1 && (
+                        <>
+                          <path
+                            d={trailPath(reachedPts)}
+                            fill="none"
+                            stroke={tc.to}
+                            strokeWidth="9"
+                            strokeLinecap="round"
+                            opacity="0.28"
+                            style={{ filter: `drop-shadow(0 0 10px ${tc.glow})` }}
+                          />
+                          <path
+                            d={trailPath(reachedPts)}
+                            fill="none"
+                            stroke={tc.from}
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                          />
+                        </>
+                      )}
+                    </svg>
+
+                    {/* nodes */}
+                    {lay.pts.map((p, i) => {
+                      const nextInBand = lay.pts[i + 1];
                       const isCurrent =
-                        safeElo >= elo &&
-                        (nextInBand === undefined ? true : safeElo < nextInBand) &&
-                        // and only for the band that actually contains the player
+                        safeElo >= p.elo &&
+                        (nextInBand === undefined ? true : safeElo < nextInBand.elo) &&
                         band.tier === currentRank.tier;
-
                       return (
                         <div
-                          key={elo}
+                          key={p.elo}
                           ref={isCurrent ? currentRef : null}
-                          className="relative z-10"
+                          className="group/node absolute z-10"
+                          style={{
+                            left: p.x - (p.size + 30) / 2,
+                            top: p.y - p.size / 2,
+                            width: p.size + 30,
+                          }}
                         >
                           <Node
-                            elo={elo}
-                            isMajor={isMajor}
+                            elo={p.elo}
+                            isMajor={p.isMajor}
                             isCurrent={isCurrent}
-                            isReached={isReached}
-                            size={size}
+                            isReached={safeElo >= p.elo}
+                            size={p.size}
+                            motion={motion}
                           />
+                          {isCurrent && (
+                            <div
+                              aria-hidden
+                              className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+                              style={{ top: -34, animation: motion ? "ptp-bob 2.2s ease-in-out infinite" : "none" }}
+                            >
+                              <div
+                                className="w-5 h-5 rounded-full border-2 border-white"
+                                style={{
+                                  background: `linear-gradient(145deg, ${currentTierColor.from}, ${currentTierColor.to})`,
+                                  boxShadow: `0 0 16px #fff, 0 0 26px ${currentTierColor.glow}`,
+                                }}
+                              />
+                              <div
+                                className="absolute left-1/2 -translate-x-1/2 top-5 w-[3px] h-4"
+                                style={{ background: `linear-gradient(to bottom, #fff, transparent)`, opacity: 0.8 }}
+                              />
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
 
       <p className="relative mt-3 text-[10px] text-muted-foreground text-center">
-        Scroll → to trace the road from Bronze to Pro. Reached checkpoints glow; your current stop pulses.
+        Scroll → to trace the road from Bronze to Pro. Reached checkpoints glow; your marker rides the trail.
       </p>
     </Card>
   );

@@ -67,12 +67,28 @@ export const MODES = [
 
 const BATTLE_LOG_BACKUP_KEY = BATTLE_LOG_KEY + ".backup";
 
+// Drop malformed entries, dedupe ids, keep newest-first ordering.
+function sanitizeLog(arr) {
+  if (!Array.isArray(arr)) return [];
+  const seen = new Set();
+  const clean = [];
+  for (const e of arr) {
+    if (!e || typeof e !== "object") continue;
+    if (!e.id || !e.timestamp) continue;
+    if (seen.has(e.id)) continue;
+    seen.add(e.id);
+    clean.push(e);
+  }
+  clean.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  return clean;
+}
+
 export function loadBattleLog() {
   try {
     const raw = localStorage.getItem(BATTLE_LOG_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) return sanitizeLog(parsed);
     }
   } catch {
     // fall through to backup
@@ -85,7 +101,7 @@ export function loadBattleLog() {
       if (Array.isArray(parsed)) {
         // Restore primary from backup
         try { localStorage.setItem(BATTLE_LOG_KEY, backup); } catch { /* noop */ }
-        return parsed;
+        return sanitizeLog(parsed);
       }
     }
   } catch {
@@ -93,6 +109,7 @@ export function loadBattleLog() {
   }
   return [];
 }
+
 
 function saveBattleLog(log) {
   const arr = Array.isArray(log) ? log : [];
@@ -237,12 +254,18 @@ export function addManualAdjustment(playerElo, adjustment) {
     starPlayer: null,
     queueType: "solo",
     duration: null,
+    performance: null,
     highestElo: playerElo,
     teammateElos: [],
+    teammateProfiles: [],
     enemyElos: [],
+    manualTeammateDeltas: [],
+    manualEnemyDeltas: [],
     playerElo,
     delta: calc.delta,
     eloAfter: calc.eloAfter,
+    eloDetails: calc.details || null,
+    rankUp: checkRankUp(playerElo, calc.eloAfter),
     manual: true,
     timestamp: new Date().toISOString(),
   };
@@ -250,6 +273,39 @@ export function addManualAdjustment(playerElo, adjustment) {
   const newLog = [entry, ...log];
   saveBattleLog(newLog);
   return { entry, log: newLog };
+}
+
+// Shared cascade: recalculates every entry NEWER than `fromIdx` (exclusive),
+// walking from `startElo`. Manual entries keep their fixed delta; rated ones
+// are re-run through the Elo engine (which re-applies rank floors + anti-farm).
+// Mutates and returns the log plus the resulting current Elo.
+export function recomputeLog(log, fromIdx, startElo) {
+  let currentElo = startElo;
+  for (let i = fromIdx - 1; i >= 0; i--) {
+    log[i].playerElo = currentElo;
+    if (!log[i].manual) {
+      const recalc = calculateElo(currentElo, {
+        result: log[i].result,
+        teammateElos: log[i].teammateElos,
+        enemyElos: log[i].enemyElos,
+        seasonRefreshed: log[i].seasonRefreshed,
+        queueType: log[i].queueType,
+        highestElo: log[i].highestElo,
+        starPlayer: log[i].starPlayer === "self" || log[i].starPlayer === true,
+        teammateProfiles: log[i].teammateProfiles,
+        duration: log[i].duration,
+        battleLog: log.slice(i + 1),
+      });
+      log[i].delta = recalc.delta;
+      log[i].eloAfter = recalc.eloAfter;
+      log[i].eloDetails = recalc.details;
+      log[i].rankUp = checkRankUp(currentElo, recalc.eloAfter);
+    } else {
+      log[i].eloAfter = Math.max(0, currentElo + (Number(log[i].delta) || 0));
+    }
+    currentElo = log[i].eloAfter;
+  }
+  return { log, newElo: currentElo };
 }
 
 export function editBattle(id, updatedData) {
@@ -270,6 +326,7 @@ export function editBattle(id, updatedData) {
     highestElo: entry.highestElo || updatedData.highestElo,
     starPlayer: isStarSelf,
     teammateProfiles: updatedData.teammateProfiles,
+    battleLog: log.slice(idx + 1),
   });
   const rankUp = checkRankUp(entry.playerElo, calc.eloAfter);
 
@@ -283,34 +340,9 @@ export function editBattle(id, updatedData) {
     rankUp,
   };
 
-  // Cascade Elo changes to all newer entries (lower indices = more recent)
-  let currentElo = calc.eloAfter;
-  for (let i = idx - 1; i >= 0; i--) {
-    log[i].playerElo = currentElo;
-    if (!log[i].manual) {
-      const recalc = calculateElo(currentElo, {
-        result: log[i].result,
-        teammateElos: log[i].teammateElos,
-        enemyElos: log[i].enemyElos,
-        seasonRefreshed: log[i].seasonRefreshed,
-        queueType: log[i].queueType,
-        highestElo: log[i].highestElo,
-        starPlayer: log[i].starPlayer === "self" || log[i].starPlayer === true,
-        teammateProfiles: log[i].teammateProfiles,
-        battleLog: log.slice(i + 1),
-      });
-      log[i].delta = recalc.delta;
-      log[i].eloAfter = recalc.eloAfter;
-      log[i].eloDetails = recalc.details;
-      log[i].rankUp = checkRankUp(currentElo, recalc.eloAfter);
-    } else {
-      log[i].eloAfter = Math.max(0, currentElo + log[i].delta);
-    }
-    currentElo = log[i].eloAfter;
-  }
-
+  const { newElo } = recomputeLog(log, idx, calc.eloAfter);
   saveBattleLog(log);
-  return { log, newElo: currentElo };
+  return { log, newElo };
 }
 
 export function deleteBattle(id) {
@@ -323,18 +355,37 @@ export function deleteBattle(id) {
     return { log: filtered, newElo: deleted?.playerElo ?? null, wasManual: deleted?.manual || false };
   }
 
-  // Oldest first for recalculation
-  const chrono = [...filtered].reverse();
-  let currentElo = chrono[0].playerElo;
-  for (const entry of chrono) {
-    entry.playerElo = currentElo;
-    entry.eloAfter = Math.max(0, currentElo + entry.delta);
-    currentElo = entry.eloAfter;
+  // Re-run the full cascade from the oldest entry so deltas (not just running
+  // totals) are recalculated with the deleted battle removed from history.
+  const oldestIdx = filtered.length - 1;
+  const oldest = filtered[oldestIdx];
+  const startElo = oldest.playerElo;
+  if (!oldest.manual) {
+    const recalc = calculateElo(startElo, {
+      result: oldest.result,
+      teammateElos: oldest.teammateElos,
+      enemyElos: oldest.enemyElos,
+      seasonRefreshed: oldest.seasonRefreshed,
+      queueType: oldest.queueType,
+      highestElo: oldest.highestElo,
+      starPlayer: oldest.starPlayer === "self" || oldest.starPlayer === true,
+      teammateProfiles: oldest.teammateProfiles,
+      duration: oldest.duration,
+      battleLog: [],
+    });
+    oldest.delta = recalc.delta;
+    oldest.eloAfter = recalc.eloAfter;
+    oldest.eloDetails = recalc.details;
+    oldest.rankUp = checkRankUp(startElo, recalc.eloAfter);
+  } else {
+    oldest.eloAfter = Math.max(0, startElo + (Number(oldest.delta) || 0));
   }
-  chrono.reverse();
-  saveBattleLog(chrono);
-  return { log: chrono, newElo: currentElo, wasManual: deleted?.manual || false };
+
+  const { newElo } = recomputeLog(filtered, oldestIdx, oldest.eloAfter);
+  saveBattleLog(filtered);
+  return { log: filtered, newElo, wasManual: deleted?.manual || false };
 }
+
 
 export function addRemoteBattle(entry) {
   const validated = validateRemoteEntry(entry);
