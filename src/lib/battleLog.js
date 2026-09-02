@@ -67,12 +67,28 @@ export const MODES = [
 
 const BATTLE_LOG_BACKUP_KEY = BATTLE_LOG_KEY + ".backup";
 
+// Drop malformed entries, dedupe ids, keep newest-first ordering.
+function sanitizeLog(arr) {
+  if (!Array.isArray(arr)) return [];
+  const seen = new Set();
+  const clean = [];
+  for (const e of arr) {
+    if (!e || typeof e !== "object") continue;
+    if (!e.id || !e.timestamp) continue;
+    if (seen.has(e.id)) continue;
+    seen.add(e.id);
+    clean.push(e);
+  }
+  clean.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  return clean;
+}
+
 export function loadBattleLog() {
   try {
     const raw = localStorage.getItem(BATTLE_LOG_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) return sanitizeLog(parsed);
     }
   } catch {
     // fall through to backup
@@ -85,7 +101,7 @@ export function loadBattleLog() {
       if (Array.isArray(parsed)) {
         // Restore primary from backup
         try { localStorage.setItem(BATTLE_LOG_KEY, backup); } catch { /* noop */ }
-        return parsed;
+        return sanitizeLog(parsed);
       }
     }
   } catch {
@@ -93,6 +109,7 @@ export function loadBattleLog() {
   }
   return [];
 }
+
 
 function saveBattleLog(log) {
   const arr = Array.isArray(log) ? log : [];
